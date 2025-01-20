@@ -14,7 +14,7 @@ chumsky = { git = "https://github.com/KrosFire/chumsky", rev = "406ea80", featur
   "default",
   "label",
 ] }
-heraclitus-compiler = "1.8.0"
+heraclitus-compiler = "1.8.1"
 serde_json = "1.0.128"
 rangemap = "1.5.1"
 indexmap = "2.6.0"

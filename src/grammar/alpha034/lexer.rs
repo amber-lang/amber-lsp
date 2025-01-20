@@ -25,43 +25,43 @@ pub fn get_rules() -> Rules {
             begin: "\"",
             end: "\"",
             tokenize: true,
-            allow_left_open: true
+            allow_unclosed_region: true
         } => [
             reg!(str_interp as "string interpolation" => {
                 begin: "{",
                 end: "}",
                 tokenize: true,
-                allow_left_open: true
+                allow_unclosed_region: true
             } ref global)
         ]),
         reg!(command as "command literal" => {
             begin: "$",
             end: "$",
             tokenize: true,
-            allow_left_open: true
+            allow_unclosed_region: true
         } => [
             reg!(com_interp as "command interpolation" => {
                 begin: "{",
                 end: "}",
                 tokenize: true,
-                allow_left_open: true
+                allow_unclosed_region: true
             } ref global)
         ]),
         reg!(cc_flag as "compiler flag" => {
             begin: "#[",
             end: "]",
-            allow_left_open: true
+            allow_unclosed_region: true
         }),
         reg!(comment as "comment" => {
             begin: "//",
             end: "\n",
-            allow_left_open: true
+            allow_unclosed_region: true
         }),
         reg!(interp as "interpolation" => {
             begin: "{",
             end: "}",
             tokenize: true,
-            allow_left_open: true
+            allow_unclosed_region: true
         } ref global)
     ];
     Rules::new(symbols, compounds, region)
