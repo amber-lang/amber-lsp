@@ -1,13 +1,16 @@
 use chumsky::prelude::*;
 
+use crate::T;
+
 use super::{lexer::Token, AmberParser};
 
-const KEYWORDS: [&str; 24] = [
+const KEYWORDS: [&str; 28] = [
     "if", "else", "loop", "in", "return", "break", "continue", "true", "false", "null", "fun",
     "as", "is", "or", "and", "not", "nameof", "status", "fail", "echo", "let", "unsafe", "silent",
-    "main",
+    "main", "import", "from", "pub", "then",
 ];
 
+#[inline]
 pub fn ident<'a>(ident_name: String) -> impl AmberParser<'a, String> {
     any()
         .try_map(move |token: Token, span| {
@@ -41,4 +44,40 @@ pub fn ident<'a>(ident_name: String) -> impl AmberParser<'a, String> {
 
             Ok(word)
         })
+        .boxed()
+}
+
+#[inline]
+pub fn default_recovery<'a>() -> impl AmberParser<'a, Token> {
+    let mut keyword_tokens = KEYWORDS
+        .map(|k| T![k])
+        .iter()
+        .cloned()
+        .collect::<Vec<Token>>();
+
+    keyword_tokens.extend(vec![
+        T!["{"],
+        T!["}"],
+        T!["("],
+        T![")"],
+        T!['"'],
+        T!['$'],
+        T!["["],
+        T!["]"],
+        T![".."],
+        T!["+"],
+        T!["-"],
+        T!["*"],
+        T!["/"],
+        T!["%"],
+        T!["="],
+        T!["=="],
+        T!["!="],
+        T!["<"],
+        T![">"],
+        T!["<="],
+        T![">="],
+    ]);
+
+    return none_of(keyword_tokens).boxed();
 }

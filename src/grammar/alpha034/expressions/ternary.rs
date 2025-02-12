@@ -1,6 +1,7 @@
 use chumsky::prelude::*;
 
 use crate::grammar::alpha034::lexer::Token;
+use crate::grammar::alpha034::parser::default_recovery;
 use crate::grammar::alpha034::{AmberParser, Spanned, Statement};
 use crate::T;
 
@@ -17,7 +18,7 @@ pub fn ternary_parser<'a>(
                 .map_with(|t, e| (t.to_string(), e.span()))
                 .then(
                     expr.clone().recover_with(via_parser(
-                        any()
+                        default_recovery()
                             .or_not()
                             .map_with(|_, e| (Expression::Error, e.span())),
                     )),
@@ -26,15 +27,14 @@ pub fn ternary_parser<'a>(
                     just(T!["else"])
                         .map_with(|t, e| (t.to_string(), e.span()))
                         .recover_with(via_parser(
-                            any().map_with(|_, e| ("".to_string(), e.span())),
-                        ))
-                        .recover_with(via_parser(
-                            end().map_with(|_, e| ("".to_string(), e.span())),
+                            default_recovery()
+                                .or_not()
+                                .map_with(|_, e| ("".to_string(), e.span())),
                         )),
                 )
                 .then(
                     expr.recover_with(via_parser(
-                        any()
+                        default_recovery()
                             .or_not()
                             .map_with(|_, e| (Expression::Error, e.span())),
                     )),
@@ -56,4 +56,5 @@ pub fn ternary_parser<'a>(
             },
         )
         .boxed()
+        .labelled("expression")
 }

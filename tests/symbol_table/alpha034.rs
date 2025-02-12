@@ -1,5 +1,6 @@
 use amber_lsp::{
-    backend::{AmberVersion, Backend}, fs::MemoryFS, grammar::alpha034::DataType, paths::FileId, symbol_table::types::{matches_type, GenericsMap}
+    backend::{AmberVersion, Backend},
+    fs::MemoryFS,
 };
 use insta::assert_debug_snapshot;
 use tower_lsp::{lsp_types::Url, LspService};
@@ -260,9 +261,13 @@ fn test_import_specific_symbols() {
 
     let src_file = "/src.ab";
     let main_file = "/main.ab";
-    vfs.write(src_file, r#"pub fun foo(a, b) {
+    vfs.write(
+        src_file,
+        r#"pub fun foo(a, b) {
         return a + b
-    }"#).unwrap();
+    }"#,
+    )
+    .unwrap();
     vfs.write(
         main_file,
         r#"

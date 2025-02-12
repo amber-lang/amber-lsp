@@ -26,17 +26,13 @@ expression: "parse(&tokenize(\"import { var1 var2 from \\\"unclosed\"))"
                                     "var2",
                                     14..18,
                                 ),
-                                (
-                                    "from",
-                                    19..23,
-                                ),
                             ],
                         ),
-                        7..23,
+                        7..18,
                     ),
                     (
                         "from",
-                        24..23,
+                        19..23,
                     ),
                     (
                         "unclosed",
@@ -49,9 +45,7 @@ expression: "parse(&tokenize(\"import { var1 var2 from \\\"unclosed\"))"
     ),
     [
         found "var2" at 14..18 expected '","',
-        found "from" at 19..23 expected '","',
-        found "\"" at 24..25 expected '","', or '"}"',
-        found "\"" at 24..25 expected something else,
+        found "from" at 19..23 expected '","', or '"}"',
         found end of input at 33..33 expected '"\""',
     ],
 )

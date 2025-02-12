@@ -163,37 +163,53 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                                         ),
                                                         (
                                                             Error,
-                                                            164..165,
+                                                            164..163,
                                                         ),
                                                     ),
-                                                    150..165,
+                                                    150..163,
                                                 ),
                                             ),
-                                            150..165,
+                                            150..163,
                                         ),
                                         (
-                                            Expression(
+                                            Block(
                                                 (
-                                                    Var(
-                                                        (
-                                                            "file",
-                                                            165..169,
-                                                        ),
+                                                    Block(
+                                                        [
+                                                            (
+                                                                Expression(
+                                                                    (
+                                                                        Var(
+                                                                            (
+                                                                                "file",
+                                                                                165..169,
+                                                                            ),
+                                                                        ),
+                                                                        165..169,
+                                                                    ),
+                                                                ),
+                                                                165..169,
+                                                            ),
+                                                        ],
                                                     ),
-                                                    165..169,
+                                                    164..170,
                                                 ),
                                             ),
-                                            165..169,
+                                            164..170,
+                                        ),
+                                        (
+                                            Error,
+                                            170..171,
                                         ),
                                     ],
                                 ),
-                                123..170,
+                                123..181,
                             ),
                         ),
-                        123..170,
+                        123..181,
                     ),
                 ),
-                123..170,
+                123..181,
             ),
             (
                 FunctionDefinition(
@@ -474,7 +490,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
         found end of input at 106..107 expected something else,
         found end of input at 112..113 expected something else,
         found end of input at 144..149 expected something else,
-        multiple errors found at 164..165,
+        found "{" at 164..165 expected "expression",
         found end of input at 170..171 expected something else,
     ],
 )

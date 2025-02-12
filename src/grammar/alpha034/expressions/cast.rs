@@ -26,4 +26,5 @@ pub fn cast_parser<'a>(
             },
         )
         .boxed()
+        .labelled("expression")
 }

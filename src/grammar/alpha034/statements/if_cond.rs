@@ -2,8 +2,8 @@ use chumsky::prelude::*;
 
 use crate::{
     grammar::alpha034::{
-        expressions::parse_expr, lexer::Token, AmberParser, ElseCondition, IfChainContent,
-        IfCondition, Spanned, Statement,
+        expressions::parse_expr, lexer::Token, parser::default_recovery, AmberParser,
+        ElseCondition, IfChainContent, IfCondition, Spanned, Statement,
     },
     T,
 };
@@ -21,9 +21,13 @@ fn else_cond_parser<'a>(
     let else_inline = just(T!["else"])
         .map_with(|_, e| ("else".to_string(), e.span()))
         .then_ignore(just(T![":"]))
-        .then(stmnts.clone().recover_with(via_parser(
-            any().or_not().map_with(|_, e| (Statement::Error, e.span())),
-        )))
+        .then(
+            stmnts.clone().recover_with(via_parser(
+                default_recovery()
+                    .or_not()
+                    .map_with(|_, e| (Statement::Error, e.span())),
+            )),
+        )
         .map_with(|(else_keyword, body), e| {
             (
                 ElseCondition::InlineElse(else_keyword, Box::new(body)),
@@ -39,9 +43,13 @@ fn cond_parser<'a>(
 ) -> impl AmberParser<'a, Spanned<IfCondition>> {
     let inline_if = parse_expr(stmnts.clone())
         .then_ignore(just(T![":"]).boxed())
-        .then(stmnts.clone().recover_with(via_parser(
-            any().or_not().map_with(|_, e| (Statement::Error, e.span())),
-        )))
+        .then(
+            stmnts.clone().recover_with(via_parser(
+                default_recovery()
+                    .or_not()
+                    .map_with(|_, e| (Statement::Error, e.span())),
+            )),
+        )
         .map_with(|(condition, body), e| {
             (
                 IfCondition::InlineIfCondition(Box::new(condition), Box::new(body)),
@@ -81,13 +89,15 @@ pub fn if_chain_parser<'a>(
         .then(
             cond_parser(stmnts.clone())
                 .recover_with(via_parser(
-                    none_of([T!["}"], T!["else"]]).map_with(|_, e| (IfCondition::Error, e.span())),
+                    default_recovery().map_with(|_, e| (IfCondition::Error, e.span())),
                 ))
                 .repeated()
                 .collect::<Vec<Spanned<IfCondition>>>(),
         )
         .then(else_cond_parser(stmnts).or_not())
-        .then_ignore(just(T!["}"]).recover_with(via_parser(any().or_not().map(|_| T!["}"]))))
+        .then_ignore(
+            just(T!["}"]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
+        )
         .map_with(|((if_keyword, if_conds), else_cond), e| {
             let mut if_chain: Vec<Spanned<IfChainContent>> = if_conds
                 .into_iter()

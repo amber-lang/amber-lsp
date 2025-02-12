@@ -94,7 +94,7 @@ impl DataType {
             DataType::Generic(file_id, id) => {
                 generics_map.get(*file_id, *id).to_string(generics_map)
             }
-            DataType::Error => "".to_string(),
+            DataType::Error => "<Invalid type>".to_string(),
         }
     }
 }

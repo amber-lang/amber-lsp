@@ -1,7 +1,9 @@
 use chumsky::prelude::*;
 
 use crate::{
-    grammar::alpha034::{lexer::Token, AmberParser, FailureHandler, Spanned, Statement},
+    grammar::alpha034::{
+        lexer::Token, parser::default_recovery, AmberParser, FailureHandler, Spanned, Statement,
+    },
     T,
 };
 
@@ -10,16 +12,20 @@ pub fn failure_parser<'a>(
 ) -> impl AmberParser<'a, Spanned<FailureHandler>> {
     let handle_parser = just(T!["failed"])
         .map_with(|t, e| (t.to_string(), e.span()))
-        .then_ignore(just(T!["{"]).recover_with(via_parser(any().or_not().map(|_| T!["{"]))))
+        .then_ignore(
+            just(T!["{"]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["{"]))),
+        )
         .then(
             stmnts
                 .recover_with(via_parser(
-                    none_of([T!["}"]]).map_with(|_, e| (Statement::Error, e.span())),
+                    default_recovery().map_with(|_, e| (Statement::Error, e.span())),
                 ))
                 .repeated()
                 .collect(),
         )
-        .then_ignore(just(T!["}"]).recover_with(via_parser(any().or_not().map(|_| T!["}"]))))
+        .then_ignore(
+            just(T!["}"]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
+        )
         .map(|(failed_keyword, block)| FailureHandler::Handle(failed_keyword, block))
         .boxed();
 

@@ -2,8 +2,10 @@ use chumsky::prelude::*;
 
 use crate::{
     grammar::alpha034::{
-        expressions::parse_expr, lexer::Token, parser::ident, AmberParser, Expression, Spanned,
-        Statement,
+        expressions::parse_expr,
+        lexer::Token,
+        parser::{default_recovery, ident},
+        AmberParser, Expression, Spanned, Statement,
     },
     T,
 };
@@ -16,7 +18,7 @@ pub fn var_set_parser<'a>(
         .then_ignore(just(T!["="]))
         .then(
             parse_expr(stmnts).recover_with(via_parser(
-                any()
+                default_recovery()
                     .or_not()
                     .map_with(|_, e| (Expression::Error, e.span())),
             )),

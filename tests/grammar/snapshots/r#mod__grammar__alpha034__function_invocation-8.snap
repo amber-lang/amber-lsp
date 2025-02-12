@@ -34,27 +34,46 @@ expression: "parse(&tokenize(\"func(1 2 let\"))"
                                             ),
                                             7..8,
                                         ),
-                                        (
-                                            Error,
-                                            9..12,
-                                        ),
                                     ],
                                     None,
                                 ),
-                                0..12,
+                                0..8,
                             ),
                         ),
-                        0..12,
+                        0..8,
                     ),
                 ),
-                0..12,
+                0..8,
+            ),
+            (
+                Statement(
+                    (
+                        VariableInit(
+                            (
+                                "let",
+                                9..12,
+                            ),
+                            (
+                                "",
+                                12..12,
+                            ),
+                            (
+                                Error,
+                                12..12,
+                            ),
+                        ),
+                        9..12,
+                    ),
+                ),
+                9..12,
             ),
         ],
     ),
     [
         found "2" at 7..8 expected '"."', '";"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '","',
-        found "let" at 9..12 expected '"."', '";"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '","',
-        found "let" at 9..12 expected "expression",
-        found end of input at 12..12 expected '","', or '")"',
+        found "let" at 9..12 expected '"."', '";"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '","', or '")"',
+        found end of input at 9..12 expected something else,
+        found end of input at 12..12 expected '"="',
+        found end of input at 12..12 expected "expression",
     ],
 )

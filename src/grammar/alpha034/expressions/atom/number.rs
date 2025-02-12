@@ -30,4 +30,5 @@ pub fn number_parser<'a>() -> impl AmberParser<'a, Spanned<Expression>> {
         .unwrapped()
         .map_with(|num, e| (Expression::Number((num, e.span())), e.span()))
         .boxed()
+        .labelled("number")
 }

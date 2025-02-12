@@ -26,4 +26,5 @@ pub fn is_parser<'a>(
             },
         )
         .boxed()
+        .labelled("expression")
 }

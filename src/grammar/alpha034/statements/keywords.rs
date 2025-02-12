@@ -2,7 +2,8 @@ use chumsky::prelude::*;
 
 use crate::{
     grammar::alpha034::{
-        expressions::parse_expr, lexer::Token, AmberParser, Expression, Spanned, Statement,
+        expressions::parse_expr, lexer::Token, parser::default_recovery, AmberParser, Expression,
+        Spanned, Statement,
     },
     T,
 };
@@ -32,7 +33,7 @@ pub fn keywords_parser<'a>(
             .map_with(|_, e| ("echo".to_string(), e.span()))
             .then(
                 parse_expr(stmnts).recover_with(via_parser(
-                    any()
+                    default_recovery()
                         .or_not()
                         .map_with(|_, e| (Expression::Error, e.span())),
                 )),

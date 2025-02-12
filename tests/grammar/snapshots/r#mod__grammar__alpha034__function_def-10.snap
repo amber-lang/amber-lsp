@@ -27,7 +27,7 @@ expression: "parse(&tokenize(\"fun foo(abc:  {\n        echo 10\n    }\"))"
                                     8..11,
                                 ),
                                 (
-                                    Error,
+                                    <Invalid type>,
                                     14..12,
                                 ),
                             ),

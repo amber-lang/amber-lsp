@@ -27,7 +27,7 @@ expression: "parse(&tokenize(\"fun foo(abc: !WrongType {\n        echo 10\n    }
                                     8..11,
                                 ),
                                 (
-                                    Error,
+                                    <Invalid type>,
                                     13..14,
                                 ),
                             ),

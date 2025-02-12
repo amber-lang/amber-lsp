@@ -1,7 +1,9 @@
 use chumsky::prelude::*;
 
 use crate::{
-    grammar::alpha034::{lexer::Token, AmberParser, Expression, Spanned, Statement},
+    grammar::alpha034::{
+        lexer::Token, parser::default_recovery, AmberParser, Expression, Spanned, Statement,
+    },
     T,
 };
 
@@ -20,7 +22,7 @@ pub fn product_parser<'a>(
             ))
             .then(
                 is_parser(stmnts, expr).recover_with(via_parser(
-                    any()
+                    default_recovery()
                         .or_not()
                         .map_with(|_, e| (Expression::Error, e.span())),
                 )),
@@ -33,4 +35,5 @@ pub fn product_parser<'a>(
             },
         )
         .boxed()
+        .labelled("expression")
 }

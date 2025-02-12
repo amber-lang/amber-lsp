@@ -2,8 +2,10 @@ use chumsky::prelude::*;
 
 use crate::{
     grammar::alpha034::{
-        expressions::parse_expr, lexer::Token, parser::ident, AmberParser, Block, Expression,
-        IterLoopVars, Spanned, Statement,
+        expressions::parse_expr,
+        lexer::Token,
+        parser::{default_recovery, ident},
+        AmberParser, Block, Expression, IterLoopVars, Spanned, Statement,
     },
     T,
 };
@@ -32,7 +34,9 @@ pub fn iter_loop_parser<'a>(
         .then_ignore(just(T![","]))
         .then(
             ident("variable".to_string())
-                .recover_with(via_parser(any().or_not().map(|_| "".to_string())))
+                .recover_with(via_parser(
+                    default_recovery().or_not().map(|_| "".to_string()),
+                ))
                 .map_with(|txt, e| (txt, e.span())),
         )
         .map_with(|(var, index), e| (IterLoopVars::WithIndex(var, index), e.span()));
@@ -41,7 +45,7 @@ pub fn iter_loop_parser<'a>(
         .map_with(|_, e| ("loop".to_string(), e.span()))
         .then(
             choice((with_index_var, single_var)).recover_with(via_parser(
-                none_of([T!["in"]]).map_with(|_, e| (IterLoopVars::Error, e.span())),
+                default_recovery().map_with(|_, e| (IterLoopVars::Error, e.span())),
             )),
         )
         .then(
@@ -51,14 +55,18 @@ pub fn iter_loop_parser<'a>(
         )
         .then(
             parse_expr(stmnts.clone()).recover_with(via_parser(
-                any()
+                default_recovery()
                     .or_not()
                     .map_with(|_, e| (Expression::Error, e.span())),
             )),
         )
-        .then(block_parser(stmnts).recover_with(via_parser(
-            any().or_not().map_with(|_, e| (Block::Error, e.span())),
-        )))
+        .then(
+            block_parser(stmnts).recover_with(via_parser(
+                default_recovery()
+                    .or_not()
+                    .map_with(|_, e| (Block::Error, e.span())),
+            )),
+        )
         .map_with(|((((loop_keyword, vars), in_keyword), expr), body), e| {
             (
                 Statement::IterLoop(loop_keyword, vars, in_keyword, Box::new(expr), body),

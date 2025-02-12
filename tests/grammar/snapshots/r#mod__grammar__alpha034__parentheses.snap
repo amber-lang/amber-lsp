@@ -13,7 +13,7 @@ expression: "parse(&tokenize(\"()\"))"
                                 Parentheses(
                                     (
                                         Error,
-                                        1..2,
+                                        1..1,
                                     ),
                                 ),
                                 0..2,
@@ -28,6 +28,5 @@ expression: "parse(&tokenize(\"()\"))"
     ),
     [
         found ")" at 1..2 expected "expression",
-        found end of input at 2..2 expected '")"',
     ],
 )

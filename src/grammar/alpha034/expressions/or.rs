@@ -1,7 +1,7 @@
 use chumsky::prelude::*;
 
 use crate::{
-    grammar::alpha034::{lexer::Token, AmberParser, Spanned, Statement},
+    grammar::alpha034::{lexer::Token, parser::default_recovery, AmberParser, Spanned, Statement},
     T,
 };
 
@@ -17,7 +17,7 @@ pub fn or_parser<'a>(
                 .map_with(|t, e| (t.to_string(), e.span()))
                 .then(
                     and_parser(stmnts, expr).recover_with(via_parser(
-                        any()
+                        default_recovery()
                             .or_not()
                             .map_with(|_, e| (Expression::Error, e.span())),
                     )),
@@ -26,8 +26,12 @@ pub fn or_parser<'a>(
             |lhs, (or_keyword, rhs)| {
                 let span = SimpleSpan::new(lhs.1.start, rhs.1.end);
 
-                (Expression::Or(Box::new(lhs), or_keyword, Box::new(rhs)), span)
+                (
+                    Expression::Or(Box::new(lhs), or_keyword, Box::new(rhs)),
+                    span,
+                )
             },
         )
         .boxed()
+        .labelled("expression")
 }

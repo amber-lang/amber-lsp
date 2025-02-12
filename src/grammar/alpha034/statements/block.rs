@@ -1,7 +1,9 @@
 use chumsky::prelude::*;
 
 use crate::{
-    grammar::alpha034::{lexer::Token, AmberParser, Block, Spanned, Statement},
+    grammar::alpha034::{
+        lexer::Token, parser::default_recovery, AmberParser, Block, Spanned, Statement,
+    },
     T,
 };
 
@@ -10,13 +12,13 @@ pub fn block_parser<'a>(
 ) -> impl AmberParser<'a, Spanned<Block>> {
     stmnts
         .recover_with(via_parser(
-            none_of([T!['}']]).map_with(|_, e| (Statement::Error, e.span())),
+            default_recovery().map_with(|_, e| (Statement::Error, e.span())),
         ))
         .repeated()
         .collect()
         .delimited_by(
             just(T!['{']),
-            just(T!['}']).recover_with(via_parser(any().or_not().map(|_| T!['}']))),
+            just(T!['}']).recover_with(via_parser(default_recovery().or_not().map(|_| T!['}']))),
         )
         .map_with(move |body, e| (Block::Block(body), e.span()))
         .boxed()

@@ -1,5 +1,7 @@
 use crate::{
-    grammar::alpha034::{lexer::Token, AmberParser, Expression, InterpolatedText, Spanned},
+    grammar::alpha034::{
+        lexer::Token, parser::default_recovery, AmberParser, Expression, InterpolatedText, Spanned,
+    },
     T,
 };
 use chumsky::prelude::*;
@@ -14,14 +16,14 @@ pub fn text_parser<'a>(
 
     let interpolated = expr
         .recover_with(via_parser(
-            any()
+            default_recovery()
                 .or_not()
                 .map_with(|_, e| (Expression::Error, e.span())),
         ))
         .delimited_by(
             just(T!['{']),
             just(T!['}']).recover_with(via_parser(
-                none_of(T!["}"])
+                default_recovery()
                     .repeated()
                     .then(just(T!['}']))
                     .or_not()
@@ -44,7 +46,10 @@ pub fn text_parser<'a>(
             .repeated()
             .collect(),
         )
-        .then_ignore(just(T!['"']).recover_with(via_parser(any().or_not().map(|_| T!['"']))))
+        .then_ignore(
+            just(T!['"']).recover_with(via_parser(default_recovery().or_not().map(|_| T!['"']))),
+        )
         .map_with(|expr, e| (Expression::Text(expr), e.span()))
         .boxed()
+        .labelled("text")
 }
