@@ -4,9 +4,9 @@ use indexmap::IndexSet;
 use tower_lsp::lsp_types::Url;
 
 #[derive(Copy, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FileId(usize);
+pub struct FileId(pub usize);
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct PathInterner {
     map: Arc<Mutex<IndexSet<Url>>>,
 }

@@ -25,7 +25,7 @@ expression: "parse_unwrap(&tokenize(\"\n        fun func(a: Num, b: Text, c: Boo
                             18..19,
                         ),
                         (
-                            "Num",
+                            Num,
                             21..24,
                         ),
                     ),
@@ -38,7 +38,7 @@ expression: "parse_unwrap(&tokenize(\"\n        fun func(a: Num, b: Text, c: Boo
                             26..27,
                         ),
                         (
-                            "Text",
+                            Text,
                             29..33,
                         ),
                     ),
@@ -51,7 +51,7 @@ expression: "parse_unwrap(&tokenize(\"\n        fun func(a: Num, b: Text, c: Boo
                             35..36,
                         ),
                         (
-                            "Bool",
+                            Bool,
                             38..42,
                         ),
                     ),
@@ -60,7 +60,7 @@ expression: "parse_unwrap(&tokenize(\"\n        fun func(a: Num, b: Text, c: Boo
             ],
             Some(
                 (
-                    "Num",
+                    Num,
                     45..48,
                 ),
             ),

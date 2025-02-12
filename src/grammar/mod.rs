@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use alpha034::GlobalStatement;
 use chumsky::{error::Rich, span::SimpleSpan};
 
@@ -40,7 +42,7 @@ pub struct ParserResponse<'a> {
     pub semantic_tokens: Vec<SpannedSemanticToken>,
 }
 
-pub trait LSPAnalysis: Sync + Send {
+pub trait LSPAnalysis: Sync + Send + Debug {
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>>;
     fn parse<'a>(&self, input: &'a Vec<Spanned<Token>>) -> ParserResponse<'a>;
 }

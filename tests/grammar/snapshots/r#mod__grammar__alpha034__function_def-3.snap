@@ -1,6 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse_unwrap(\"fun func(a : Num) {}\")"
+expression: "parse_unwrap(&tokenize(\"fun func(a : Num) {}\"))"
 ---
 [
     (
@@ -25,7 +25,7 @@ expression: "parse_unwrap(\"fun func(a : Num) {}\")"
                             9..10,
                         ),
                         (
-                            "Num",
+                            Num,
                             13..16,
                         ),
                     ),

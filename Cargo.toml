@@ -2,7 +2,6 @@
 name = "amber-lsp"
 version = "0.1.0"
 edition = "2021"
-# build = "build.rs"
 
 [dependencies]
 tokio = { version = "1.39.1", features = ["full"] }
@@ -14,11 +13,14 @@ chumsky = { git = "https://github.com/KrosFire/chumsky", rev = "406ea80", featur
   "default",
   "label",
 ] }
-heraclitus-compiler = "1.8.1"
+heraclitus-compiler = "1.8.2"
 serde_json = "1.0.128"
 rangemap = "1.5.1"
 indexmap = "2.6.0"
 clap = { version = "4.5.21", features = ["derive"] }
+include_dir = "0.7.4"
+tracing = "0.1"
+tracing-subscriber = "0.3"
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["yaml"] }

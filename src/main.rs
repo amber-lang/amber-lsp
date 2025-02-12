@@ -1,8 +1,13 @@
-use std::{os::unix::process::ExitStatusExt, process::{Command, Stdio}};
+use std::{
+    os::unix::process::ExitStatusExt,
+    process::{Command, Stdio},
+};
 
 use amber_lsp::backend::{AmberVersion, Backend};
 use clap::Parser;
 use tower_lsp::{LspService, Server};
+use tracing::subscriber;
+use tracing_subscriber::fmt::format::FmtSpan;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -14,6 +19,30 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
+    // construct a subscriber that prints formatted traces to stdout
+    let subscriber = tracing_subscriber::fmt()
+        // Use a more compact, abbreviated log format
+        .compact()
+        // Display source code file paths
+        .with_file(true)
+        // Display source code line numbers
+        .with_line_number(true)
+        // Don't display the thread ID an event was recorded on
+        .with_thread_ids(false)
+        // Don't display the event's target (module path)
+        .with_target(false)
+        // Log when entering and exiting spans
+        .with_span_events(FmtSpan::ENTER | FmtSpan::CLOSE)
+        // Log to stderr
+        .with_writer(std::io::stderr)
+        // Disabled ANSI color codes for better compatibility with some terminals
+        .with_ansi(false)
+        // Build the subscriber
+        .finish();
+    
+    // use that subscriber to process traces emitted after this point
+    subscriber::set_global_default(subscriber).expect("Could not set global default subscriber");
+
     let args = Args::parse();
 
     let stdin = tokio::io::stdin();
@@ -29,6 +58,7 @@ async fn main() {
     Server::new(stdin, stdout, socket).serve(service).await;
 }
 
+#[tracing::instrument]
 fn detect_amber_version() -> AmberVersion {
     let output = String::from_utf8_lossy(
         Command::new("amber")

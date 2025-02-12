@@ -55,11 +55,7 @@ pub fn command_parser<'a>(
             choice((
                 any()
                     .filter(|c: &Token| {
-                        *c != T!["$"]
-                            && *c != T!["{"]
-                            && *c != T!["}"]
-                            && *c != T!["\\"]
-                            && *c != T!["-"]
+                        *c != T!["$"] && *c != T!["{"] && *c != T!["\\"] && *c != T!["-"]
                     })
                     .map(|text| InterpolatedCommand::Text(text.to_string())),
                 escape,

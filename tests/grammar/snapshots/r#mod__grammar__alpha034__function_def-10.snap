@@ -21,17 +21,17 @@ expression: "parse(&tokenize(\"fun foo(abc:  {\n        echo 10\n    }\"))"
                     ),
                     [
                         (
-                            Generic(
+                            Typed(
                                 (
                                     "abc",
                                     8..11,
                                 ),
+                                (
+                                    Error,
+                                    14..12,
+                                ),
                             ),
-                            8..11,
-                        ),
-                        (
-                            Error,
-                            11..12,
+                            8..12,
                         ),
                     ],
                     None,
@@ -61,8 +61,7 @@ expression: "parse(&tokenize(\"fun foo(abc:  {\n        echo 10\n    }\"))"
         ],
     ),
     [
-        multiple errors found at 14..15,
-        multiple errors found at 11..12,
-        found "{" at 14..15 expected '","', or '")"',
+        found "{" at 14..15 expected '"Text"', '"Num"', '"Bool"', '"Null"', or '"["',
+        found "{" at 14..15 expected something else,
     ],
 )

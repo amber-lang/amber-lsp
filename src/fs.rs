@@ -1,10 +1,12 @@
-use std::{collections::HashMap, fs, io::Result, sync::{Arc, Mutex}};
+use std::{collections::HashMap, fmt::Debug, fs, io::Result, sync::{Arc, Mutex}};
 
-pub trait FS: Sync + Send {
+pub trait FS: Sync + Send + Debug {
     fn read(&self, path: &str) -> Result<String>;
     fn write(&self, path: &str, content: &str) -> Result<()>;
+    fn exists(&self, path: &str) -> bool;
 }
 
+#[derive(Debug)]
 pub struct MemoryFS {
     files: Arc<Mutex<HashMap<String, String>>>,
 }
@@ -29,8 +31,14 @@ impl FS for MemoryFS {
 
         Ok(())
     }
+
+    fn exists(&self, path: &str) -> bool {
+        let files = self.files.lock().unwrap();
+        files.contains_key(path)
+    }
 }
 
+#[derive(Debug)]
 pub struct LocalFs {}
 
 impl LocalFs {
@@ -46,5 +54,9 @@ impl FS for LocalFs {
 
     fn write(&self, path: &str, content: &str) -> Result<()> {
         fs::write(path, content)
+    }
+
+    fn exists(&self, path: &str) -> bool {
+        fs::metadata(path).is_ok()
     }
 }

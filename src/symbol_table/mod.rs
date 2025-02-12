@@ -1,49 +1,33 @@
-use dashmap::DashMap;
 use rangemap::RangeInclusiveMap;
-use std::{ops::RangeInclusive, path::PathBuf};
+use std::{collections::HashMap, ops::RangeInclusive};
+use types::GenericsMap;
 
-use crate::{backend::Backend, paths::FileId};
+use crate::{backend::Backend, grammar::alpha034::DataType, paths::FileId};
 
 pub mod alpha034;
+pub mod types;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum DataType {
-    Any,
-    Number,
-    Boolean,
-    Text,
-    Null,
-    Array(Box<DataType>),
+pub struct FunctionSymbol {
+    pub arguments: Vec<(String, DataType)>,
+    pub is_public: bool,
 }
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct VarSymbol {}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SymbolType {
-    Function,
-    Variable,
+    Function(FunctionSymbol),
+    Variable(VarSymbol),
 }
 
 /// Information about a symbol in the document.
-///
-/// The `name` field contains the name of the symbol.
-///
-/// The `symbol_type` field contains the type of the symbol.
-///
-/// The `data_type` field contains the data type of the symbol.
-///
-/// The `arguments` field contains the arguments of the symbol if it is a function.
-///
-/// The `is_public` field is true if the symbol is public.
-///
-/// The `is_definition` field is true if the symbol is a definition.
-///
-/// The `undefined` field is true if the symbol is undefined.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SymbolInfo {
     pub name: String,
     pub symbol_type: SymbolType,
     pub data_type: DataType,
-    pub arguments: Option<Vec<(String, DataType)>>,
-    pub is_public: bool,
     pub is_definition: bool,
     pub undefined: bool,
 }
@@ -65,71 +49,44 @@ pub struct SymbolLocation {
 /// The `references` map contains the references to each symbol.
 ///
 /// The `symbols` Lapper contains the information about symbols in the document.
+#[derive(Clone, Debug)]
 pub struct SymbolTable {
     pub symbols: RangeInclusiveMap<usize, SymbolInfo>,
-    pub definitions: DashMap<String, RangeInclusiveMap<usize, SymbolLocation>>,
-    pub references: DashMap<String, Vec<SymbolLocation>>,
+    pub definitions: HashMap<String, RangeInclusiveMap<usize, SymbolLocation>>,
+    pub references: HashMap<String, Vec<SymbolLocation>>,
 }
 
 impl Default for SymbolTable {
     fn default() -> Self {
         Self {
             symbols: RangeInclusiveMap::new(),
-            definitions: DashMap::new(),
-            references: DashMap::new(),
+            definitions: HashMap::new(),
+            references: HashMap::new(),
         }
     }
 }
 
-pub fn map_type(data_type: &str) -> DataType {
-    match data_type {
-        "Text" => DataType::Text,
-        "Num" => DataType::Number,
-        "Bool" => DataType::Boolean,
-        "Null" => DataType::Null,
-        _ => {
-            if data_type.starts_with("[") && data_type.ends_with("]") {
-                let inner_ty = data_type[1..data_type.len() - 1].to_string();
-
-                return match inner_ty.as_str() {
-                    "Text" => DataType::Array(Box::new(DataType::Text)),
-                    "Num" => DataType::Array(Box::new(DataType::Number)),
-                    "Bool" => DataType::Array(Box::new(DataType::Boolean)),
-                    "Null" => DataType::Array(Box::new(DataType::Null)),
-                    _ => DataType::Array(Box::new(DataType::Any)),
-                };
-            }
-
-            DataType::Any
-        }
-    }
-}
-
-#[inline]
-#[cfg(target_os = "linux")]
-pub fn get_install_dir() -> PathBuf {
-    PathBuf::from("/etc/amber_lsp")
-}
-
-#[inline]
-#[cfg(target_os = "windows")]
-pub fn get_install_dir() -> PathBuf {
-    PathBuf::from("C:\\Program Files\\amber_lsp")
-}
-
-#[inline]
-#[cfg(target_os = "macos")]
-pub fn get_install_dir() -> PathBuf {
-    PathBuf::from("/usr/local/etc/amber_lsp")
-}
-
+#[tracing::instrument]
 pub fn insert_symbol_definition(
     symbol_table: &mut SymbolTable,
     symbol: &str,
     definition_scope: RangeInclusive<usize>,
     definition_location: &SymbolLocation,
+    data_type: DataType,
+    symbol_type: SymbolType,
 ) {
-    let mut symbol_definitions = match symbol_table.definitions.get_mut(symbol) {
+    symbol_table.symbols.insert(
+        definition_location.start..=definition_location.end,
+        SymbolInfo {
+            name: symbol.to_string(),
+            symbol_type,
+            data_type,
+            is_definition: true,
+            undefined: false,
+        },
+    );
+
+    let symbol_definitions = match symbol_table.definitions.get_mut(symbol) {
         Some(symbol_definitions) => symbol_definitions,
         None => {
             symbol_table
@@ -143,60 +100,87 @@ pub fn insert_symbol_definition(
     symbol_definitions.insert(definition_scope, definition_location.clone());
 }
 
+#[tracing::instrument]
 pub fn insert_symbol_reference(
     symbol: &str,
-    current_file_symbol_table: &mut SymbolTable,
     backend: &Backend,
     reference_location: &SymbolLocation,
+    scoped_generics: &GenericsMap,
 ) {
     let span = reference_location.start..=reference_location.end;
 
-    let symbol_definition = match current_file_symbol_table.definitions.get(symbol) {
-        Some(symbol_definitions) => symbol_definitions.get(&span.start()).cloned(),
-        None => None,
-    };
+    let symbol_info = get_symbol_definition_info(
+        backend,
+        symbol,
+        &reference_location.file,
+        reference_location.start,
+    );
 
-    match symbol_definition {
-        Some(definition) => {
-            let symbol_info = if definition.file == reference_location.file {
-                current_file_symbol_table
-                    .symbols
-                    .get(&definition.start)
-                    .cloned()
-                    .unwrap()
-            } else {
-                let definition_file_symbol_table =
-                    backend.symbol_table.get_mut(&definition.file).unwrap();
+    match symbol_info {
+        Some(symbol_info) => {
+            let mut current_file_symbol_table = backend
+                .symbol_table
+                .get_mut(&reference_location.file)
+                .unwrap();
 
-                definition_file_symbol_table
-                    .symbols
-                    .get(&definition.start)
-                    .cloned()
-                    .unwrap()
+            // If generic is already inferred, use the inferred type
+            // if not, use generic as a pointer to the inferred type in the map
+            let data_type = match symbol_info.data_type {
+                DataType::Generic(file_id, id) if scoped_generics.is_inferred((file_id, id)) => {
+                    scoped_generics.get_recursive(file_id, id)
+                }
+                DataType::Union(types) => DataType::Union(
+                    types
+                        .iter()
+                        .map(|ty| scoped_generics.deref_type(ty))
+                        .collect(),
+                ),
+                ty => ty,
+            };
+
+            let symbol_type = match symbol_info.symbol_type {
+                SymbolType::Function(FunctionSymbol {
+                    arguments,
+                    is_public,
+                }) => SymbolType::Function(FunctionSymbol {
+                    arguments: arguments
+                        .iter()
+                        .map(|(name, ty)| (name.clone(), scoped_generics.deref_type(ty)))
+                        .collect(),
+                    is_public,
+                }),
+                symbol => symbol,
             };
 
             current_file_symbol_table.symbols.insert(
                 span.clone(),
                 SymbolInfo {
                     name: symbol.to_string(),
-                    symbol_type: symbol_info.symbol_type.clone(),
-                    data_type: symbol_info.data_type.clone(),
-                    arguments: symbol_info.arguments.clone(),
-                    is_public: symbol_info.is_public,
+                    symbol_type,
+                    data_type,
                     is_definition: false,
                     undefined: false,
                 },
             );
         }
         None => {
+            backend.report_error(
+                &reference_location.file,
+                &format!("\"{}\" is not defined", symbol),
+                (reference_location.start..reference_location.end).into(),
+            );
+
+            let mut current_file_symbol_table = backend
+                .symbol_table
+                .get_mut(&reference_location.file)
+                .unwrap();
+
             current_file_symbol_table.symbols.insert(
                 span.clone(),
                 SymbolInfo {
                     name: symbol.to_string(),
-                    symbol_type: SymbolType::Variable,
-                    data_type: DataType::Any,
-                    arguments: None,
-                    is_public: false,
+                    symbol_type: SymbolType::Variable(VarSymbol {}),
+                    data_type: DataType::Null,
                     is_definition: false,
                     undefined: true,
                 },
@@ -204,7 +188,12 @@ pub fn insert_symbol_reference(
         }
     }
 
-    let mut symbol_references = match current_file_symbol_table.references.get_mut(symbol) {
+    let mut current_file_symbol_table = backend
+        .symbol_table
+        .get_mut(&reference_location.file)
+        .unwrap();
+
+    let symbol_references = match current_file_symbol_table.references.get_mut(symbol) {
         Some(symbol_references) => symbol_references,
         None => {
             current_file_symbol_table
@@ -219,4 +208,41 @@ pub fn insert_symbol_reference(
     };
 
     symbol_references.push(reference_location.clone());
+}
+
+pub fn get_symbol_definition_info(
+    backend: &Backend,
+    symbol: &str,
+    file_id: &FileId,
+    position: usize,
+) -> Option<SymbolInfo> {
+    let current_file_symbol_table = match backend.symbol_table.get(&file_id) {
+        Some(symbol_table) => symbol_table,
+        None => return None,
+    };
+
+    let symbol_definition = match current_file_symbol_table.definitions.get(symbol) {
+        Some(symbol_definitions) => symbol_definitions.get(&position).cloned(),
+        None => return None,
+    };
+
+    match symbol_definition {
+        Some(definition) => {
+            if definition.file == *file_id {
+                current_file_symbol_table
+                    .symbols
+                    .get(&definition.start)
+                    .cloned()
+            } else {
+                let definition_file_symbol_table =
+                    backend.symbol_table.get_mut(&definition.file).unwrap();
+
+                definition_file_symbol_table
+                    .symbols
+                    .get(&definition.start)
+                    .cloned()
+            }
+        }
+        None => None,
+    }
 }

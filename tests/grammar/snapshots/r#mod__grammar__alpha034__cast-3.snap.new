@@ -1,5 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
+assertion_line: 294
 expression: "parse(&tokenize(\"1 as \"))"
 ---
 (
@@ -25,7 +26,7 @@ expression: "parse(&tokenize(\"1 as \"))"
                                         2..4,
                                     ),
                                     (
-                                        Error,
+                                        ,
                                         4..4,
                                     ),
                                 ),

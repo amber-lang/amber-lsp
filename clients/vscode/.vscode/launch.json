@@ -18,6 +18,7 @@
           "script": "watch"
         },
         "env": {
+          // "SERVER_PATH": "${workspaceRoot}/../../target/release/amber-lsp"
           "SERVER_PATH": "${workspaceRoot}/../../target/debug/amber-lsp"
         }
       },

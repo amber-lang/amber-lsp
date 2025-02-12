@@ -5,12 +5,13 @@ expression: symbol_table.symbols.get(&11)
 Some(
     SymbolInfo {
         name: "foo",
-        symbol_type: Function,
-        data_type: Null,
-        arguments: Some(
-            [],
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [],
+                is_public: true,
+            },
         ),
-        is_public: true,
+        data_type: Null,
         is_definition: true,
         undefined: false,
     },

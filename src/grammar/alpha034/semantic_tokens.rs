@@ -592,13 +592,14 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
 
             tokens
         }
-        Expression::Is((_, is_span), lhs, (_, ty_span)) => {
-            let mut tokens = vec![(
-                hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                is_span.clone(),
-            )];
+        Expression::Is(lhs, (_, is_span), (_, ty_span)) => {
+            let mut tokens = vec![];
 
             tokens.extend(semantic_tokens_from_expr(lhs));
+            tokens.push((
+                hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                is_span.clone(),
+            ));
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::TYPE),
                 ty_span.clone(),

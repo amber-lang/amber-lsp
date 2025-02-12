@@ -3,8 +3,8 @@ use chumsky::prelude::*;
 use crate::T;
 
 use super::{
-    lexer::Token, parser::ident, statements::statement_parser, AmberParser, FunctionArgument,
-    GlobalStatement, ImportContent, Spanned, Statement,
+    lexer::Token, parser::ident, statements::statement_parser, AmberParser, DataType,
+    FunctionArgument, GlobalStatement, ImportContent, Spanned, Statement,
 };
 
 pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
@@ -85,16 +85,23 @@ pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .boxed()
 }
 
-fn type_parser<'a>() -> impl AmberParser<'a, Spanned<String>> {
-    just(T![':'])
-        .ignore_then(
-            ident("type".to_string())
-                .or(just(T!["["])
-                    .ignore_then(ident("type".to_string()))
-                    .then_ignore(just(T!["]"]))
-                    .map(|ty| format!("[{}]", ty)))
-                .map_with(|name, e| (name, e.span())),
-        )
+pub fn type_parser<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
+    let literal_type = choice((
+        just(T!["Text"]).to(DataType::Text),
+        just(T!["Num"]).to(DataType::Number),
+        just(T!["Bool"]).to(DataType::Boolean),
+        just(T!["Null"]).to(DataType::Null),
+    ))
+    .boxed();
+
+    literal_type
+        .clone()
+        .or(just(T!["["])
+            .ignore_then(literal_type)
+            .then_ignore(just(T!["]"]))
+            .map(|ty| DataType::Array(Box::new(ty))))
+        .recover_with(via_parser(none_of([T![")"], T!["{"], T!["}"]]).or_not().map(|_| DataType::Error)))
+        .map_with(|ty, e| (ty, e.span()))
         .boxed()
 }
 
@@ -105,7 +112,7 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
 
     let typed_arg_parser = ident("argument".to_string())
         .map_with(|name, e| (name, e.span()))
-        .then(type_parser())
+        .then(just(T![":"]).ignore_then(type_parser()))
         .map_with(|(name, ty), e| (FunctionArgument::Typed(name, ty), e.span()))
         .boxed();
 
@@ -127,7 +134,8 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         )
         .boxed();
 
-    let ret_parser = type_parser()
+    let ret_parser = just(T![":"])
+        .ignore_then(type_parser())
         .or_not()
         .then(
             just(T!["{"])

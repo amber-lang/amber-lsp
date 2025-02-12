@@ -1,6 +1,20 @@
+use std::{
+    collections::HashSet,
+    fmt,
+    sync::atomic::{AtomicUsize, Ordering},
+};
+
+use crate::{paths::FileId, symbol_table::types::GenericsMap};
+
 pub use super::Spanned;
 use super::{Grammar, LSPAnalysis, ParserResponse, Span};
-use chumsky::{error::Rich, extra::Err, input::{Input, SpannedInput}, span::SimpleSpan, Parser};
+use chumsky::{
+    error::Rich,
+    extra::Err,
+    input::{Input, SpannedInput},
+    span::SimpleSpan,
+    Parser,
+};
 use heraclitus_compiler::prelude::*;
 use lexer::{get_rules, Token};
 use prelude::lexer::Lexer;
@@ -38,6 +52,57 @@ pub enum InterpolatedCommand {
     CommandOption(String),
     Expression(Box<Spanned<Expression>>),
     Text(String),
+}
+
+static GENERIC_TYPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+#[derive(PartialEq, Eq, Clone, Hash)]
+pub enum DataType {
+    Any,
+    Number,
+    Boolean,
+    Text,
+    Null,
+    Array(Box<DataType>),
+    Union(Vec<DataType>),
+    Generic(FileId, usize),
+    Error,
+}
+
+impl DataType {
+    pub fn new_generic_id() -> usize {
+        GENERIC_TYPE_COUNTER.fetch_add(1, Ordering::SeqCst)
+    }
+
+    pub fn to_string(&self, generics_map: &GenericsMap) -> String {
+        match self {
+            DataType::Any => "Any".to_string(),
+            DataType::Number => "Num".to_string(),
+            DataType::Boolean => "Bool".to_string(),
+            DataType::Text => "Text".to_string(),
+            DataType::Null => "Null".to_string(),
+            DataType::Array(t) => format!("[{}]", t.to_string(generics_map)),
+            DataType::Union(types) => {
+                let mut seen = HashSet::new();
+                types
+                    .iter()
+                    .map(|t| t.to_string(generics_map))
+                    .filter(|t| seen.insert(t.clone()))
+                    .collect::<Vec<String>>()
+                    .join(" | ")
+            }
+            DataType::Generic(file_id, id) => {
+                generics_map.get(*file_id, *id).to_string(generics_map)
+            }
+            DataType::Error => "".to_string(),
+        }
+    }
+}
+
+impl fmt::Debug for DataType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string(&GenericsMap::new()))
+    }
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -89,10 +154,10 @@ pub enum Expression {
     Array(Vec<Spanned<Expression>>),
     Range(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
     Null,
-    Cast(Box<Spanned<Expression>>, Spanned<String>, Spanned<String>),
+    Cast(Box<Spanned<Expression>>, Spanned<String>, Spanned<DataType>),
     Status,
     Nameof(Spanned<String>, Box<Spanned<Expression>>),
-    Is(Spanned<String>, Box<Spanned<Expression>>, Spanned<String>),
+    Is(Box<Spanned<Expression>>, Spanned<String>, Spanned<DataType>),
     Error,
 }
 
@@ -105,7 +170,7 @@ pub enum ImportContent {
 #[derive(PartialEq, Debug, Clone)]
 pub enum FunctionArgument {
     Generic(Spanned<String>),
-    Typed(Spanned<String>, Spanned<String>),
+    Typed(Spanned<String>, Spanned<DataType>),
     Error,
 }
 
@@ -196,13 +261,14 @@ pub enum GlobalStatement {
         Spanned<String>,
         Spanned<String>,
         Vec<Spanned<FunctionArgument>>,
-        Option<Spanned<String>>,
+        Option<Spanned<DataType>>,
         Vec<Spanned<Statement>>,
     ),
     Main(Spanned<String>, Vec<Spanned<Statement>>),
     Statement(Spanned<Statement>),
 }
 
+#[derive(Debug)]
 pub struct AmberCompiler {
     lexer: Lexer,
 }
@@ -220,11 +286,12 @@ impl AmberCompiler {
 }
 
 impl LSPAnalysis for AmberCompiler {
+    #[tracing::instrument]
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>> {
         // It should never fail
         self.lexer
             .tokenize(input)
-            .unwrap()
+            .expect("Failed to tokenize input")
             .iter()
             .filter_map(|t| {
                 if t.word == "\n" {
@@ -239,6 +306,7 @@ impl LSPAnalysis for AmberCompiler {
             .collect()
     }
 
+    #[tracing::instrument]
     fn parse<'a>(&self, tokens: &'a Vec<Spanned<Token>>) -> ParserResponse<'a> {
         let len = tokens.last().map(|t| t.1.end).unwrap_or(0);
         let parser_input = tokens.spanned(Span::new(len, len));

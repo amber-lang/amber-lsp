@@ -1,16 +1,20 @@
 use tower_lsp::lsp_types::Url;
 
-use super::get_install_dir;
+use crate::{backend::Backend, stdlib::resolve};
 
 pub mod exp;
 pub mod global;
 pub mod stmnts;
 
-pub fn map_import_path(uri: &Url, path: &str) -> Url {
+#[tracing::instrument]
+pub fn map_import_path(uri: &Url, path: &str, backend: &Backend) -> Url {
     if path == "std" {
-        let std_file = get_install_dir().join("resources/alpha034/std/main.ab");
-
-        return Url::from_file_path(std_file).unwrap();
+        match resolve(backend, "main") {
+            Some(path) => {
+                return path;
+            }
+            None => {}
+        }
     }
 
     let path = uri.to_file_path().unwrap().parent().unwrap().join(path);

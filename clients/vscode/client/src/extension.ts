@@ -17,15 +17,14 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
 	const version = workspace.getConfiguration('amber-lsp').get<string>('version', 'auto');
-	const traceOutputChannel = window.createOutputChannel("Amber Language Server trace");
 	const command = process.env.SERVER_PATH || "amber-lsp";
 	const run: Executable = {
 	  command,
 	  options: {
-		env: {
-		  ...process.env,
-		  RUST_LOG: "trace",
-		},
+			env: {
+				...process.env,
+				RUST_LOG: "debug",
+			},
 	  },
 	  args: ["--amber-version", version],
 	};
@@ -43,9 +42,7 @@ export function activate(context: ExtensionContext) {
 		// Notify the server about file changes to '.clientrc files contained in the workspace
 		fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
 	  },
-	  traceOutputChannel,
 	};
-  
 	
 	// Create the language client and start the client.
 	client = new LanguageClient("amber-lsp", "Amber language server", serverOptions, clientOptions);

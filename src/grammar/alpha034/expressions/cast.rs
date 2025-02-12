@@ -1,7 +1,9 @@
 use chumsky::prelude::*;
 
 use crate::{
-    grammar::alpha034::{lexer::Token, parser::ident, AmberParser, Expression, Spanned, Statement},
+    grammar::alpha034::{
+        global::type_parser, lexer::Token, AmberParser, Expression, Spanned, Statement,
+    },
     T,
 };
 
@@ -15,11 +17,7 @@ pub fn cast_parser<'a>(
         .foldl(
             just(T!["as"])
                 .map_with(|t, e| (t.to_string(), e.span()))
-                .then(
-                    ident("type".to_string())
-                        .recover_with(via_parser(any().or_not().map(|_| "".to_string())))
-                        .map_with(|txt, e| (txt, e.span())),
-                )
+                .then(type_parser())
                 .repeated(),
             |expr, (as_keyword, cast)| {
                 let span = SimpleSpan::new(expr.1.start, cast.1.end);

@@ -1,7 +1,5 @@
 use amber_lsp::{
-    backend::{AmberVersion, Backend},
-    fs::MemoryFS,
-    symbol_table::get_install_dir,
+    backend::{AmberVersion, Backend}, fs::MemoryFS, grammar::alpha034::DataType, paths::FileId, symbol_table::types::{matches_type, GenericsMap}
 };
 use insta::assert_debug_snapshot;
 use tower_lsp::{lsp_types::Url, LspService};
@@ -214,8 +212,8 @@ fn test_symbol_reference_in_expression() {
     let a_refs = symbol_table.references.get("a").unwrap();
     let b_refs = symbol_table.references.get("b").unwrap();
 
-    assert_debug_snapshot!(a_refs.value());
-    assert_debug_snapshot!(b_refs.value());
+    assert_debug_snapshot!(a_refs);
+    assert_debug_snapshot!(b_refs);
 }
 
 #[test]
@@ -262,7 +260,9 @@ fn test_import_specific_symbols() {
 
     let src_file = "/src.ab";
     let main_file = "/main.ab";
-    vfs.write(src_file, r#"pub fun foo() {}"#).unwrap();
+    vfs.write(src_file, r#"pub fun foo(a, b) {
+        return a + b
+    }"#).unwrap();
     vfs.write(
         main_file,
         r#"
@@ -287,9 +287,10 @@ fn test_import_specific_symbols() {
     let foo_refs = main_symbol_table.references.get("foo").unwrap();
 
     assert_debug_snapshot!(foo_def.get(&usize::MAX));
-    assert_debug_snapshot!(foo_refs.value());
+    assert_debug_snapshot!(foo_refs);
     assert_debug_snapshot!(foo_def1.get(&42));
 }
+
 #[test]
 fn test_import_all_symbols() {
     let (service, _) = LspService::new(|client| {
@@ -331,57 +332,6 @@ fn test_import_all_symbols() {
     let foo_refs = main_symbol_table.references.get("foo").unwrap();
 
     assert_debug_snapshot!(foo_def.get(&usize::MAX));
-    assert_debug_snapshot!(foo_refs.value());
+    assert_debug_snapshot!(foo_refs);
     assert_debug_snapshot!(foo_def1.get(&42));
-}
-
-#[test]
-fn test_std_import() {
-    let (service, _) = LspService::new(|client| {
-        Backend::new(
-            client,
-            AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
-        )
-    });
-
-    let backend = service.inner();
-
-    let vfs = &backend.fs;
-
-    vfs.write(
-        get_install_dir()
-            .join("resources/alpha034/std/main.ab")
-            .to_string_lossy()
-            .as_ref(),
-        r#"
-    pub fun input(prompt: Text): Text {
-        unsafe $printf "\${nameof prompt}"$
-        unsafe $read$
-        return "$REPLY"
-    }
-    "#,
-    )
-    .unwrap();
-    let main_file = "/main.ab";
-    vfs.write(
-        main_file,
-        r#"
-    import { input } from "std"
-
-    input()
-    "#,
-    )
-    .unwrap();
-
-    let main_uri = Url::from_file_path(main_file).unwrap();
-
-    let main_file_id = backend.open_document(&main_uri).unwrap();
-
-    let main_symbol_table = backend.symbol_table.get(&main_file_id).unwrap();
-    let input_refs = main_symbol_table.references.get("input").unwrap();
-    let input_defs = main_symbol_table.definitions.get("input").unwrap();
-
-    assert_debug_snapshot!(input_refs.value());
-    assert_debug_snapshot!(input_defs.get(&usize::MAX));
 }

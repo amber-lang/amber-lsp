@@ -25,7 +25,7 @@ expression: "parse_unwrap(&tokenize(\"1 as Num as Text\"))"
                                         2..4,
                                     ),
                                     (
-                                        "Num",
+                                        Num,
                                         5..8,
                                     ),
                                 ),
@@ -36,7 +36,7 @@ expression: "parse_unwrap(&tokenize(\"1 as Num as Text\"))"
                                 9..11,
                             ),
                             (
-                                "Text",
+                                Text,
                                 12..16,
                             ),
                         ),

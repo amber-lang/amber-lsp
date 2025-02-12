@@ -1,3 +1,4 @@
+use chumsky::span::SimpleSpan;
 use clap::builder::PossibleValue;
 use clap::ValueEnum;
 use dashmap::DashMap;
@@ -15,7 +16,8 @@ use crate::grammar::{
 };
 use crate::paths::{FileId, PathInterner};
 use crate::symbol_table::alpha034::global::analyze_global_stmnt;
-use crate::symbol_table::SymbolTable;
+use crate::symbol_table::types::GenericsMap;
+use crate::symbol_table::{FunctionSymbol, SymbolTable, SymbolType};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AmberVersion {
@@ -40,6 +42,7 @@ impl ValueEnum for AmberVersion {
     }
 }
 
+#[derive(Debug)]
 pub struct Backend {
     pub client: Client,
     pub paths: PathInterner,
@@ -54,9 +57,11 @@ pub struct Backend {
     pub semantic_token_map: DashMap<FileId, Vec<SpannedSemanticToken>>,
     /// A map from document URI to the symbol table.
     pub symbol_table: DashMap<FileId, SymbolTable>,
+    pub generic_types: GenericsMap,
     /// The LSP analysis implementation.
     pub lsp_analysis: Box<dyn LSPAnalysis>,
     pub token_types: Box<[SemanticTokenType]>,
+    pub amber_version: AmberVersion,
 }
 
 impl Backend {
@@ -80,8 +85,10 @@ impl Backend {
             document_map: DashMap::new(),
             semantic_token_map: DashMap::new(),
             symbol_table: DashMap::new(),
+            generic_types: GenericsMap::new(),
             lsp_analysis,
             token_types,
+            amber_version,
         }
     }
 
@@ -180,11 +187,10 @@ impl Backend {
         self.semantic_token_map.insert(*file_id, semantic_tokens);
 
         self.symbol_table.insert(*file_id, SymbolTable::default());
-        let mut symbol_table = self.symbol_table.get_mut(file_id).unwrap();
 
         match ast {
             Grammar::Alpha034(Some(ast)) => {
-                analyze_global_stmnt(file_id, &ast, &mut symbol_table, self);
+                analyze_global_stmnt(file_id, &ast, self);
             }
             _ => {}
         }
@@ -198,6 +204,15 @@ impl Backend {
         let first_char_of_line = rope.try_line_to_char(line).ok().unwrap_or(rope.len_chars());
         let column = offset - first_char_of_line;
         Some(Position::new(line as u32, column as u32))
+    }
+
+    pub fn report_error(&self, file_id: &FileId, msg: &str, span: SimpleSpan) {
+        let mut errors = match self.errors.get(file_id) {
+            Some(errors) => errors.clone(),
+            None => vec![],
+        };
+        errors.push((msg.to_string(), span));
+        self.errors.insert(*file_id, errors);
     }
 }
 
@@ -245,6 +260,7 @@ impl LanguageServer for Backend {
                 definition_provider: Some(OneOf::Left(true)),
                 references_provider: Some(OneOf::Left(true)),
                 rename_provider: Some(OneOf::Left(true)),
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -610,5 +626,78 @@ impl LanguageServer for Backend {
         }
 
         Ok(None)
+    }
+
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        let uri = params.text_document_position_params.text_document.uri;
+        let file_id = match self.paths.get(&uri) {
+            Some(file_id) => file_id,
+            None => return Ok(None),
+        };
+
+        let (rope, _) = match self.document_map.get(&file_id) {
+            Some(document) => document.clone(),
+            None => return Ok(None),
+        };
+
+        let position = params.text_document_position_params.position;
+        let char = rope
+            .try_line_to_char(position.line as usize)
+            .ok()
+            .unwrap_or(rope.len_chars());
+        let offset = char + position.character as usize;
+
+        let symbol_table = match self.symbol_table.get(&file_id) {
+            Some(symbol_table) => symbol_table,
+            None => return Ok(None),
+        };
+
+        let symbol_info = match symbol_table.symbols.get(&offset) {
+            Some(symbol) => symbol.clone(),
+            None => return Ok(None),
+        };
+
+        if symbol_info.undefined {
+            return Ok(None);
+        }
+
+        Ok(Some(Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: format!(
+                    "```ab\n{}{}: {}\n```",
+                    symbol_info.name,
+                    match symbol_info.symbol_type {
+                        SymbolType::Function(FunctionSymbol {
+                            arguments,
+                            is_public: _,
+                        }) => format!(
+                            "({})",
+                            arguments
+                                .iter()
+                                .map(|(name, ty)| format!(
+                                    "{}: {}",
+                                    name,
+                                    ty.to_string(&self.generic_types)
+                                ))
+                                .collect::<Vec<String>>()
+                                .join(", ")
+                        ),
+                        _ => "".to_string(),
+                    },
+                    symbol_info.data_type.to_string(&self.generic_types),
+                ),
+            }),
+            range: Some(Range {
+                start: Position {
+                    line: position.line,
+                    character: position.character,
+                },
+                end: Position {
+                    line: position.line,
+                    character: position.character,
+                },
+            }),
+        }))
     }
 }
