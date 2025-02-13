@@ -32,7 +32,7 @@ pub enum InterpolatedText {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Block {
-    Block(Vec<Spanned<Statement>>),
+    Block(Vec<Spanned<CommandModifier>>, Vec<Spanned<Statement>>),
     Error,
 }
 
@@ -133,11 +133,13 @@ pub enum Expression {
         Box<Spanned<Expression>>,
     ),
     FunctionInvocation(
+        Vec<Spanned<CommandModifier>>,
         Spanned<String>,
         Vec<Spanned<Expression>>,
         Option<Spanned<FailureHandler>>,
     ),
     Command(
+        Vec<Spanned<CommandModifier>>,
         Vec<Spanned<InterpolatedCommand>>,
         Option<Spanned<FailureHandler>>,
     ),
@@ -205,9 +207,17 @@ pub enum CompilerFlag {
 }
 
 #[derive(PartialEq, Debug, Clone)]
+pub enum VariableInitType {
+    Expression(Spanned<Expression>),
+    DataType(Spanned<DataType>),
+    Error,
+}
+
+
+#[derive(PartialEq, Debug, Clone)]
 pub enum Statement {
     Expression(Box<Spanned<Expression>>),
-    VariableInit(Spanned<String>, Spanned<String>, Box<Spanned<Expression>>),
+    VariableInit(Spanned<String>, Spanned<String>, Spanned<VariableInitType>),
     VariableSet(Spanned<String>, Box<Spanned<Expression>>),
     IfCondition(
         Spanned<String>,
@@ -233,7 +243,6 @@ pub enum Statement {
     Return(Spanned<String>, Option<Box<Spanned<Expression>>>),
     Fail(Spanned<String>, Option<Box<Spanned<Expression>>>),
     Echo(Spanned<String>, Box<Spanned<Expression>>),
-    CommandModifier(Spanned<CommandModifier>),
     Block(Spanned<Block>),
     Comment(String),
     Error,

@@ -4,10 +4,10 @@ use crate::T;
 
 use super::{lexer::Token, AmberParser};
 
-const KEYWORDS: [&str; 28] = [
+const KEYWORDS: &[&str] = &[
     "if", "else", "loop", "in", "return", "break", "continue", "true", "false", "null", "fun",
     "as", "is", "or", "and", "not", "nameof", "status", "fail", "echo", "let", "unsafe", "silent",
-    "main", "import", "from", "pub", "then",
+    "main", "import", "from", "pub", "then", "Text", "Num", "Bool", "Null",
 ];
 
 #[inline]
@@ -49,11 +49,7 @@ pub fn ident<'a>(ident_name: String) -> impl AmberParser<'a, String> {
 
 #[inline]
 pub fn default_recovery<'a>() -> impl AmberParser<'a, Token> {
-    let mut keyword_tokens = KEYWORDS
-        .map(|k| T![k])
-        .iter()
-        .cloned()
-        .collect::<Vec<Token>>();
+    let mut keyword_tokens = KEYWORDS.iter().map(|k| T![k]).collect::<Vec<Token>>();
 
     keyword_tokens.extend(vec![
         T!["{"],

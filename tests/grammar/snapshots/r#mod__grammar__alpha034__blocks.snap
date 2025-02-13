@@ -9,6 +9,7 @@ expression: "parse_unwrap(&tokenize(\"\n        {\n            echo 10\n        
                 Block(
                     (
                         Block(
+                            [],
                             [
                                 (
                                     Echo(
@@ -44,11 +45,13 @@ expression: "parse_unwrap(&tokenize(\"\n        {\n            echo 10\n        
                 Block(
                     (
                         Block(
+                            [],
                             [
                                 (
                                     Block(
                                         (
                                             Block(
+                                                [],
                                                 [
                                                     (
                                                         Echo(

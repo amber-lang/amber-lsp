@@ -1,50 +1,37 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse(\"unsafe silent {}\").unwrap()"
+expression: "parse_unwrap(&tokenize(\"unsafe silent foo()\"))"
 ---
 [
     (
         Statement(
             (
-                CommandModifier(
+                Expression(
                     (
-                        Unsafe,
-                        0..6,
-                    ),
-                ),
-                0..6,
-            ),
-        ),
-        0..6,
-    ),
-    (
-        Statement(
-            (
-                CommandModifier(
-                    (
-                        Silent,
-                        7..13,
-                    ),
-                ),
-                7..13,
-            ),
-        ),
-        7..13,
-    ),
-    (
-        Statement(
-            (
-                Block(
-                    (
-                        Block(
+                        FunctionInvocation(
+                            [
+                                (
+                                    Unsafe,
+                                    0..6,
+                                ),
+                                (
+                                    Silent,
+                                    7..13,
+                                ),
+                            ],
+                            (
+                                "foo",
+                                14..17,
+                            ),
                             [],
+                            None,
                         ),
-                        14..16,
+                        0..19,
                     ),
                 ),
-                14..16,
+                0..19,
             ),
         ),
-        14..16,
+        0..19,
     ),
 ]

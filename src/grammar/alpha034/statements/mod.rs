@@ -26,7 +26,6 @@ pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
             loops::inf_loop_parser(stmnt.clone()),
             loops::iter_loop_parser(stmnt.clone()),
             keywords::keywords_parser(stmnt.clone()),
-            modifiers::modifier_parser(),
             parse_expr(stmnt).map_with(|expr, e| (Statement::Expression(Box::new(expr)), e.span())),
         ))
         .boxed()

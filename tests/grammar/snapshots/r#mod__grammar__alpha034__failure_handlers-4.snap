@@ -9,6 +9,7 @@ expression: "parse_unwrap(&tokenize(\"foo() failed {}\"))"
                 Expression(
                     (
                         FunctionInvocation(
+                            [],
                             (
                                 "foo",
                                 0..3,

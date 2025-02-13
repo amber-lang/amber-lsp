@@ -1,15 +1,16 @@
 use chumsky::prelude::*;
 
 use crate::{
-    grammar::alpha034::{lexer::Token, AmberParser, CommandModifier, Spanned, Statement},
+    grammar::alpha034::{lexer::Token, AmberParser, CommandModifier, Spanned},
     T,
 };
 
-pub fn modifier_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
+pub fn modifier_parser<'a>() -> impl AmberParser<'a, Spanned<CommandModifier>> {
     choice((
-        just(T!["unsafe"]).map_with(|_, e| (CommandModifier::Unsafe, e.span())),
-        just(T!["silent"]).map_with(|_, e| (CommandModifier::Silent, e.span())),
+        just(T!["unsafe"]).to(CommandModifier::Unsafe),
+        just(T!["silent"]).to(CommandModifier::Silent),
     ))
-    .map_with(|modifier, e| (Statement::CommandModifier(modifier), e.span()))
+    .map_with(|modifier, e| (modifier, e.span()))
+    .labelled("modifier")
     .boxed()
 }

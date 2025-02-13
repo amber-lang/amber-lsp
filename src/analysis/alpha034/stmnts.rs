@@ -187,8 +187,14 @@ pub fn analyze_stmnt(
             );
             return analyze_block(file_id, block, backend, scoped_generic_types);
         }
-        Statement::VariableInit(_, (var_name, var_span), exp) => {
-            let exp_type = analyze_exp(file_id, exp, DataType::Any, backend, scoped_generic_types);
+        Statement::VariableInit(_, (var_name, var_span), (value, _)) => {
+            let var_type = match value {
+                VariableInitType::Expression(exp) => {
+                    analyze_exp(file_id, exp, DataType::Any, backend, scoped_generic_types)
+                }
+                VariableInitType::DataType((ty, _)) => ty.clone(),
+                _ => DataType::Error,
+            };
 
             let mut symbol_table = backend.symbol_table.get_mut(file_id).unwrap();
             insert_symbol_definition(
@@ -201,7 +207,7 @@ pub fn analyze_stmnt(
                     end: var_span.end,
                     is_public: false,
                 },
-                scoped_generic_types.deref_type(&exp_type),
+                scoped_generic_types.deref_type(&var_type),
                 SymbolType::Variable(VarSymbol {}),
             );
         }
@@ -453,8 +459,8 @@ pub fn analyze_block(
     backend: &Backend,
     scoped_generic_types: &GenericsMap,
 ) -> Option<DataType> {
-    let mut types = vec![];
-    if let Block::Block(stmnt) = block {
+    let mut types: Vec<DataType> = vec![];
+    if let Block::Block(_, stmnt) = block {
         for stmnt in stmnt.iter() {
             if let Some(ty) = analyze_stmnt(file_id, stmnt, backend, span.end, scoped_generic_types)
             {

@@ -1,0 +1,38 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"let a = [Text]\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        VariableInit(
+                            (
+                                "let",
+                                0..3,
+                            ),
+                            (
+                                "a",
+                                4..5,
+                            ),
+                            (
+                                DataType(
+                                    (
+                                        [Text],
+                                        8..14,
+                                    ),
+                                ),
+                                8..14,
+                            ),
+                        ),
+                        0..14,
+                    ),
+                ),
+                0..14,
+            ),
+        ],
+    ),
+    [],
+)

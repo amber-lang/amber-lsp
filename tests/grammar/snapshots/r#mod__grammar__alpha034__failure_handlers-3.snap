@@ -1,6 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse(\"foo()?\").unwrap()"
+expression: "parse_unwrap(&tokenize(\"foo()?\"))"
 ---
 [
     (
@@ -9,6 +9,7 @@ expression: "parse(\"foo()?\").unwrap()"
                 Expression(
                     (
                         FunctionInvocation(
+                            [],
                             (
                                 "foo",
                                 0..3,

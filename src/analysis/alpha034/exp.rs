@@ -1,15 +1,15 @@
 use crate::{
+    analysis::{
+        get_symbol_definition_info, insert_symbol_reference,
+        types::{make_union_type, matches_type, GenericsMap},
+        SymbolInfo, SymbolLocation, SymbolType, VarSymbol,
+    },
     backend::Backend,
     grammar::{
         alpha034::{DataType, Expression, InterpolatedCommand, InterpolatedText},
         Spanned,
     },
     paths::FileId,
-    analysis::{
-        get_symbol_definition_info, insert_symbol_reference,
-        types::{make_union_type, matches_type, GenericsMap},
-        SymbolInfo, SymbolLocation, SymbolType, VarSymbol,
-    },
 };
 
 use super::stmnts::analyze_failure_handler;
@@ -25,7 +25,7 @@ pub fn analyze_exp(
     let exp_span_inclusive = exp_span.start..=exp_span.end;
 
     let ty: DataType = match exp {
-        Expression::FunctionInvocation((name, name_span), args, failure) => {
+        Expression::FunctionInvocation(_, (name, name_span), args, failure) => {
             let return_type = {
                 let fun_symbol =
                     get_symbol_definition_info(backend, name, file_id, name_span.start);
@@ -202,7 +202,7 @@ pub fn analyze_exp(
 
             ty.clone()
         }
-        Expression::Command(inter_cmd, failure) => {
+        Expression::Command(_, inter_cmd, failure) => {
             inter_cmd.iter().for_each(|(inter_cmd, _)| match inter_cmd {
                 InterpolatedCommand::Expression(exp) => {
                     analyze_exp(file_id, &exp, DataType::Any, backend, scoped_generic_types);

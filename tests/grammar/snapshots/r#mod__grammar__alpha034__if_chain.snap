@@ -41,6 +41,7 @@ expression: "parse_unwrap(&tokenize(\"\n        if {\n            2 == 3 {\n    
                                         ),
                                         (
                                             Block(
+                                                [],
                                                 [
                                                     (
                                                         Echo(
@@ -117,6 +118,7 @@ expression: "parse_unwrap(&tokenize(\"\n        if {\n            2 == 3 {\n    
                                         ),
                                         (
                                             Block(
+                                                [],
                                                 [
                                                     (
                                                         Echo(

@@ -24,6 +24,7 @@ expression: "parse_unwrap(&tokenize(\"if true { echo 10 } else {}\"))"
                             ),
                             (
                                 Block(
+                                    [],
                                     [
                                         (
                                             Echo(
@@ -59,6 +60,7 @@ expression: "parse_unwrap(&tokenize(\"if true { echo 10 } else {}\"))"
                                 ),
                                 (
                                     Block(
+                                        [],
                                         [],
                                     ),
                                     25..27,

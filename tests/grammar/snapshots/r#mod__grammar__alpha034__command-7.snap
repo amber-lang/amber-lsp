@@ -11,6 +11,7 @@ expression: "parse(&tokenize(\"$command {unclosed interpolation$ let x = 10\"))"
                         Expression(
                             (
                                 Command(
+                                    [],
                                     [
                                         (
                                             Text(
@@ -62,9 +63,14 @@ expression: "parse(&tokenize(\"$command {unclosed interpolation$ let x = 10\"))"
                                 38..39,
                             ),
                             (
-                                Number(
+                                Expression(
                                     (
-                                        10.0,
+                                        Number(
+                                            (
+                                                10.0,
+                                                42..44,
+                                            ),
+                                        ),
                                         42..44,
                                     ),
                                 ),

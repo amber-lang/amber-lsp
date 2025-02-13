@@ -1,6 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse_unwrap(r#\"$echo \\\"Hello, world!\\\"$\"#)"
+expression: "parse_unwrap(&tokenize(r#\"$echo \\\"Hello, world!\\\"$\"#))"
 ---
 [
     (
@@ -9,6 +9,7 @@ expression: "parse_unwrap(r#\"$echo \\\"Hello, world!\\\"$\"#)"
                 Expression(
                     (
                         Command(
+                            [],
                             [
                                 (
                                     Text(

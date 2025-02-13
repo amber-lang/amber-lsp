@@ -11,6 +11,7 @@ expression: "parse(&tokenize(\"func(1 2 let\"))"
                         Expression(
                             (
                                 FunctionInvocation(
+                                    [],
                                     (
                                         "func",
                                         0..4,
@@ -74,6 +75,6 @@ expression: "parse(&tokenize(\"func(1 2 let\"))"
         found "let" at 9..12 expected '"."', '";"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '","', or '")"',
         found end of input at 9..12 expected something else,
         found end of input at 12..12 expected '"="',
-        found end of input at 12..12 expected "expression",
+        found end of input at 12..12 expected "type", or "expression",
     ],
 )

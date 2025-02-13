@@ -1,6 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse(\"func()\").unwrap()"
+expression: "parse_unwrap(&tokenize(\"func()\"))"
 ---
 [
     (
@@ -9,6 +9,7 @@ expression: "parse(\"func()\").unwrap()"
                 Expression(
                     (
                         FunctionInvocation(
+                            [],
                             (
                                 "func",
                                 0..4,

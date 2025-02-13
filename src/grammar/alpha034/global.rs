@@ -106,9 +106,6 @@ pub fn type_parser<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
             .ignore_then(literal_type)
             .then_ignore(just(T!["]"]))
             .map(|ty| DataType::Array(Box::new(ty))))
-        .recover_with(via_parser(
-            default_recovery().or_not().map(|_| DataType::Error),
-        ))
         .map_with(|ty, e| (ty, e.span()))
         .labelled("type")
         .boxed()
@@ -142,7 +139,15 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
 
     let typed_arg_parser = ident("argument".to_string())
         .map_with(|name, e| (name, e.span()))
-        .then(just(T![":"]).ignore_then(type_parser()))
+        .then(
+            just(T![":"]).ignore_then(
+                type_parser().recover_with(via_parser(
+                    default_recovery()
+                        .or_not()
+                        .map_with(|_, e| (DataType::Error, e.span())),
+                )),
+            ),
+        )
         .map_with(|(name, ty), e| (FunctionArgument::Typed(name, ty), e.span()))
         .boxed();
 
@@ -165,7 +170,13 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .boxed();
 
     let ret_parser = just(T![":"])
-        .ignore_then(type_parser())
+        .ignore_then(
+            type_parser().recover_with(via_parser(
+                default_recovery()
+                    .or_not()
+                    .map_with(|_, e| (DataType::Error, e.span())),
+            )),
+        )
         .or_not()
         .then(
             just(T!["{"])

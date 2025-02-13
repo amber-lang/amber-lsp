@@ -1,6 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse(\"$$?\").unwrap()"
+expression: "parse_unwrap(&tokenize(\"$$?\"))"
 ---
 [
     (
@@ -9,6 +9,7 @@ expression: "parse(\"$$?\").unwrap()"
                 Expression(
                     (
                         Command(
+                            [],
                             [],
                             Some(
                                 (

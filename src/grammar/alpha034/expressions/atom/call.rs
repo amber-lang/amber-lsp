@@ -2,7 +2,7 @@ use crate::{
     grammar::alpha034::{
         lexer::Token,
         parser::{default_recovery, ident},
-        statements::failed::failure_parser,
+        statements::{failed::failure_parser, modifiers::modifier_parser},
         AmberParser, Expression, Spanned, Statement,
     },
     T,
@@ -13,8 +13,10 @@ pub fn function_call_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,
     expr: impl AmberParser<'a, Spanned<Expression>>,
 ) -> impl AmberParser<'a, Spanned<Expression>> {
-    ident("function".to_string())
-        .map_with(|name, e| (name, e.span()))
+    modifier_parser()
+        .repeated()
+        .collect()
+        .then(ident("function".to_string()).map_with(|name, e| (name, e.span())))
         .then_ignore(just(T!["("]))
         .then(
             expr.recover_with(via_parser(
@@ -30,9 +32,9 @@ pub fn function_call_parser<'a>(
             just(T![")"]).recover_with(via_parser(default_recovery().or_not().map(|_| T![")"]))),
         )
         .then(failure_parser(stmnts).or_not())
-        .map_with(|((name, args), failure), e| {
+        .map_with(|(((modifier, name), args), failure), e| {
             (
-                Expression::FunctionInvocation(name, args, failure),
+                Expression::FunctionInvocation(modifier, name, args, failure),
                 e.span(),
             )
         })

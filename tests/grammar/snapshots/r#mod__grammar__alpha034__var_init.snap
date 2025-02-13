@@ -16,9 +16,14 @@ expression: "parse_unwrap(&tokenize(\"let a = 10\"))"
                         4..5,
                     ),
                     (
-                        Number(
+                        Expression(
                             (
-                                10.0,
+                                Number(
+                                    (
+                                        10.0,
+                                        8..10,
+                                    ),
+                                ),
                                 8..10,
                             ),
                         ),

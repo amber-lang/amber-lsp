@@ -10,6 +10,7 @@ expression: "parse_unwrap(&tokenize(\"$$ failed {}\"))"
                     (
                         Command(
                             [],
+                            [],
                             Some(
                                 (
                                     Handle(

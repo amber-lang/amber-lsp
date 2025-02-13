@@ -1,6 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse(\"$command --arg1 -v$\")"
+expression: "parse(&tokenize(\"$command --arg1 -v$\"))"
 ---
 (
     Some(
@@ -11,6 +11,7 @@ expression: "parse(\"$command --arg1 -v$\")"
                         Expression(
                             (
                                 Command(
+                                    [],
                                     [
                                         (
                                             Text(

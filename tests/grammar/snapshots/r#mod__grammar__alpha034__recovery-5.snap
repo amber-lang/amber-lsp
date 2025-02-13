@@ -80,25 +80,6 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                             (
                                 Var(
                                     (
-                                        "Text",
-                                        108..112,
-                                    ),
-                                ),
-                                108..112,
-                            ),
-                        ),
-                        108..112,
-                    ),
-                ),
-                108..112,
-            ),
-            (
-                Statement(
-                    (
-                        Expression(
-                            (
-                                Var(
-                                    (
                                         "CmdText",
                                         115..122,
                                     ),
@@ -117,6 +98,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                         Block(
                             (
                                 Block(
+                                    [],
                                     [
                                         (
                                             Return(
@@ -175,6 +157,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                             Block(
                                                 (
                                                     Block(
+                                                        [],
                                                         [
                                                             (
                                                                 Expression(
@@ -319,23 +302,15 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
             (
                 Statement(
                     (
-                        CommandModifier(
-                            (
-                                Unsafe,
-                                262..268,
-                            ),
-                        ),
-                        262..268,
-                    ),
-                ),
-                262..268,
-            ),
-            (
-                Statement(
-                    (
                         Block(
                             (
                                 Block(
+                                    [
+                                        (
+                                            Unsafe,
+                                            262..268,
+                                        ),
+                                    ],
                                     [
                                         (
                                             VariableInit(
@@ -348,13 +323,18 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                                     287..288,
                                                 ),
                                                 (
-                                                    Number(
+                                                    Expression(
                                                         (
-                                                            5.0,
+                                                            Number(
+                                                                (
+                                                                    5.0,
+                                                                    291..292,
+                                                                ),
+                                                            ),
                                                             291..292,
                                                         ),
                                                     ),
-                                                    291..292,
+                                                    291..293,
                                                 ),
                                             ),
                                             283..293,
@@ -413,6 +393,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                                                     ),
                                                                     (
                                                                         Block(
+                                                                            [],
                                                                             [
                                                                                 (
                                                                                     Echo(
@@ -476,20 +457,19 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                         ),
                                     ],
                                 ),
-                                269..450,
+                                262..450,
                             ),
                         ),
-                        269..450,
+                        262..450,
                     ),
                 ),
-                269..450,
+                262..450,
             ),
         ],
     ),
     [
         found end of input at 74..75 expected something else,
         found end of input at 106..107 expected something else,
-        found end of input at 112..113 expected something else,
         found end of input at 144..149 expected something else,
         found "{" at 164..165 expected "expression",
         found end of input at 170..171 expected something else,

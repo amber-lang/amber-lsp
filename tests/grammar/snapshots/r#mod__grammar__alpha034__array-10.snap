@@ -78,6 +78,6 @@ expression: "parse(&tokenize(\"[1, 2 3 let\"))"
         found "let" at 8..11 expected '"."', '";"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '","', or '"]"',
         found end of input at 8..11 expected something else,
         found end of input at 11..11 expected '"="',
-        found end of input at 11..11 expected "expression",
+        found end of input at 11..11 expected "type", or "expression",
     ],
 )

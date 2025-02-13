@@ -1,3 +1,5 @@
+use std::fs::read_to_string;
+
 use chumsky::error::Rich;
 use insta::assert_debug_snapshot;
 
@@ -448,6 +450,7 @@ fn test_var_init() {
     assert_debug_snapshot!(parse_unwrap(&tokenize("let a = 10")));
     assert_debug_snapshot!(parse_unwrap(&tokenize("let a = 10 + 2")));
     assert_debug_snapshot!(parse_unwrap(&tokenize("let a = 10 + 2 * 3")));
+    assert_debug_snapshot!(parse(&tokenize("let a = [Text]")));
 }
 
 #[test]
@@ -549,11 +552,10 @@ fn test_keywords() {
 
 #[test]
 fn test_modifiers() {
-    assert_debug_snapshot!(parse_unwrap(&tokenize("unsafe")));
-    assert_debug_snapshot!(parse_unwrap(&tokenize("silent")));
     assert_debug_snapshot!(parse_unwrap(&tokenize("silent unsafe {}")));
     assert_debug_snapshot!(parse_unwrap(&tokenize("unsafe silent {}")));
     assert_debug_snapshot!(parse_unwrap(&tokenize("unsafe silent $command$")));
+    assert_debug_snapshot!(parse_unwrap(&tokenize("unsafe silent foo()")));
 }
 
 #[test]
@@ -650,4 +652,11 @@ fn test_lexer() {
         abcd {let x = 10
     "#
     ));
+}
+
+#[test]
+fn test_stdlib() {
+    let stdlib = read_to_string("resources/alpha034/std/main.ab").unwrap();
+
+    assert_debug_snapshot!(parse(&tokenize(&stdlib)));
 }

@@ -46,9 +46,14 @@ expression: "parse(&tokenize(\"\n        1 +\n        let x = 10\n    \"))"
                                 25..26,
                             ),
                             (
-                                Number(
+                                Expression(
                                     (
-                                        10.0,
+                                        Number(
+                                            (
+                                                10.0,
+                                                29..31,
+                                            ),
+                                        ),
                                         29..31,
                                     ),
                                 ),

@@ -1,20 +1,32 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse(\"silent\").unwrap()"
+expression: "parse_unwrap(&tokenize(\"unsafe silent {}\"))"
 ---
 [
     (
         Statement(
             (
-                CommandModifier(
+                Block(
                     (
-                        Silent,
-                        0..6,
+                        Block(
+                            [
+                                (
+                                    Unsafe,
+                                    0..6,
+                                ),
+                                (
+                                    Silent,
+                                    7..13,
+                                ),
+                            ],
+                            [],
+                        ),
+                        0..16,
                     ),
                 ),
-                0..6,
+                0..16,
             ),
         ),
-        0..6,
+        0..16,
     ),
 ]

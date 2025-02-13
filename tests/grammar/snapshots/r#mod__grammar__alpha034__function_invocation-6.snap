@@ -11,6 +11,7 @@ expression: "parse(&tokenize(\"func(,)\"))"
                         Expression(
                             (
                                 FunctionInvocation(
+                                    [],
                                     (
                                         "func",
                                         0..4,

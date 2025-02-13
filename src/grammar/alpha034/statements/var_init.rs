@@ -3,9 +3,10 @@ use chumsky::prelude::*;
 use crate::{
     grammar::alpha034::{
         expressions::parse_expr,
+        global::type_parser,
         lexer::Token,
         parser::{default_recovery, ident},
-        AmberParser, Expression, Spanned, Statement,
+        AmberParser, Spanned, Statement, VariableInitType,
     },
     T,
 };
@@ -26,17 +27,17 @@ pub fn var_init_parser<'a>(
             just(T!["="]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["="]))),
         )
         .then(
-            parse_expr(stmnts).recover_with(via_parser(
-                default_recovery()
-                    .or_not()
-                    .map_with(|_, e| (Expression::Error, e.span())),
-            )),
+            choice((
+                type_parser().map(|ty| VariableInitType::DataType(ty)),
+                parse_expr(stmnts).map(|expr| VariableInitType::Expression(expr)),
+            ))
+            .recover_with(via_parser(
+                default_recovery().or_not().map(|_| VariableInitType::Error),
+            ))
+            .map_with(|val, e| (val, e.span())),
         )
         .map_with(|((let_keyword, name), value), e| {
-            (
-                Statement::VariableInit(let_keyword, name, Box::new(value)),
-                e.span(),
-            )
+            (Statement::VariableInit(let_keyword, name, value), e.span())
         })
         .boxed()
 }

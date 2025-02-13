@@ -73,6 +73,7 @@ expression: "parse_unwrap(&tokenize(\"true as Bool as Text as Num * 2 / foo()\")
                             ),
                             (
                                 FunctionInvocation(
+                                    [],
                                     (
                                         "foo",
                                         34..37,
