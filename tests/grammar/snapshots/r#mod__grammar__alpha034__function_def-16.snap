@@ -1,0 +1,39 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(r#\"\n    #[invalid]\n    pub fun func() {}\n    \"#))"
+---
+(
+    Some(
+        [
+            (
+                FunctionDefinition(
+                    [
+                        (
+                            Error,
+                            5..15,
+                        ),
+                    ],
+                    (
+                        true,
+                        20..23,
+                    ),
+                    (
+                        "fun",
+                        24..27,
+                    ),
+                    (
+                        "func",
+                        28..32,
+                    ),
+                    [],
+                    None,
+                    [],
+                ),
+                5..37,
+            ),
+        ],
+    ),
+    [
+        found "invalid" at 7..14 expected '"allow_nested_if_else"', '"allow_generic_return"', or '"allow_absurd_cast"',
+    ],
+)

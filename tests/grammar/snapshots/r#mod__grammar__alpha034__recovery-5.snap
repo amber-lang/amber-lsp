@@ -213,6 +213,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
             ),
             (
                 FunctionDefinition(
+                    [],
                     (
                         false,
                         191..181,

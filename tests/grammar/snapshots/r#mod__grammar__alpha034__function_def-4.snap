@@ -5,6 +5,7 @@ expression: "parse_unwrap(&tokenize(\"fun func(a: Num, b, c: Bool): Num {}\"))"
 [
     (
         FunctionDefinition(
+            [],
             (
                 false,
                 0..3,

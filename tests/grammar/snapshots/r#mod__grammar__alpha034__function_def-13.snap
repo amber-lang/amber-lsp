@@ -1,0 +1,32 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse_unwrap(&tokenize(r#\"\n    #[allow_absurd_cast]\n    pub fun func() {}\n    \"#))"
+---
+[
+    (
+        FunctionDefinition(
+            [
+                (
+                    AllowAbsurdCast,
+                    5..25,
+                ),
+            ],
+            (
+                true,
+                30..33,
+            ),
+            (
+                "fun",
+                34..37,
+            ),
+            (
+                "func",
+                38..42,
+            ),
+            [],
+            None,
+            [],
+        ),
+        5..47,
+    ),
+]

@@ -5,6 +5,7 @@ expression: "parse_unwrap(&tokenize(\"\n        fun func(a: Num, b: Text, c: Boo
 [
     (
         FunctionDefinition(
+            [],
             (
                 false,
                 9..12,

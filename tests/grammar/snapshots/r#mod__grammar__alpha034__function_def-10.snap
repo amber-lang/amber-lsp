@@ -7,6 +7,7 @@ expression: "parse(&tokenize(\"fun foo(abc:  {\n        echo 10\n    }\"))"
         [
             (
                 FunctionDefinition(
+                    [],
                     (
                         false,
                         0..3,

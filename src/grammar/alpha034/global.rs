@@ -6,7 +6,8 @@ use super::{
     lexer::Token,
     parser::{default_recovery, ident},
     statements::statement_parser,
-    AmberParser, DataType, FunctionArgument, GlobalStatement, ImportContent, Spanned, Statement,
+    AmberParser, CompilerFlag, DataType, FunctionArgument, GlobalStatement, ImportContent, Spanned,
+    Statement,
 };
 
 pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
@@ -105,8 +106,32 @@ pub fn type_parser<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
             .ignore_then(literal_type)
             .then_ignore(just(T!["]"]))
             .map(|ty| DataType::Array(Box::new(ty))))
-        .recover_with(via_parser(default_recovery().or_not().map(|_| DataType::Error)))
+        .recover_with(via_parser(
+            default_recovery().or_not().map(|_| DataType::Error),
+        ))
         .map_with(|ty, e| (ty, e.span()))
+        .labelled("type")
+        .boxed()
+}
+
+fn compiler_flag_parser<'a>() -> impl AmberParser<'a, Spanned<CompilerFlag>> {
+    just(T!["#"])
+        .ignore_then(just(T!["["]))
+        .ignore_then(
+            choice((
+                just(T!["allow_nested_if_else"]).to(CompilerFlag::AllowNestedIfElse),
+                just(T!["allow_generic_return"]).to(CompilerFlag::AllowGenericReturn),
+                just(T!["allow_absurd_cast"]).to(CompilerFlag::AllowAbsurdCast),
+            ))
+            .recover_with(via_parser(
+                default_recovery().or_not().map(|_| CompilerFlag::Error),
+            )),
+        )
+        .then_ignore(
+            just(T!["]"]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["]"]))),
+        )
+        .map_with(|flag, e| (flag, e.span()))
+        .labelled("compiler flag")
         .boxed()
 }
 
@@ -121,7 +146,9 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .map_with(|(name, ty), e| (FunctionArgument::Typed(name, ty), e.span()))
         .boxed();
 
-    let arg_parser = choice((typed_arg_parser, generic_arg_parser)).boxed();
+    let arg_parser = choice((typed_arg_parser, generic_arg_parser))
+        .labelled("argument")
+        .boxed();
 
     let args_parser = arg_parser
         .recover_with(via_parser(
@@ -151,29 +178,50 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
                         .collect(),
                 )
                 .then_ignore(
-                    just(T!["}"]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
+                    just(T!["}"])
+                        .recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
                 ),
         )
         .boxed();
 
-    just(T!["pub"])
-        .or_not()
-        .map_with(|is_pub, e| (is_pub.is_some(), e.span()))
+    compiler_flag_parser()
+        .repeated()
+        .collect()
+        .then(
+            just(T!["pub"])
+                .or_not()
+                .map_with(|is_pub, e| (is_pub.is_some(), e.span())),
+        )
         .then(just(T!["fun"]).map_with(|_, e| ("fun".to_string(), e.span())))
         .then(
             ident("function".to_string())
                 .map_err(|err| Rich::custom(err.span().clone(), "Expected function name"))
-                .recover_with(via_parser(default_recovery().or_not().map(|_| "".to_string())))
+                .recover_with(via_parser(
+                    default_recovery().or_not().map(|_| "".to_string()),
+                ))
                 .map_with(|name, e| (name, e.span())),
         )
         .then(args_parser.recover_with(via_parser(default_recovery().or_not().map(|_| vec![]))))
-        .then(ret_parser.recover_with(via_parser(default_recovery().or_not().map(|_| (None, vec![])))))
-        .map_with(|((((is_pub, fun), name), args), (ty, body)), e| {
-            (
-                GlobalStatement::FunctionDefinition(is_pub, fun, name, args, ty, body),
-                e.span(),
-            )
-        })
+        .then(ret_parser.recover_with(via_parser(
+            default_recovery().or_not().map(|_| (None, vec![])),
+        )))
+        .map_with(
+            |(((((compiler_flags, is_pub), fun), name), args), (ty, body)), e| {
+                (
+                    GlobalStatement::FunctionDefinition(
+                        compiler_flags,
+                        is_pub,
+                        fun,
+                        name,
+                        args,
+                        ty,
+                        body,
+                    ),
+                    e.span(),
+                )
+            },
+        )
+        .labelled("function")
         .boxed()
 }
 
@@ -198,7 +246,8 @@ pub fn main_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
                         .collect(),
                 )
                 .then_ignore(
-                    just(T!["}"]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
+                    just(T!["}"])
+                        .recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
                 ),
         )
         .map_with(|(main, body), e| (GlobalStatement::Main(main, body), e.span()))

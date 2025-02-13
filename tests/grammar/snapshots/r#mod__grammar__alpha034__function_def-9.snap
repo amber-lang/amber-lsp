@@ -7,6 +7,7 @@ expression: "parse(&tokenize(\"fun foo(abc! {\n        echo 10\n    }\"))"
         [
             (
                 FunctionDefinition(
+                    [],
                     (
                         false,
                         0..3,
@@ -62,7 +63,7 @@ expression: "parse(&tokenize(\"fun foo(abc! {\n        echo 10\n    }\"))"
     ),
     [
         found "!" at 11..12 expected '":"', or '","',
-        multiple errors found at 11..12,
+        found end of input at 11..12 expected "argument",
         found "{" at 13..14 expected '","', or '")"',
     ],
 )

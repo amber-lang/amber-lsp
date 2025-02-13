@@ -1,17 +1,14 @@
 use rangemap::RangeInclusiveMap;
 
 use crate::{
-    backend::Backend,
-    grammar::{
-        alpha034::{DataType, FunctionArgument, GlobalStatement, ImportContent},
-        Spanned,
-    },
-    paths::FileId,
     analysis::{
         insert_symbol_definition,
         types::{make_union_type, matches_type},
         FunctionSymbol, SymbolInfo, SymbolLocation, SymbolType, VarSymbol,
-    },
+    }, backend::Backend, grammar::{
+        alpha034::{CompilerFlag, DataType, FunctionArgument, GlobalStatement, ImportContent},
+        Spanned,
+    }, paths::FileId
 };
 
 use super::{map_import_path, stmnts::analyze_stmnt};
@@ -27,6 +24,7 @@ pub fn analyze_global_stmnt(
     for (global, span) in ast.iter() {
         match global {
             GlobalStatement::FunctionDefinition(
+                compiler_flags,
                 (is_pub, _),
                 _,
                 (name, name_span),
@@ -34,6 +32,17 @@ pub fn analyze_global_stmnt(
                 ty,
                 body,
             ) => {
+                compiler_flags.iter().for_each(|(flag, span)| {
+                    if let CompilerFlag::Error = *flag {
+                        backend.report_error(
+                            file_id,
+                            "Invalid compiler flag name. Choose one of: allow_nested_if_else, allow_generic_return, allow_absurd_cast",
+                            *span,
+                        );
+                    }
+                });
+
+
                 // We create scoped generics map, to not overwrite other generics, not defined here
                 let scoped_generics_map = backend.generic_types.clone();
 

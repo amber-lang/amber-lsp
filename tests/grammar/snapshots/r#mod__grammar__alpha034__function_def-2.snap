@@ -1,10 +1,11 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse_unwrap(\"fun func(a) {}\")"
+expression: "parse_unwrap(&tokenize(\"fun func(a) {}\"))"
 ---
 [
     (
         FunctionDefinition(
+            [],
             (
                 false,
                 0..3,

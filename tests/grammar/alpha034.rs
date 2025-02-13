@@ -406,6 +406,24 @@ fn test_function_def() {
         echo 10
     }"
     )));
+    assert_debug_snapshot!(parse_unwrap(&tokenize("pub fun func() {}")));
+    assert_debug_snapshot!(parse_unwrap(&tokenize(r#"
+    #[allow_absurd_cast]
+    pub fun func() {}
+    "#)));
+    assert_debug_snapshot!(parse_unwrap(&tokenize(r#"
+    #[allow_absurd_cast]
+    #[allow_generic_return]
+    pub fun func() {}
+    "#)));
+    assert_debug_snapshot!(parse(&tokenize(r#"
+    #[
+    pub fun func() {}
+    "#)));
+    assert_debug_snapshot!(parse(&tokenize(r#"
+    #[invalid]
+    pub fun func() {}
+    "#)));
 }
 
 #[test]

@@ -5,7 +5,7 @@ use crate::grammar::SpannedSemanticToken;
 
 use super::*;
 
-pub const LEGEND_TYPE: [SemanticTokenType; 10] = [
+pub const LEGEND_TYPE: [SemanticTokenType; 11] = [
     SemanticTokenType::FUNCTION,
     SemanticTokenType::VARIABLE,
     SemanticTokenType::STRING,
@@ -16,6 +16,7 @@ pub const LEGEND_TYPE: [SemanticTokenType; 10] = [
     SemanticTokenType::PARAMETER,
     SemanticTokenType::TYPE,
     SemanticTokenType::MODIFIER,
+    SemanticTokenType::DECORATOR,
 ];
 
 fn hash_semantic_token_type(token_type: SemanticTokenType) -> usize {
@@ -71,6 +72,7 @@ pub fn semantic_tokens_from_ast(
                     ));
                 }
                 GlobalStatement::FunctionDefinition(
+                    compiler_flags,
                     is_pub,
                     fun,
                     (_, name_span),
@@ -78,6 +80,13 @@ pub fn semantic_tokens_from_ast(
                     ty,
                     body,
                 ) => {
+                    compiler_flags.iter().for_each(|(_, span)| {
+                        tokens.push((
+                            hash_semantic_token_type(SemanticTokenType::DECORATOR),
+                            span.clone(),
+                        ));
+                    });
+
                     if is_pub.0 {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::MODIFIER),

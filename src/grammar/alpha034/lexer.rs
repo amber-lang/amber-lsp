@@ -50,6 +50,7 @@ pub fn get_rules() -> Rules {
         reg!(cc_flag as "compiler flag" => {
             begin: "#[",
             end: "]",
+            tokenize: true,
             allow_unclosed_region: true
         }),
         reg!(comment as "comment" => {

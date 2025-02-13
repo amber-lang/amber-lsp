@@ -7,6 +7,7 @@ expression: "parse(&tokenize(r#\"\n        fun foo(a) {\n\n            return \"
         [
             (
                 FunctionDefinition(
+                    [],
                     (
                         false,
                         9..12,

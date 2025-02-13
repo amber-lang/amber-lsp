@@ -420,6 +420,10 @@ impl LanguageServer for Backend {
         let data = semantic_tokens
             .iter()
             .filter_map(|(token, span)| {
+                if span.start > span.end {
+                    return None;
+                }
+
                 let length = span.end - span.start;
                 // Get the line number of the token
                 let line = rope.try_byte_to_line(span.start).ok()? as u32;
@@ -498,6 +502,10 @@ impl LanguageServer for Backend {
                         || (line == requested_range.end.line
                             && start <= requested_range.end.character)))
                 {
+                    return None;
+                }
+
+                if span.start > span.end {
                     return None;
                 }
 

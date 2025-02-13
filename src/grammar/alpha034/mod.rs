@@ -197,6 +197,14 @@ pub enum CommandModifier {
 }
 
 #[derive(PartialEq, Debug, Clone)]
+pub enum CompilerFlag {
+    AllowNestedIfElse,
+    AllowGenericReturn,
+    AllowAbsurdCast,
+    Error,
+}
+
+#[derive(PartialEq, Debug, Clone)]
 pub enum Statement {
     Expression(Box<Spanned<Expression>>),
     VariableInit(Spanned<String>, Spanned<String>, Box<Spanned<Expression>>),
@@ -247,6 +255,7 @@ pub enum GlobalStatement {
     ///
     /// is_public, "fun", name, args, return_type, body
     FunctionDefinition(
+        Vec<Spanned<CompilerFlag>>,
         Spanned<bool>,
         Spanned<String>,
         Spanned<String>,
