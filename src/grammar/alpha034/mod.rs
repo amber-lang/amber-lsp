@@ -1,10 +1,6 @@
-use std::{
-    collections::HashSet,
-    fmt,
-    sync::atomic::{AtomicUsize, Ordering},
-};
+use std::{collections::HashSet, fmt};
 
-use crate::{paths::FileId, symbol_table::types::GenericsMap};
+use crate::{analysis::types::GenericsMap, paths::FileId};
 
 pub use super::Spanned;
 use super::{Grammar, LSPAnalysis, ParserResponse, Span};
@@ -54,8 +50,6 @@ pub enum InterpolatedCommand {
     Text(String),
 }
 
-static GENERIC_TYPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
-
 #[derive(PartialEq, Eq, Clone, Hash)]
 pub enum DataType {
     Any,
@@ -70,10 +64,6 @@ pub enum DataType {
 }
 
 impl DataType {
-    pub fn new_generic_id() -> usize {
-        GENERIC_TYPE_COUNTER.fetch_add(1, Ordering::SeqCst)
-    }
-
     pub fn to_string(&self, generics_map: &GenericsMap) -> String {
         match self {
             DataType::Any => "Any".to_string(),

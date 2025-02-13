@@ -18,6 +18,10 @@ impl GenericsMap {
         }
     }
 
+    pub fn new_generic_id(&self) -> usize {
+        return self.map.len();
+    }
+
     pub fn constrain_generic_type(&self, key: (FileId, usize), constraint: DataType) {
         if self.has_ref_to_generic(&constraint, key.0, key.1) {
             return;
@@ -140,12 +144,19 @@ impl GenericsMap {
     }
 
     pub fn to_string(&self) -> String {
-        self.map
+        let mut collection = self.map
             .iter()
             .map(|entry| {
                 let (file_id, id) = entry.key();
-                format!("({:?}, {}): {}", file_id, id, entry.value().to_string(self))
+                (*id, format!("({:?}, {}): {}", file_id, id, entry.value().to_string(self)))
             })
+            .collect::<Vec<(usize, String)>>();
+
+        collection.sort_unstable_by_key(|(id, _)| *id);
+        
+        collection
+            .into_iter()
+            .map(|(_, s)| s)
             .collect::<Vec<String>>()
             .join("\n")
     }

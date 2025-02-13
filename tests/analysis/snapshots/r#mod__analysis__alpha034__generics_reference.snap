@@ -1,0 +1,5 @@
+---
+source: tests/analysis/alpha034.rs
+expression: backend.generic_types.to_string()
+---
+"(FileId(0), 0): Num | Text | [Num | Text]\n(FileId(0), 1): Num | Text | [Num | Text]"

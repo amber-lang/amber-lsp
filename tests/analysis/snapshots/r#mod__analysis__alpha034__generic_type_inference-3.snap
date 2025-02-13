@@ -1,0 +1,5 @@
+---
+source: tests/analysis/alpha034.rs
+expression: foo_symbol.data_type.to_string(&backend.generic_types)
+---
+"Any | Num | Text"

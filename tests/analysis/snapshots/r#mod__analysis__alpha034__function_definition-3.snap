@@ -1,0 +1,5 @@
+---
+source: tests/analysis/alpha034.rs
+expression: a_defs.get(&63)
+---
+None

@@ -41,14 +41,14 @@ pub struct SymbolLocation {
 }
 
 /// A symbol table that contains all the symbols in a document.
-/// The symbols are stored in a RangeMap data structure for fast
+/// Symbols are stored in a RangeMap data structure for fast
 /// range queries.
 ///
-/// The `definitions` map contains the definition of each symbol. RangeMap is used to store the scope of each symbol definition.
+/// `definitions` map contains definition of each symbol. RangeMap is used to store the scope of each symbol definition.
 ///
-/// The `references` map contains the references to each symbol.
+/// `references` map contains references to each symbol.
 ///
-/// The `symbols` Lapper contains the information about symbols in the document.
+/// `symbols` range map contains information about symbols in the document.
 #[derive(Clone, Debug)]
 pub struct SymbolTable {
     pub symbols: RangeInclusiveMap<usize, SymbolInfo>,

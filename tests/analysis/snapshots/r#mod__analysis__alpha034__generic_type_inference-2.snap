@@ -1,0 +1,18 @@
+---
+source: tests/analysis/alpha034.rs
+expression: "arguments.iter().map(|(name, ty)|\n(name.clone(), ty.to_string(&backend.generic_types))).collect::<Vec<_>>()"
+---
+[
+    (
+        "a",
+        "Text",
+    ),
+    (
+        "b",
+        "Bool",
+    ),
+    (
+        "c",
+        "Any",
+    ),
+]

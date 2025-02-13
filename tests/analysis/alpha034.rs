@@ -1,4 +1,5 @@
 use amber_lsp::{
+    analysis::{FunctionSymbol, SymbolType},
     backend::{AmberVersion, Backend},
     fs::MemoryFS,
 };
@@ -339,4 +340,113 @@ fn test_import_all_symbols() {
     assert_debug_snapshot!(foo_def.get(&usize::MAX));
     assert_debug_snapshot!(foo_refs);
     assert_debug_snapshot!(foo_def1.get(&42));
+}
+
+#[test]
+fn test_generic_type_inference() {
+    let (service, _) = LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha034,
+            Some(Box::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+
+    let vfs = &backend.fs;
+
+    let file = "/main.ab";
+    vfs.write(
+        file,
+        r#"
+    fun foo(a, b, c) {
+        if b == 10 {
+            return c
+        }
+
+        if b {
+            return 5
+        }
+
+        return a + "text"
+    }
+    "#,
+    )
+    .unwrap();
+
+    let file_uri = Url::from_file_path(file).unwrap();
+    let file_id = backend.open_document(&file_uri).unwrap();
+
+    let symbol_table = backend.symbol_table.get(&file_id).unwrap();
+    let foo_symbol = symbol_table.symbols.get(&10).unwrap();
+
+    assert_debug_snapshot!(backend.generic_types.to_string());
+    match &foo_symbol.symbol_type {
+        SymbolType::Function(FunctionSymbol {
+            arguments,
+            is_public: _,
+        }) => {
+            assert_debug_snapshot!(arguments
+                .iter()
+                .map(|(name, ty)| (name.clone(), ty.to_string(&backend.generic_types)))
+                .collect::<Vec<_>>());
+        }
+        _ => panic!("Expected function symbol"),
+    }
+    assert_debug_snapshot!(foo_symbol.data_type.to_string(&backend.generic_types));
+}
+
+#[test]
+fn test_generics_reference() {
+    let (service, _) = LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha034,
+            Some(Box::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+
+    let vfs = &backend.fs;
+
+    let file = "/main.ab";
+    vfs.write(
+        file,
+        r#"
+    fun foo(a, b) {
+        return a + b
+    }
+
+    foo(1, 2)
+    foo("a", "b")
+    foo(true, false)
+    foo(1, "test")
+    "#,
+    )
+    .unwrap();
+
+    let file_uri = Url::from_file_path(file).unwrap();
+    let file_id = backend.open_document(&file_uri).unwrap();
+
+    let symbol_table = backend.symbol_table.get(&file_id).unwrap();
+    let foo_symbol = symbol_table.symbols.get(&10).unwrap();
+
+    assert_debug_snapshot!(backend.generic_types.to_string());
+    match &foo_symbol.symbol_type {
+        SymbolType::Function(FunctionSymbol {
+            arguments,
+            is_public: _,
+        }) => {
+            assert_debug_snapshot!(arguments
+                .iter()
+                .map(|(name, ty)| (name.clone(), ty.to_string(&backend.generic_types)))
+                .collect::<Vec<_>>());
+        }
+        _ => panic!("Expected function symbol"),
+    }
+    assert_debug_snapshot!(foo_symbol.data_type.to_string(&backend.generic_types));
+
+    assert_debug_snapshot!(symbol_table.symbols);
 }

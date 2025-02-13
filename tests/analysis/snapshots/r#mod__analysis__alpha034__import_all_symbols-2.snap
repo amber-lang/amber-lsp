@@ -1,0 +1,14 @@
+---
+source: tests/analysis/alpha034.rs
+expression: foo_refs
+---
+[
+    SymbolLocation {
+        file: FileId(
+            1,
+        ),
+        start: 33,
+        end: 36,
+        is_public: false,
+    },
+]

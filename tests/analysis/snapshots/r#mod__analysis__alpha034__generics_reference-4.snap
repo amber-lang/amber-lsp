@@ -1,0 +1,147 @@
+---
+source: tests/analysis/alpha034.rs
+expression: symbol_table.symbols
+---
+{
+    9..=12: SymbolInfo {
+        name: "foo",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        "a",
+                        Any,
+                    ),
+                    (
+                        "b",
+                        Any,
+                    ),
+                ],
+                is_public: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+    },
+    13..=14: SymbolInfo {
+        name: "a",
+        symbol_type: Variable(
+            VarSymbol,
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+    },
+    16..=17: SymbolInfo {
+        name: "b",
+        symbol_type: Variable(
+            VarSymbol,
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+    },
+    36..=37: SymbolInfo {
+        name: "a",
+        symbol_type: Variable(
+            VarSymbol,
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+    },
+    40..=41: SymbolInfo {
+        name: "b",
+        symbol_type: Variable(
+            VarSymbol,
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+    },
+    53..=56: SymbolInfo {
+        name: "foo",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        "a",
+                        Num,
+                    ),
+                    (
+                        "b",
+                        Num,
+                    ),
+                ],
+                is_public: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+    },
+    67..=70: SymbolInfo {
+        name: "foo",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        "a",
+                        Text,
+                    ),
+                    (
+                        "b",
+                        Text,
+                    ),
+                ],
+                is_public: false,
+            },
+        ),
+        data_type: Text,
+        is_definition: false,
+        undefined: false,
+    },
+    85..=88: SymbolInfo {
+        name: "foo",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        "a",
+                        Num | Text | [Num | Text],
+                    ),
+                    (
+                        "b",
+                        Num | Text | [Num | Text],
+                    ),
+                ],
+                is_public: false,
+            },
+        ),
+        data_type: Num | Text | [Num | Text],
+        is_definition: false,
+        undefined: false,
+    },
+    106..=109: SymbolInfo {
+        name: "foo",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        "a",
+                        Num,
+                    ),
+                    (
+                        "b",
+                        Num,
+                    ),
+                ],
+                is_public: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+    },
+}

@@ -1,0 +1,5 @@
+---
+source: tests/analysis/alpha034.rs
+expression: backend.generic_types.to_string()
+---
+"(FileId(0), 0): Text\n(FileId(0), 1): Bool\n(FileId(0), 2): Any"

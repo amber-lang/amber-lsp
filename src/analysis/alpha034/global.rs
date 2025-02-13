@@ -7,7 +7,7 @@ use crate::{
         Spanned,
     },
     paths::FileId,
-    symbol_table::{
+    analysis::{
         insert_symbol_definition,
         types::{make_union_type, matches_type},
         FunctionSymbol, SymbolInfo, SymbolLocation, SymbolType, VarSymbol,
@@ -46,7 +46,7 @@ pub fn analyze_global_stmnt(
                 args.iter().for_each(|(arg, _)| {
                     let (name, ty, name_span) = match arg {
                         FunctionArgument::Generic((name, span)) => {
-                            let generic_id = DataType::new_generic_id();
+                            let generic_id = scoped_generics_map.new_generic_id();
                             scoped_generics_map.constrain_generic_type(
                                 (file_id.clone(), generic_id),
                                 DataType::Any,

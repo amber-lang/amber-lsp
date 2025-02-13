@@ -1,0 +1,27 @@
+---
+source: tests/analysis/alpha034.rs
+expression: symbol_table.symbols.get(&11)
+---
+Some(
+    SymbolInfo {
+        name: "foo",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        "a",
+                        Any,
+                    ),
+                    (
+                        "b",
+                        Any,
+                    ),
+                ],
+                is_public: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+    },
+)

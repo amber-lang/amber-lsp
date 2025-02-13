@@ -2,7 +2,7 @@ use crate::{
     backend::Backend,
     grammar::{alpha034::*, Spanned},
     paths::FileId,
-    symbol_table::{
+    analysis::{
         get_symbol_definition_info, insert_symbol_definition, insert_symbol_reference,
         types::{make_union_type, matches_type, GenericsMap},
         DataType, SymbolLocation, SymbolType, VarSymbol,

@@ -1,2 +1,2 @@
 pub mod grammar;
-pub mod symbol_table;
+pub mod analysis;

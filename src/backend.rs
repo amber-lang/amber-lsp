@@ -15,9 +15,9 @@ use crate::grammar::{
     Grammar, LSPAnalysis, ParserResponse, SpannedSemanticToken,
 };
 use crate::paths::{FileId, PathInterner};
-use crate::symbol_table::alpha034::global::analyze_global_stmnt;
-use crate::symbol_table::types::GenericsMap;
-use crate::symbol_table::{FunctionSymbol, SymbolTable, SymbolType};
+use crate::analysis::alpha034::global::analyze_global_stmnt;
+use crate::analysis::types::GenericsMap;
+use crate::analysis::{FunctionSymbol, SymbolTable, SymbolType};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AmberVersion {

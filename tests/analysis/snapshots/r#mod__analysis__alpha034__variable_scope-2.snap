@@ -1,0 +1,14 @@
+---
+source: tests/analysis/alpha034.rs
+expression: "a_defs.get(&usize::MAX)"
+---
+Some(
+    SymbolLocation {
+        file: FileId(
+            0,
+        ),
+        start: 9,
+        end: 10,
+        is_public: false,
+    },
+)
