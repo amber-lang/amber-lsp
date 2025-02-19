@@ -17,7 +17,7 @@ struct Args {
     amber_version: AmberVersion,
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     // construct a subscriber that prints formatted traces to stdout
     let subscriber = tracing_subscriber::fmt()
@@ -34,12 +34,14 @@ async fn main() {
         // Log when entering and exiting spans
         .with_span_events(FmtSpan::ENTER | FmtSpan::CLOSE)
         // Log to stderr
-        .with_writer(std::io::stderr)
+        // .with_writer(std::io::stderr)
+        // log to a file
+        .with_writer(std::fs::OpenOptions::new().create(true).append(true).open("amber-lsp.log").unwrap())
         // Disabled ANSI color codes for better compatibility with some terminals
         .with_ansi(false)
         // Build the subscriber
         .finish();
-    
+
     // use that subscriber to process traces emitted after this point
     subscriber::set_global_default(subscriber).expect("Could not set global default subscriber");
 
@@ -58,7 +60,7 @@ async fn main() {
     Server::new(stdin, stdout, socket).serve(service).await;
 }
 
-#[tracing::instrument]
+#[tracing::instrument(skip_all)]
 fn detect_amber_version() -> AmberVersion {
     let output = String::from_utf8_lossy(
         Command::new("amber")

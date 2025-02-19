@@ -31,22 +31,14 @@ pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .boxed();
 
     let path_parser = just(T!['"'])
-        .ignore_then(
+        .then(
             any()
                 .filter(|c| *c != T!['"'])
                 .repeated()
                 .collect::<Vec<Token>>()
-                .map_with(|name, e| {
-                    (
-                        name.iter().map(|t| t.to_string()).collect::<String>(),
-                        SimpleSpan::new(
-                            (e.span() as SimpleSpan).start - 1,
-                            (e.span() as SimpleSpan).end + 1,
-                        ),
-                    )
-                }),
+                .map(|name| name.iter().map(|t| t.to_string()).collect::<String>()),
         )
-        .then_ignore(
+        .then(
             just(T!['"']).recover_with(via_parser(
                 default_recovery()
                     .repeated()
@@ -55,6 +47,7 @@ pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
                     .map(|_| T!['"']),
             )),
         )
+        .map_with(|((_, path), _): ((Token, String), Token), e| (path, e.span()))
         .boxed();
 
     just(T!["pub"])

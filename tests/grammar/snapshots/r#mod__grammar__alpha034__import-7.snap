@@ -25,7 +25,7 @@ expression: "parse(&tokenize(\"import  \\\"unclosed\"))"
                     ),
                     (
                         "unclosed",
-                        8..18,
+                        8..17,
                     ),
                 ),
                 0..17,

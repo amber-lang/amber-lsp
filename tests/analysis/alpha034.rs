@@ -1,24 +1,27 @@
+use std::sync::Arc;
+
 use amber_lsp::{
     analysis::{FunctionSymbol, SymbolType},
     backend::{AmberVersion, Backend},
     fs::MemoryFS,
 };
 use insta::assert_debug_snapshot;
+use tokio::test;
 use tower_lsp::{lsp_types::Url, LspService};
 
 #[test]
-fn test_function_definition() {
+async fn test_function_definition() {
     let (service, _) = LspService::new(|client| {
         Backend::new(
             client,
             AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
+            Some(Arc::new(MemoryFS::new())),
         )
     });
 
     let backend = service.inner();
 
-    let vfs = &backend.fs;
+    let vfs = &backend.files.fs;
 
     let file = "/main.ab";
     vfs.write(
@@ -33,12 +36,13 @@ fn test_function_definition() {
     foo(1, 2)
     ",
     )
+    .await
     .unwrap();
 
     let uri = Url::from_file_path(file).unwrap();
-    let file_id = backend.open_document(&uri).unwrap();
+    let file_id = backend.open_document(&uri).await.unwrap();
 
-    let symbol_table = backend.symbol_table.get(&file_id).unwrap();
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
 
     let foo_defs = symbol_table.definitions.get("foo").unwrap();
     let a_defs = symbol_table.definitions.get("a").unwrap();
@@ -58,18 +62,18 @@ fn test_function_definition() {
 }
 
 #[test]
-fn test_variable_definition() {
+async fn test_variable_definition() {
     let (service, _) = LspService::new(|client| {
         Backend::new(
             client,
             AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
+            Some(Arc::new(MemoryFS::new())),
         )
     });
 
     let backend = service.inner();
 
-    let vfs = &backend.fs;
+    let vfs = &backend.files.fs;
 
     let file = "/main.ab";
     vfs.write(
@@ -82,12 +86,13 @@ fn test_variable_definition() {
     echo a
     ",
     )
+    .await
     .unwrap();
 
     let uri = Url::from_file_path(file).unwrap();
-    let file_id = backend.open_document(&uri).unwrap();
+    let file_id = backend.open_document(&uri).await.unwrap();
 
-    let symbol_table = backend.symbol_table.get(&file_id).unwrap();
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
 
     let a_defs = symbol_table.definitions.get("a").unwrap();
 
@@ -96,18 +101,18 @@ fn test_variable_definition() {
 }
 
 #[test]
-fn test_variable_scope() {
+async fn test_variable_scope() {
     let (service, _) = LspService::new(|client| {
         Backend::new(
             client,
             AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
+            Some(Arc::new(MemoryFS::new())),
         )
     });
 
     let backend = service.inner();
 
-    let vfs = &backend.fs;
+    let vfs = &backend.files.fs;
 
     let file = "/main.ab";
     vfs.write(
@@ -148,12 +153,13 @@ fn test_variable_scope() {
     }
     ",
     )
+    .await
     .unwrap();
 
     let uri = Url::from_file_path(file).unwrap();
-    let file_id = backend.open_document(&uri).unwrap();
+    let file_id = backend.open_document(&uri).await.unwrap();
 
-    let symbol_table = backend.symbol_table.get(&file_id).unwrap();
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
 
     let a_defs = symbol_table.definitions.get("a").unwrap();
 
@@ -169,18 +175,18 @@ fn test_variable_scope() {
 }
 
 #[test]
-fn test_symbol_reference_in_expression() {
+async fn test_symbol_reference_in_expression() {
     let (service, _) = LspService::new(|client| {
         Backend::new(
             client,
             AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
+            Some(Arc::new(MemoryFS::new())),
         )
     });
 
     let backend = service.inner();
 
-    let vfs = &backend.fs;
+    let vfs = &backend.files.fs;
 
     let file = "/main.ab";
     vfs.write(
@@ -204,12 +210,13 @@ fn test_symbol_reference_in_expression() {
     echo "{a}"
     "#,
     )
+    .await
     .unwrap();
 
     let uri = Url::from_file_path(file).unwrap();
-    let file_id = backend.open_document(&uri).unwrap();
+    let file_id = backend.open_document(&uri).await.unwrap();
 
-    let symbol_table = backend.symbol_table.get(&file_id).unwrap();
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
 
     let a_refs = symbol_table.references.get("a").unwrap();
     let b_refs = symbol_table.references.get("b").unwrap();
@@ -219,26 +226,26 @@ fn test_symbol_reference_in_expression() {
 }
 
 #[test]
-fn test_public_definitions() {
+async fn test_public_definitions() {
     let (service, _) = LspService::new(|client| {
         Backend::new(
             client,
             AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
+            Some(Arc::new(MemoryFS::new())),
         )
     });
 
     let backend = service.inner();
 
-    let vfs = &backend.fs;
+    let vfs = &backend.files.fs;
 
     let file = "/main.ab";
-    vfs.write(file, r#"pub fun foo() {}"#).unwrap();
+    vfs.write(file, r#"pub fun foo() {}"#).await.unwrap();
 
     let uri = Url::from_file_path(file).unwrap();
-    let file_id = backend.open_document(&uri).unwrap();
+    let file_id = backend.open_document(&uri).await.unwrap();
 
-    let symbol_table = backend.symbol_table.get(&file_id).unwrap();
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
 
     let foo_def = symbol_table.definitions.get("foo").unwrap();
 
@@ -247,18 +254,18 @@ fn test_public_definitions() {
 }
 
 #[test]
-fn test_import_specific_symbols() {
+async fn test_import_specific_symbols() {
     let (service, _) = LspService::new(|client| {
         Backend::new(
             client,
             AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
+            Some(Arc::new(MemoryFS::new())),
         )
     });
 
     let backend = service.inner();
 
-    let vfs = &backend.fs;
+    let vfs = &backend.files.fs;
 
     let src_file = "/src.ab";
     let main_file = "/main.ab";
@@ -268,6 +275,7 @@ fn test_import_specific_symbols() {
         return a + b
     }"#,
     )
+    .await
     .unwrap();
     vfs.write(
         main_file,
@@ -277,16 +285,17 @@ fn test_import_specific_symbols() {
     foo()
     "#,
     )
+    .await
     .unwrap();
 
     let src_uri = Url::from_file_path(src_file).unwrap();
-    let src_file_id = backend.open_document(&src_uri).unwrap();
+    let src_file_id = backend.open_document(&src_uri).await.unwrap();
 
     let main_uri = Url::from_file_path(main_file).unwrap();
-    let main_file_id = backend.open_document(&main_uri).unwrap();
+    let main_file_id = backend.open_document(&main_uri).await.unwrap();
 
-    let src_symbol_table = backend.symbol_table.get(&src_file_id).unwrap();
-    let main_symbol_table = backend.symbol_table.get(&main_file_id).unwrap();
+    let src_symbol_table = backend.files.symbol_table.get(&src_file_id).unwrap();
+    let main_symbol_table = backend.files.symbol_table.get(&main_file_id).unwrap();
 
     let foo_def = src_symbol_table.definitions.get("foo").unwrap();
     let foo_def1 = main_symbol_table.definitions.get("foo").unwrap();
@@ -298,22 +307,22 @@ fn test_import_specific_symbols() {
 }
 
 #[test]
-fn test_import_all_symbols() {
+async fn test_import_all_symbols() {
     let (service, _) = LspService::new(|client| {
         Backend::new(
             client,
             AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
+            Some(Arc::new(MemoryFS::new())),
         )
     });
 
     let backend = service.inner();
 
-    let vfs = &backend.fs;
+    let vfs = &backend.files.fs;
 
     let src_file = "/src.ab";
     let main_file = "/main.ab";
-    vfs.write(src_file, r#"pub fun foo() {}"#).unwrap();
+    vfs.write(src_file, r#"pub fun foo() {}"#).await.unwrap();
     vfs.write(
         main_file,
         r#"
@@ -322,16 +331,17 @@ fn test_import_all_symbols() {
     foo()
     "#,
     )
+    .await
     .unwrap();
 
     let src_uri = Url::from_file_path(src_file).unwrap();
-    let src_file_id = backend.open_document(&src_uri).unwrap();
+    let src_file_id = backend.open_document(&src_uri).await.unwrap();
 
     let main_uri = Url::from_file_path(main_file).unwrap();
-    let main_file_id = backend.open_document(&main_uri).unwrap();
+    let main_file_id = backend.open_document(&main_uri).await.unwrap();
 
-    let src_symbol_table = backend.symbol_table.get(&src_file_id).unwrap();
-    let main_symbol_table = backend.symbol_table.get(&main_file_id).unwrap();
+    let src_symbol_table = backend.files.symbol_table.get(&src_file_id).unwrap();
+    let main_symbol_table = backend.files.symbol_table.get(&main_file_id).unwrap();
 
     let foo_def = src_symbol_table.definitions.get("foo").unwrap();
     let foo_def1 = main_symbol_table.definitions.get("foo").unwrap();
@@ -343,18 +353,18 @@ fn test_import_all_symbols() {
 }
 
 #[test]
-fn test_generic_type_inference() {
+async fn test_generic_type_inference() {
     let (service, _) = LspService::new(|client| {
         Backend::new(
             client,
             AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
+            Some(Arc::new(MemoryFS::new())),
         )
     });
 
     let backend = service.inner();
 
-    let vfs = &backend.fs;
+    let vfs = &backend.files.fs;
 
     let file = "/main.ab";
     vfs.write(
@@ -373,43 +383,41 @@ fn test_generic_type_inference() {
     }
     "#,
     )
+    .await
     .unwrap();
 
     let file_uri = Url::from_file_path(file).unwrap();
-    let file_id = backend.open_document(&file_uri).unwrap();
+    let file_id = backend.open_document(&file_uri).await.unwrap();
 
-    let symbol_table = backend.symbol_table.get(&file_id).unwrap();
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
     let foo_symbol = symbol_table.symbols.get(&10).unwrap();
 
-    assert_debug_snapshot!(backend.generic_types.to_string());
+    assert_debug_snapshot!(backend.files.generic_types.to_string());
     match &foo_symbol.symbol_type {
-        SymbolType::Function(FunctionSymbol {
-            arguments,
-            is_public: _,
-        }) => {
+        SymbolType::Function(FunctionSymbol { arguments, .. }) => {
             assert_debug_snapshot!(arguments
                 .iter()
-                .map(|(name, ty)| (name.clone(), ty.to_string(&backend.generic_types)))
+                .map(|(name, ty)| (name.clone(), ty.to_string(&backend.files.generic_types)))
                 .collect::<Vec<_>>());
         }
         _ => panic!("Expected function symbol"),
     }
-    assert_debug_snapshot!(foo_symbol.data_type.to_string(&backend.generic_types));
+    assert_debug_snapshot!(foo_symbol.data_type.to_string(&backend.files.generic_types));
 }
 
 #[test]
-fn test_generics_reference() {
+async fn test_generics_reference() {
     let (service, _) = LspService::new(|client| {
         Backend::new(
             client,
             AmberVersion::Alpha034,
-            Some(Box::new(MemoryFS::new())),
+            Some(Arc::new(MemoryFS::new())),
         )
     });
 
     let backend = service.inner();
 
-    let vfs = &backend.fs;
+    let vfs = &backend.files.fs;
 
     let file = "/main.ab";
     vfs.write(
@@ -425,28 +433,26 @@ fn test_generics_reference() {
     foo(1, "test")
     "#,
     )
+    .await
     .unwrap();
 
     let file_uri = Url::from_file_path(file).unwrap();
-    let file_id = backend.open_document(&file_uri).unwrap();
+    let file_id = backend.open_document(&file_uri).await.unwrap();
 
-    let symbol_table = backend.symbol_table.get(&file_id).unwrap();
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
     let foo_symbol = symbol_table.symbols.get(&10).unwrap();
 
-    assert_debug_snapshot!(backend.generic_types.to_string());
+    assert_debug_snapshot!(backend.files.generic_types.to_string());
     match &foo_symbol.symbol_type {
-        SymbolType::Function(FunctionSymbol {
-            arguments,
-            is_public: _,
-        }) => {
+        SymbolType::Function(FunctionSymbol { arguments, .. }) => {
             assert_debug_snapshot!(arguments
                 .iter()
-                .map(|(name, ty)| (name.clone(), ty.to_string(&backend.generic_types)))
+                .map(|(name, ty)| (name.clone(), ty.to_string(&backend.files.generic_types)))
                 .collect::<Vec<_>>());
         }
         _ => panic!("Expected function symbol"),
     }
-    assert_debug_snapshot!(foo_symbol.data_type.to_string(&backend.generic_types));
+    assert_debug_snapshot!(foo_symbol.data_type.to_string(&backend.files.generic_types));
 
     assert_debug_snapshot!(symbol_table.symbols);
 }

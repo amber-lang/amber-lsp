@@ -22,9 +22,21 @@ expression: "parse_unwrap(&tokenize(\"unsafe silent $command$\"))"
                             [
                                 (
                                     Text(
+                                        "$",
+                                    ),
+                                    14..15,
+                                ),
+                                (
+                                    Text(
                                         "command",
                                     ),
                                     15..22,
+                                ),
+                                (
+                                    Text(
+                                        "$",
+                                    ),
+                                    22..23,
                                 ),
                             ],
                             None,

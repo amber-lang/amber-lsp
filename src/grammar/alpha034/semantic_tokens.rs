@@ -5,7 +5,10 @@ use crate::grammar::SpannedSemanticToken;
 
 use super::*;
 
-pub const LEGEND_TYPE: [SemanticTokenType; 11] = [
+const ESCAPE_SEQUENCE: SemanticTokenType = SemanticTokenType::new("escapeSequence");
+const CONSTANT: SemanticTokenType = SemanticTokenType::new("constant");
+
+pub const LEGEND_TYPE: [SemanticTokenType; 13] = [
     SemanticTokenType::FUNCTION,
     SemanticTokenType::VARIABLE,
     SemanticTokenType::STRING,
@@ -17,12 +20,15 @@ pub const LEGEND_TYPE: [SemanticTokenType; 11] = [
     SemanticTokenType::TYPE,
     SemanticTokenType::MODIFIER,
     SemanticTokenType::DECORATOR,
+    ESCAPE_SEQUENCE,
+    CONSTANT,
 ];
 
 fn hash_semantic_token_type(token_type: SemanticTokenType) -> usize {
     LEGEND_TYPE.iter().position(|x| *x == token_type).unwrap()
 }
 
+#[tracing::instrument(skip_all)]
 pub fn semantic_tokens_from_ast(
     ast: Option<&Vec<Spanned<GlobalStatement>>>,
 ) -> Vec<SpannedSemanticToken> {
@@ -483,7 +489,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
             .flat_map(|expr| semantic_tokens_from_expr(expr))
             .collect(),
         Expression::Boolean(_) => vec![(
-            hash_semantic_token_type(SemanticTokenType::KEYWORD),
+            hash_semantic_token_type(CONSTANT),
             span.clone(),
         )],
         Expression::Cast(expr, (_, as_span), (_, ty_span)) => {
@@ -523,13 +529,13 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
                 }
                 InterpolatedCommand::CommandOption(_) => {
                     tokens.push((
-                        hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                        hash_semantic_token_type(CONSTANT),
                         span.clone(),
                     ));
                 }
                 InterpolatedCommand::Escape(_) => {
                     tokens.push((
-                        hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                        hash_semantic_token_type(ESCAPE_SEQUENCE),
                         span.clone(),
                     ));
                 }
@@ -714,7 +720,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
             tokens
         }
         Expression::Null => vec![(
-            hash_semantic_token_type(SemanticTokenType::KEYWORD),
+            hash_semantic_token_type(CONSTANT),
             span.clone(),
         )],
         Expression::Number(_) => vec![(

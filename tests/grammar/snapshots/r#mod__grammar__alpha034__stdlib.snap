@@ -1,6 +1,5 @@
 ---
 source: tests/grammar/alpha034.rs
-assertion_line: 661
 expression: parse(&tokenize(&stdlib))
 ---
 (
@@ -56,6 +55,12 @@ expression: parse(&tokenize(&stdlib))
                                         [
                                             (
                                                 Text(
+                                                    "$",
+                                                ),
+                                                47..48,
+                                            ),
+                                            (
+                                                Text(
                                                     "printf",
                                                 ),
                                                 48..54,
@@ -101,6 +106,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                                 73..74,
                                             ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                74..75,
+                                            ),
                                         ],
                                         None,
                                     ),
@@ -122,9 +133,21 @@ expression: parse(&tokenize(&stdlib))
                                         [
                                             (
                                                 Text(
+                                                    "$",
+                                                ),
+                                                87..88,
+                                            ),
+                                            (
+                                                Text(
                                                     "read",
                                                 ),
                                                 88..92,
+                                            ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                92..93,
                                             ),
                                         ],
                                         None,
@@ -238,6 +261,12 @@ expression: parse(&tokenize(&stdlib))
                                             [
                                                 (
                                                     Text(
+                                                        "$",
+                                                    ),
+                                                    188..189,
+                                                ),
+                                                (
+                                                    Text(
                                                         "echo",
                                                     ),
                                                     189..193,
@@ -318,6 +347,12 @@ expression: parse(&tokenize(&stdlib))
                                                     ),
                                                     230..231,
                                                 ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    231..232,
+                                                ),
                                             ],
                                             None,
                                         ),
@@ -393,6 +428,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                             ],
                                             [
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    302..303,
+                                                ),
                                                 (
                                                     Text(
                                                         "echo",
@@ -474,6 +515,12 @@ expression: parse(&tokenize(&stdlib))
                                                         "\"",
                                                     ),
                                                     345..346,
+                                                ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    346..347,
                                                 ),
                                             ],
                                             None,
@@ -567,6 +614,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                             ],
                                             [
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    447..448,
+                                                ),
                                                 (
                                                     Text(
                                                         "echo",
@@ -687,6 +740,12 @@ expression: parse(&tokenize(&stdlib))
                                                     ),
                                                     501..502,
                                                 ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    502..503,
+                                                ),
                                             ],
                                             None,
                                         ),
@@ -736,6 +795,12 @@ expression: parse(&tokenize(&stdlib))
                                         [
                                             (
                                                 Text(
+                                                    "$",
+                                                ),
+                                                537..538,
+                                            ),
+                                            (
+                                                Text(
                                                     "[",
                                                 ),
                                                 538..539,
@@ -777,6 +842,12 @@ expression: parse(&tokenize(&stdlib))
                                                     "]",
                                                 ),
                                                 552..553,
+                                            ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                553..554,
                                             ),
                                         ],
                                         Some(
@@ -878,6 +949,12 @@ expression: parse(&tokenize(&stdlib))
                                         [
                                             (
                                                 Text(
+                                                    "$",
+                                                ),
+                                                641..642,
+                                            ),
+                                            (
+                                                Text(
                                                     "[",
                                                 ),
                                                 642..643,
@@ -919,6 +996,12 @@ expression: parse(&tokenize(&stdlib))
                                                     "]",
                                                 ),
                                                 656..657,
+                                            ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                657..658,
                                             ),
                                         ],
                                         Some(
@@ -1025,6 +1108,12 @@ expression: parse(&tokenize(&stdlib))
                                             [
                                                 (
                                                     Text(
+                                                        "$",
+                                                    ),
+                                                    751..752,
+                                                ),
+                                                (
+                                                    Text(
                                                         "<",
                                                     ),
                                                     752..753,
@@ -1054,6 +1143,12 @@ expression: parse(&tokenize(&stdlib))
                                                         "\"",
                                                     ),
                                                     761..762,
+                                                ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    762..763,
                                                 ),
                                             ],
                                             Some(
@@ -1123,6 +1218,12 @@ expression: parse(&tokenize(&stdlib))
                                             [
                                                 (
                                                     Text(
+                                                        "$",
+                                                    ),
+                                                    815..816,
+                                                ),
+                                                (
+                                                    Text(
                                                         "echo",
                                                     ),
                                                     816..820,
@@ -1184,6 +1285,12 @@ expression: parse(&tokenize(&stdlib))
                                                         "\"",
                                                     ),
                                                     842..843,
+                                                ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    843..844,
                                                 ),
                                             ],
                                             Some(
@@ -1253,6 +1360,12 @@ expression: parse(&tokenize(&stdlib))
                                             [
                                                 (
                                                     Text(
+                                                        "$",
+                                                    ),
+                                                    897..898,
+                                                ),
+                                                (
+                                                    Text(
                                                         "echo",
                                                     ),
                                                     898..902,
@@ -1320,6 +1433,12 @@ expression: parse(&tokenize(&stdlib))
                                                         "\"",
                                                     ),
                                                     925..926,
+                                                ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    926..927,
                                                 ),
                                             ],
                                             Some(
@@ -1422,6 +1541,12 @@ expression: parse(&tokenize(&stdlib))
                                             ),
                                         ],
                                         [
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                1020..1021,
+                                            ),
                                             (
                                                 Text(
                                                     "IFS",
@@ -1590,6 +1715,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                                 1101..1102,
                                             ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                1102..1103,
+                                            ),
                                         ],
                                         None,
                                     ),
@@ -1692,6 +1823,12 @@ expression: parse(&tokenize(&stdlib))
                                             ),
                                         ],
                                         [
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                1196..1197,
+                                            ),
                                             (
                                                 Text(
                                                     "IFS",
@@ -1827,6 +1964,12 @@ expression: parse(&tokenize(&stdlib))
                                                     "\"",
                                                 ),
                                                 1258..1259,
+                                            ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                1259..1260,
                                             ),
                                         ],
                                         None,
@@ -2008,6 +2151,12 @@ expression: parse(&tokenize(&stdlib))
                                             [
                                                 (
                                                     Text(
+                                                        "$",
+                                                    ),
+                                                    1417..1418,
+                                                ),
+                                                (
+                                                    Text(
                                                         "IFS",
                                                     ),
                                                     1418..1421,
@@ -2127,6 +2276,12 @@ expression: parse(&tokenize(&stdlib))
                                                     ),
                                                     1465..1466,
                                                 ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    1466..1467,
+                                                ),
                                             ],
                                             None,
                                         ),
@@ -2193,6 +2348,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                             ],
                                             [
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    1527..1528,
+                                                ),
                                                 (
                                                     Text(
                                                         "echo",
@@ -2321,6 +2482,12 @@ expression: parse(&tokenize(&stdlib))
                                                     ),
                                                     1569..1570,
                                                 ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    1570..1571,
+                                                ),
                                             ],
                                             None,
                                         ),
@@ -2387,6 +2554,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                             ],
                                             [
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    1632..1633,
+                                                ),
                                                 (
                                                     Text(
                                                         "echo",
@@ -2514,6 +2687,12 @@ expression: parse(&tokenize(&stdlib))
                                                         "'",
                                                     ),
                                                     1675..1676,
+                                                ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    1676..1677,
                                                 ),
                                             ],
                                             None,
@@ -2670,6 +2849,12 @@ expression: parse(&tokenize(&stdlib))
                                             [
                                                 (
                                                     Text(
+                                                        "$",
+                                                    ),
+                                                    1808..1809,
+                                                ),
+                                                (
+                                                    Text(
                                                         "echo",
                                                     ),
                                                     1809..1813,
@@ -2796,6 +2981,12 @@ expression: parse(&tokenize(&stdlib))
                                                     ),
                                                     1850..1851,
                                                 ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    1851..1852,
+                                                ),
                                             ],
                                             None,
                                         ),
@@ -2862,6 +3053,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                             ],
                                             [
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    1908..1909,
+                                                ),
                                                 (
                                                     Text(
                                                         "echo",
@@ -2990,6 +3187,12 @@ expression: parse(&tokenize(&stdlib))
                                                     ),
                                                     1950..1951,
                                                 ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    1951..1952,
+                                                ),
                                             ],
                                             None,
                                         ),
@@ -3097,6 +3300,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                         [
                                                                                             (
                                                                                                 Text(
+                                                                                                    "$",
+                                                                                                ),
+                                                                                                2061..2062,
+                                                                                            ),
+                                                                                            (
+                                                                                                Text(
                                                                                                     "echo",
                                                                                                 ),
                                                                                                 2062..2066,
@@ -3160,6 +3369,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                                 ),
                                                                                                 2088..2089,
                                                                                             ),
+                                                                                            (
+                                                                                                Text(
+                                                                                                    "$",
+                                                                                                ),
+                                                                                                2089..2090,
+                                                                                            ),
                                                                                         ],
                                                                                         None,
                                                                                     ),
@@ -3203,6 +3418,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                         Command(
                                                                                             [],
                                                                                             [
+                                                                                                (
+                                                                                                    Text(
+                                                                                                        "$",
+                                                                                                    ),
+                                                                                                    2131..2132,
+                                                                                                ),
                                                                                                 (
                                                                                                     Text(
                                                                                                         "echo",
@@ -3285,6 +3506,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                                         "\"",
                                                                                                     ),
                                                                                                     2161..2162,
+                                                                                                ),
+                                                                                                (
+                                                                                                    Text(
+                                                                                                        "$",
+                                                                                                    ),
+                                                                                                    2162..2163,
                                                                                                 ),
                                                                                             ],
                                                                                             None,
@@ -3372,6 +3599,12 @@ expression: parse(&tokenize(&stdlib))
                                     Command(
                                         [],
                                         [
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                2238..2239,
+                                            ),
                                             (
                                                 Text(
                                                     "[",
@@ -3528,6 +3761,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                                 2291..2295,
                                             ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                2295..2296,
+                                            ),
                                         ],
                                         Some(
                                             (
@@ -3648,6 +3887,12 @@ expression: parse(&tokenize(&stdlib))
                                             ),
                                         ],
                                         [
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                2394..2395,
+                                            ),
                                             (
                                                 Text(
                                                     "for",
@@ -3939,6 +4184,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                                 2503..2504,
                                             ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                2504..2505,
+                                            ),
                                         ],
                                         None,
                                     ),
@@ -4031,6 +4282,12 @@ expression: parse(&tokenize(&stdlib))
                                                         ),
                                                     ],
                                                     [
+                                                        (
+                                                            Text(
+                                                                "$",
+                                                            ),
+                                                            2597..2598,
+                                                        ),
                                                         (
                                                             Text(
                                                                 "echo",
@@ -4248,6 +4505,12 @@ expression: parse(&tokenize(&stdlib))
                                                                 "'",
                                                             ),
                                                             2664..2665,
+                                                        ),
+                                                        (
+                                                            Text(
+                                                                "$",
+                                                            ),
+                                                            2665..2666,
                                                         ),
                                                     ],
                                                     None,
@@ -4904,6 +5167,12 @@ expression: parse(&tokenize(&stdlib))
                                         [
                                             (
                                                 Text(
+                                                    "$",
+                                                ),
+                                                3254..3255,
+                                            ),
+                                            (
+                                                Text(
                                                     "eval",
                                                 ),
                                                 3255..3259,
@@ -4921,6 +5190,12 @@ expression: parse(&tokenize(&stdlib))
                                                     ),
                                                 ),
                                                 3260..3269,
+                                            ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                3269..3270,
                                             ),
                                         ],
                                         None,
@@ -5013,6 +5288,12 @@ expression: parse(&tokenize(&stdlib))
                                         [
                                             (
                                                 Text(
+                                                    "$",
+                                                ),
+                                                3340..3341,
+                                            ),
+                                            (
+                                                Text(
                                                     "exit",
                                                 ),
                                                 3341..3345,
@@ -5042,6 +5323,12 @@ expression: parse(&tokenize(&stdlib))
                                                     "\"",
                                                 ),
                                                 3353..3354,
+                                            ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                3354..3355,
                                             ),
                                         ],
                                         None,
@@ -5266,6 +5553,12 @@ expression: parse(&tokenize(&stdlib))
                                         [
                                             (
                                                 Text(
+                                                    "$",
+                                                ),
+                                                3540..3541,
+                                            ),
+                                            (
+                                                Text(
                                                     "[",
                                                 ),
                                                 3541..3542,
@@ -5337,6 +5630,12 @@ expression: parse(&tokenize(&stdlib))
                                                     "]",
                                                 ),
                                                 3573..3574,
+                                            ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                3574..3575,
                                             ),
                                         ],
                                         Some(
@@ -5499,6 +5798,12 @@ expression: parse(&tokenize(&stdlib))
                                                                     [
                                                                         (
                                                                             Text(
+                                                                                "$",
+                                                                            ),
+                                                                            3744..3745,
+                                                                        ),
+                                                                        (
+                                                                            Text(
                                                                                 "ln",
                                                                             ),
                                                                             3745..3747,
@@ -5560,6 +5865,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                 "\"",
                                                                             ),
                                                                             3776..3777,
+                                                                        ),
+                                                                        (
+                                                                            Text(
+                                                                                "$",
+                                                                            ),
+                                                                            3777..3778,
                                                                         ),
                                                                     ],
                                                                     None,
@@ -5792,6 +6103,12 @@ expression: parse(&tokenize(&stdlib))
                                                                     [
                                                                         (
                                                                             Text(
+                                                                                "$",
+                                                                            ),
+                                                                            3953..3954,
+                                                                        ),
+                                                                        (
+                                                                            Text(
                                                                                 "mkdir",
                                                                             ),
                                                                             3954..3959,
@@ -5827,6 +6144,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                 "\"",
                                                                             ),
                                                                             3970..3971,
+                                                                        ),
+                                                                        (
+                                                                            Text(
+                                                                                "$",
+                                                                            ),
+                                                                            3971..3972,
                                                                         ),
                                                                     ],
                                                                     None,
@@ -5935,6 +6258,12 @@ expression: parse(&tokenize(&stdlib))
                                                                     [
                                                                         (
                                                                             Text(
+                                                                                "$",
+                                                                            ),
+                                                                            4067..4068,
+                                                                        ),
+                                                                        (
+                                                                            Text(
                                                                                 "chmod",
                                                                             ),
                                                                             4068..4073,
@@ -5976,6 +6305,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                 "\"",
                                                                             ),
                                                                             4084..4085,
+                                                                        ),
+                                                                        (
+                                                                            Text(
+                                                                                "$",
+                                                                            ),
+                                                                            4085..4086,
                                                                         ),
                                                                     ],
                                                                     None,
@@ -6243,6 +6578,12 @@ expression: parse(&tokenize(&stdlib))
                                                                     [
                                                                         (
                                                                             Text(
+                                                                                "$",
+                                                                            ),
+                                                                            4289..4290,
+                                                                        ),
+                                                                        (
+                                                                            Text(
                                                                                 "chown",
                                                                             ),
                                                                             4290..4295,
@@ -6304,6 +6645,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                 "\"",
                                                                             ),
                                                                             4315..4316,
+                                                                        ),
+                                                                        (
+                                                                            Text(
+                                                                                "$",
+                                                                            ),
+                                                                            4316..4317,
                                                                         ),
                                                                     ],
                                                                     None,
@@ -6475,6 +6822,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                 [
                                                                                     (
                                                                                         Text(
+                                                                                            "$",
+                                                                                        ),
+                                                                                        4470..4471,
+                                                                                    ),
+                                                                                    (
+                                                                                        Text(
                                                                                             "curl",
                                                                                         ),
                                                                                         4471..4475,
@@ -6542,6 +6895,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                             "\"",
                                                                                         ),
                                                                                         4497..4498,
+                                                                                    ),
+                                                                                    (
+                                                                                        Text(
+                                                                                            "$",
+                                                                                        ),
+                                                                                        4498..4499,
                                                                                     ),
                                                                                 ],
                                                                                 None,
@@ -6611,6 +6970,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                 [
                                                                                     (
                                                                                         Text(
+                                                                                            "$",
+                                                                                        ),
+                                                                                        4558..4559,
+                                                                                    ),
+                                                                                    (
+                                                                                        Text(
                                                                                             "wget",
                                                                                         ),
                                                                                         4559..4563,
@@ -6672,6 +7037,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                             "\"",
                                                                                         ),
                                                                                         4582..4583,
+                                                                                    ),
+                                                                                    (
+                                                                                        Text(
+                                                                                            "$",
+                                                                                        ),
+                                                                                        4583..4584,
                                                                                     ),
                                                                                 ],
                                                                                 None,
@@ -6741,6 +7112,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                 [
                                                                                     (
                                                                                         Text(
+                                                                                            "$",
+                                                                                        ),
+                                                                                        4645..4646,
+                                                                                    ),
+                                                                                    (
+                                                                                        Text(
                                                                                             "aria2c",
                                                                                         ),
                                                                                         4646..4652,
@@ -6802,6 +7179,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                             "\"",
                                                                                         ),
                                                                                         4671..4672,
+                                                                                    ),
+                                                                                    (
+                                                                                        Text(
+                                                                                            "$",
+                                                                                        ),
+                                                                                        4672..4673,
                                                                                     ),
                                                                                 ],
                                                                                 None,
@@ -6937,6 +7320,12 @@ expression: parse(&tokenize(&stdlib))
                                                                 [
                                                                     (
                                                                         Text(
+                                                                            "$",
+                                                                        ),
+                                                                        4801..4802,
+                                                                    ),
+                                                                    (
+                                                                        Text(
                                                                             "id",
                                                                         ),
                                                                         4802..4804,
@@ -6946,6 +7335,12 @@ expression: parse(&tokenize(&stdlib))
                                                                             "-u",
                                                                         ),
                                                                         4805..4807,
+                                                                    ),
+                                                                    (
+                                                                        Text(
+                                                                            "$",
+                                                                        ),
+                                                                        4807..4808,
                                                                     ),
                                                                 ],
                                                                 None,
@@ -7093,6 +7488,12 @@ expression: parse(&tokenize(&stdlib))
                                                 [
                                                     (
                                                         Text(
+                                                            "$",
+                                                        ),
+                                                        4927..4928,
+                                                    ),
+                                                    (
+                                                        Text(
                                                             "echo",
                                                         ),
                                                         4928..4932,
@@ -7138,6 +7539,12 @@ expression: parse(&tokenize(&stdlib))
                                                             "\"",
                                                         ),
                                                         4943..4944,
+                                                    ),
+                                                    (
+                                                        Text(
+                                                            "$",
+                                                        ),
+                                                        4944..4945,
                                                     ),
                                                 ],
                                                 None,
@@ -7276,6 +7683,12 @@ expression: parse(&tokenize(&stdlib))
                                                                     [
                                                                         (
                                                                             Text(
+                                                                                "$",
+                                                                            ),
+                                                                            5036..5037,
+                                                                        ),
+                                                                        (
+                                                                            Text(
                                                                                 "source",
                                                                             ),
                                                                             5037..5043,
@@ -7304,6 +7717,12 @@ expression: parse(&tokenize(&stdlib))
                                                                             ),
                                                                             5049..5050,
                                                                         ),
+                                                                        (
+                                                                            Text(
+                                                                                "$",
+                                                                            ),
+                                                                            5050..5051,
+                                                                        ),
                                                                     ],
                                                                     None,
                                                                 ),
@@ -7328,6 +7747,12 @@ expression: parse(&tokenize(&stdlib))
                                                                             ),
                                                                         ],
                                                                         [
+                                                                            (
+                                                                                Text(
+                                                                                    "$",
+                                                                                ),
+                                                                                5074..5075,
+                                                                            ),
                                                                             (
                                                                                 Text(
                                                                                     "echo",
@@ -7375,6 +7800,12 @@ expression: parse(&tokenize(&stdlib))
                                                                                     "\"",
                                                                                 ),
                                                                                 5090..5091,
+                                                                            ),
+                                                                            (
+                                                                                Text(
+                                                                                    "$",
+                                                                                ),
+                                                                                5091..5092,
                                                                             ),
                                                                         ],
                                                                         None,
@@ -7451,6 +7882,12 @@ expression: parse(&tokenize(&stdlib))
                                             ),
                                         ],
                                         [
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                5160..5161,
+                                            ),
                                             (
                                                 Text(
                                                     "export",
@@ -7541,6 +7978,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                                 5194..5198,
                                             ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                5198..5199,
+                                            ),
                                         ],
                                         None,
                                     ),
@@ -7596,6 +8039,12 @@ expression: parse(&tokenize(&stdlib))
                                     Command(
                                         [],
                                         [
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                5247..5248,
+                                            ),
                                             (
                                                 Text(
                                                     "[",
@@ -7690,6 +8139,12 @@ expression: parse(&tokenize(&stdlib))
                                                     "]",
                                                 ),
                                                 5279..5280,
+                                            ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                5280..5281,
                                             ),
                                         ],
                                         Some(
@@ -7813,6 +8268,12 @@ expression: parse(&tokenize(&stdlib))
                                         [
                                             (
                                                 Text(
+                                                    "$",
+                                                ),
+                                                5399..5400,
+                                            ),
+                                            (
+                                                Text(
                                                     "readonly",
                                                 ),
                                                 5400..5408,
@@ -7929,6 +8390,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                                 5450..5454,
                                             ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                5454..5455,
+                                            ),
                                         ],
                                         Some(
                                             (
@@ -7996,6 +8463,12 @@ expression: parse(&tokenize(&stdlib))
                                             [
                                                 (
                                                     Text(
+                                                        "$",
+                                                    ),
+                                                    5518..5519,
+                                                ),
+                                                (
+                                                    Text(
                                                         "echo",
                                                     ),
                                                     5519..5523,
@@ -8046,6 +8519,12 @@ expression: parse(&tokenize(&stdlib))
                                                         "}",
                                                     ),
                                                     5542..5543,
+                                                ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    5543..5544,
                                                 ),
                                             ],
                                             Some(
@@ -8121,6 +8600,12 @@ expression: parse(&tokenize(&stdlib))
                                     Command(
                                         [],
                                         [
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                5606..5607,
+                                            ),
                                             (
                                                 Text(
                                                     "export",
@@ -8239,6 +8724,12 @@ expression: parse(&tokenize(&stdlib))
                                                 ),
                                                 5655..5659,
                                             ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                5659..5660,
+                                            ),
                                         ],
                                         Some(
                                             (
@@ -8306,6 +8797,12 @@ expression: parse(&tokenize(&stdlib))
                                             [
                                                 (
                                                     Text(
+                                                        "$",
+                                                    ),
+                                                    5718..5719,
+                                                ),
+                                                (
+                                                    Text(
                                                         "echo",
                                                     ),
                                                     5719..5723,
@@ -8356,6 +8853,12 @@ expression: parse(&tokenize(&stdlib))
                                                         "}",
                                                     ),
                                                     5742..5743,
+                                                ),
+                                                (
+                                                    Text(
+                                                        "$",
+                                                    ),
+                                                    5743..5744,
                                                 ),
                                             ],
                                             Some(
@@ -8420,6 +8923,12 @@ expression: parse(&tokenize(&stdlib))
                                         [
                                             (
                                                 Text(
+                                                    "$",
+                                                ),
+                                                5793..5794,
+                                            ),
+                                            (
+                                                Text(
                                                     "unset",
                                                 ),
                                                 5794..5799,
@@ -8437,6 +8946,12 @@ expression: parse(&tokenize(&stdlib))
                                                     ),
                                                 ),
                                                 5800..5806,
+                                            ),
+                                            (
+                                                Text(
+                                                    "$",
+                                                ),
+                                                5806..5807,
                                             ),
                                         ],
                                         Some(

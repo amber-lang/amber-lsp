@@ -4,7 +4,7 @@ use crate::{
         types::{make_union_type, matches_type, GenericsMap},
         SymbolInfo, SymbolLocation, SymbolType, VarSymbol,
     },
-    backend::Backend,
+    files::{FileVersion, Files},
     grammar::{
         alpha034::{DataType, Expression, InterpolatedCommand, InterpolatedText},
         Spanned,
@@ -14,21 +14,27 @@ use crate::{
 
 use super::stmnts::analyze_failure_handler;
 
-#[tracing::instrument]
+#[tracing::instrument(skip(file_version, files, scoped_generic_types))]
 pub fn analyze_exp(
-    file_id: &FileId,
+    file_id: FileId,
+    file_version: FileVersion,
     (exp, exp_span): &Spanned<Expression>,
     expected_type: DataType,
-    backend: &Backend,
+    files: &Files,
     scoped_generic_types: &GenericsMap,
 ) -> DataType {
     let exp_span_inclusive = exp_span.start..=exp_span.end;
 
+    if exp_span_inclusive.is_empty() {
+        return DataType::Error;
+    }
+
+    let file = (file_id, file_version);
+
     let ty: DataType = match exp {
         Expression::FunctionInvocation(_, (name, name_span), args, failure) => {
             let return_type = {
-                let fun_symbol =
-                    get_symbol_definition_info(backend, name, file_id, name_span.start);
+                let fun_symbol = get_symbol_definition_info(&files, name, &file, name_span.start);
 
                 let expected_types = fun_symbol
                     .clone()
@@ -46,19 +52,24 @@ pub fn analyze_exp(
 
                 args.iter().enumerate().for_each(|(idx, arg)| {
                     if let Some(ty) = expected_types.get(idx) {
-                        let exp_ty =
-                            analyze_exp(file_id, arg, ty.clone(), backend, scoped_generic_types);
+                        let exp_ty = analyze_exp(
+                            file_id,
+                            file_version,
+                            arg,
+                            ty.clone(),
+                            files,
+                            scoped_generic_types,
+                        );
 
                         match ty {
-                            DataType::Generic(file_id, id) => {
-                                scoped_generic_types
-                                    .constrain_generic_type((*file_id, *id), exp_ty.clone());
+                            DataType::Generic(id) => {
+                                scoped_generic_types.constrain_generic_type(*id, exp_ty.clone());
                             }
                             _ => {}
                         }
                     } else {
-                        backend.report_error(
-                            file_id,
+                        files.report_error(
+                            &file,
                             &format!("Function takes only {} arguments", expected_types.len()),
                             arg.1,
                         );
@@ -66,8 +77,8 @@ pub fn analyze_exp(
                 });
 
                 if expected_types.len() > args.len() {
-                    backend.report_error(
-                        file_id,
+                    files.report_error(
+                        &file,
                         &format!("Function takes {} arguments", expected_types.len()),
                         *name_span,
                     );
@@ -79,17 +90,22 @@ pub fn analyze_exp(
             };
 
             if let Some(failure) = failure {
-                analyze_failure_handler(file_id, failure, backend, scoped_generic_types);
+                analyze_failure_handler(
+                    file_id,
+                    file_version,
+                    failure,
+                    files,
+                    scoped_generic_types,
+                );
             }
 
             insert_symbol_reference(
                 &name,
-                backend,
+                files,
                 &SymbolLocation {
-                    file: *file_id,
+                    file,
                     start: name_span.start,
                     end: name_span.end,
-                    is_public: false,
                 },
                 scoped_generic_types,
             );
@@ -99,17 +115,16 @@ pub fn analyze_exp(
         Expression::Var((name, name_span)) => {
             insert_symbol_reference(
                 &name,
-                backend,
+                files,
                 &SymbolLocation {
-                    file: *file_id,
+                    file,
                     start: name_span.start,
                     end: name_span.end,
-                    is_public: false,
                 },
                 scoped_generic_types,
             );
 
-            match get_symbol_definition_info(backend, &name, file_id, name_span.start) {
+            match get_symbol_definition_info(files, &name, &file, name_span.start) {
                 Some(info) => info.data_type,
                 None => DataType::Null,
             }
@@ -117,6 +132,7 @@ pub fn analyze_exp(
         Expression::Add(exp1, exp2) => {
             let ty = analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Union(vec![
                     DataType::Number,
@@ -126,19 +142,25 @@ pub fn analyze_exp(
                         DataType::Text,
                     ]))),
                 ]),
-                backend,
+                files,
                 scoped_generic_types,
             );
-            let right_hand_ty =
-                analyze_exp(file_id, exp2, ty.clone(), backend, scoped_generic_types);
+            let right_hand_ty = analyze_exp(
+                file_id,
+                file_version,
+                exp2,
+                ty.clone(),
+                files,
+                scoped_generic_types,
+            );
 
-            if let DataType::Generic(file_id, id) = ty {
-                scoped_generic_types.constrain_generic_type((file_id, id), right_hand_ty.clone());
+            if let DataType::Generic(id) = ty {
+                scoped_generic_types.constrain_generic_type(id, right_hand_ty.clone());
             }
 
             if !matches_type(&right_hand_ty, &ty, scoped_generic_types) {
-                backend.report_error(
-                    file_id,
+                files.report_error(
+                    &file,
                     &format!(
                         "Expected type {}, found type {}",
                         right_hand_ty.to_string(scoped_generic_types),
@@ -153,16 +175,18 @@ pub fn analyze_exp(
         Expression::And(exp1, _, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Boolean,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Boolean,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
@@ -174,9 +198,10 @@ pub fn analyze_exp(
                 .map(|exp| {
                     analyze_exp(
                         file_id,
+                        file_version,
                         exp,
                         DataType::Union(vec![DataType::Number, DataType::Text]),
-                        backend,
+                        files,
                         scoped_generic_types,
                     )
                 })
@@ -186,8 +211,8 @@ pub fn analyze_exp(
 
             match array_type {
                 DataType::Union(_) => {
-                    backend.report_error(
-                        file_id,
+                    files.report_error(
+                        &file,
                         "Array must have elements of the same type",
                         *exp_span,
                     );
@@ -198,20 +223,40 @@ pub fn analyze_exp(
             DataType::Array(Box::new(array_type))
         }
         Expression::Cast(exp, _, (ty, _)) => {
-            analyze_exp(file_id, &exp, DataType::Any, backend, scoped_generic_types);
+            analyze_exp(
+                file_id,
+                file_version,
+                &exp,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+            );
 
             ty.clone()
         }
         Expression::Command(_, inter_cmd, failure) => {
             inter_cmd.iter().for_each(|(inter_cmd, _)| match inter_cmd {
                 InterpolatedCommand::Expression(exp) => {
-                    analyze_exp(file_id, &exp, DataType::Any, backend, scoped_generic_types);
+                    analyze_exp(
+                        file_id,
+                        file_version,
+                        &exp,
+                        DataType::Any,
+                        files,
+                        scoped_generic_types,
+                    );
                 }
                 _ => {}
             });
 
             if let Some(failure) = failure {
-                analyze_failure_handler(file_id, failure, backend, scoped_generic_types);
+                analyze_failure_handler(
+                    file_id,
+                    file_version,
+                    failure,
+                    files,
+                    scoped_generic_types,
+                );
             }
 
             DataType::Text
@@ -219,40 +264,58 @@ pub fn analyze_exp(
         Expression::Divide(exp1, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
             DataType::Number
         }
         Expression::Eq(exp1, exp2) => {
-            analyze_exp(file_id, exp1, DataType::Any, backend, scoped_generic_types);
-            analyze_exp(file_id, exp2, DataType::Any, backend, scoped_generic_types);
+            analyze_exp(
+                file_id,
+                file_version,
+                exp1,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+            );
+            analyze_exp(
+                file_id,
+                file_version,
+                exp2,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+            );
 
             DataType::Boolean
         }
         Expression::Ge(exp1, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
@@ -261,39 +324,50 @@ pub fn analyze_exp(
         Expression::Gt(exp1, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
             DataType::Boolean
         }
         Expression::Is(exp, _, _) => {
-            analyze_exp(file_id, exp, DataType::Any, backend, scoped_generic_types);
+            analyze_exp(
+                file_id,
+                file_version,
+                exp,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+            );
 
             DataType::Boolean
         }
         Expression::Le(exp1, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
@@ -302,16 +376,18 @@ pub fn analyze_exp(
         Expression::Lt(exp1, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
@@ -320,16 +396,18 @@ pub fn analyze_exp(
         Expression::Modulo(exp1, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
@@ -338,49 +416,74 @@ pub fn analyze_exp(
         Expression::Multiply(exp1, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
             DataType::Number
         }
         Expression::Nameof(_, exp) => {
-            analyze_exp(file_id, exp, DataType::Any, backend, scoped_generic_types);
+            analyze_exp(
+                file_id,
+                file_version,
+                exp,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+            );
 
             DataType::Text
         }
         Expression::Neg(_, exp) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
             DataType::Number
         }
         Expression::Neq(exp1, exp2) => {
-            analyze_exp(file_id, exp1, DataType::Any, backend, scoped_generic_types);
-            analyze_exp(file_id, exp2, DataType::Any, backend, scoped_generic_types);
+            analyze_exp(
+                file_id,
+                file_version,
+                exp1,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+            );
+            analyze_exp(
+                file_id,
+                file_version,
+                exp2,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+            );
 
             DataType::Boolean
         }
         Expression::Not(_, exp) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp,
                 DataType::Boolean,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
@@ -389,37 +492,46 @@ pub fn analyze_exp(
         Expression::Or(exp1, _, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Boolean,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Boolean,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
             DataType::Boolean
         }
-        Expression::Parentheses(exp) => {
-            analyze_exp(file_id, exp, DataType::Any, backend, scoped_generic_types)
-        }
+        Expression::Parentheses(exp) => analyze_exp(
+            file_id,
+            file_version,
+            exp,
+            DataType::Any,
+            files,
+            scoped_generic_types,
+        ),
         Expression::Range(exp1, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
@@ -428,16 +540,18 @@ pub fn analyze_exp(
         Expression::Subtract(exp1, exp2) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
             analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 DataType::Number,
-                backend,
+                files,
                 scoped_generic_types,
             );
 
@@ -446,23 +560,26 @@ pub fn analyze_exp(
         Expression::Ternary(exp1, _, exp2, _, exp3) => {
             analyze_exp(
                 file_id,
+                file_version,
                 exp1,
                 DataType::Boolean,
-                backend,
+                files,
                 scoped_generic_types,
             );
             let if_true = analyze_exp(
                 file_id,
+                file_version,
                 exp2,
                 expected_type.clone(),
-                backend,
+                files,
                 scoped_generic_types,
             );
             let if_false = analyze_exp(
                 file_id,
+                file_version,
                 exp3,
                 expected_type.clone(),
-                backend,
+                files,
                 scoped_generic_types,
             );
 
@@ -471,7 +588,14 @@ pub fn analyze_exp(
         Expression::Text(int_text) => {
             int_text.iter().for_each(|(text, _)| match text {
                 InterpolatedText::Expression(exp) => {
-                    analyze_exp(file_id, exp, DataType::Any, backend, scoped_generic_types);
+                    analyze_exp(
+                        file_id,
+                        file_version,
+                        exp,
+                        DataType::Any,
+                        files,
+                        scoped_generic_types,
+                    );
                 }
                 _ => {}
             });
@@ -482,7 +606,7 @@ pub fn analyze_exp(
         Expression::Boolean(_) => DataType::Boolean,
         Expression::Null => DataType::Null,
         Expression::Status => {
-            let mut symbol_table = backend.symbol_table.get_mut(file_id).unwrap();
+            let mut symbol_table = files.symbol_table.get_mut(&file).unwrap();
             symbol_table.symbols.insert(
                 exp_span_inclusive,
                 SymbolInfo {
@@ -500,8 +624,8 @@ pub fn analyze_exp(
     };
 
     if !matches_type(&expected_type, &ty, scoped_generic_types) {
-        backend.report_error(
-            file_id,
+        files.report_error(
+            &file,
             &format!(
                 "Expected type {}, found type {}",
                 expected_type.to_string(scoped_generic_types),
@@ -509,8 +633,8 @@ pub fn analyze_exp(
             ),
             *exp_span,
         );
-    } else if let DataType::Generic(file_id, id) = ty {
-        scoped_generic_types.constrain_generic_type((file_id, id), expected_type.clone());
+    } else if let DataType::Generic(id) = ty {
+        scoped_generic_types.constrain_generic_type(id, expected_type.clone());
     }
 
     ty

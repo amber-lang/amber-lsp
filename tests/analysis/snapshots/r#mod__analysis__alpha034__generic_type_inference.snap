@@ -1,5 +1,5 @@
 ---
 source: tests/analysis/alpha034.rs
-expression: backend.generic_types.to_string()
+expression: backend.files.generic_types.to_string()
 ---
-"(FileId(0), 0): Text\n(FileId(0), 1): Bool\n(FileId(0), 2): Any"
+"[0]: Text\n[1]: Bool\n[2]: Any"

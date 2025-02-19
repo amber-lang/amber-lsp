@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt};
 
-use crate::{analysis::types::GenericsMap, paths::FileId};
+use crate::analysis::types::GenericsMap;
 
 pub use super::Spanned;
 use super::{Grammar, LSPAnalysis, ParserResponse, Span};
@@ -59,7 +59,7 @@ pub enum DataType {
     Null,
     Array(Box<DataType>),
     Union(Vec<DataType>),
-    Generic(FileId, usize),
+    Generic(usize),
     Error,
 }
 
@@ -81,9 +81,7 @@ impl DataType {
                     .collect::<Vec<String>>()
                     .join(" | ")
             }
-            DataType::Generic(file_id, id) => {
-                generics_map.get(*file_id, *id).to_string(generics_map)
-            }
+            DataType::Generic(id) => generics_map.get(*id).to_string(generics_map),
             DataType::Error => "<Invalid type>".to_string(),
         }
     }
@@ -198,12 +196,23 @@ pub enum CommandModifier {
     Silent,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Eq)]
 pub enum CompilerFlag {
     AllowNestedIfElse,
     AllowGenericReturn,
     AllowAbsurdCast,
     Error,
+}
+
+impl fmt::Display for CompilerFlag {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CompilerFlag::AllowNestedIfElse => write!(f, "allow_nested_if_else"),
+            CompilerFlag::AllowGenericReturn => write!(f, "allow_generic_return"),
+            CompilerFlag::AllowAbsurdCast => write!(f, "allow_absurd_cast"),
+            CompilerFlag::Error => write!(f, "<Invalid flag>"),
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -212,7 +221,6 @@ pub enum VariableInitType {
     DataType(Spanned<DataType>),
     Error,
 }
-
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Statement {
@@ -294,7 +302,7 @@ impl AmberCompiler {
 }
 
 impl LSPAnalysis for AmberCompiler {
-    #[tracing::instrument]
+    #[tracing::instrument(skip_all)]
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>> {
         // It should never fail
         self.lexer
@@ -314,7 +322,7 @@ impl LSPAnalysis for AmberCompiler {
             .collect()
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip_all)]
     fn parse<'a>(&self, tokens: &'a Vec<Spanned<Token>>) -> ParserResponse<'a> {
         let len = tokens.last().map(|t| t.1.end).unwrap_or(0);
         let parser_input = tokens.spanned(Span::new(len, len));

@@ -13,6 +13,12 @@ expression: "parse_unwrap(&tokenize(r#\"$echo \\\"Hello, world!\\\"$\"#))"
                             [
                                 (
                                     Text(
+                                        "$",
+                                    ),
+                                    0..1,
+                                ),
+                                (
+                                    Text(
                                         "echo",
                                     ),
                                     1..5,
@@ -52,6 +58,12 @@ expression: "parse_unwrap(&tokenize(r#\"$echo \\\"Hello, world!\\\"$\"#))"
                                         "\"",
                                     ),
                                     21..23,
+                                ),
+                                (
+                                    Text(
+                                        "$",
+                                    ),
+                                    23..24,
                                 ),
                             ],
                             None,

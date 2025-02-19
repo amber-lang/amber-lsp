@@ -6,10 +6,10 @@ pub mod exp;
 pub mod global;
 pub mod stmnts;
 
-#[tracing::instrument]
-pub fn map_import_path(uri: &Url, path: &str, backend: &Backend) -> Url {
+#[tracing::instrument(skip_all)]
+pub async fn map_import_path(uri: &Url, path: &str, backend: &Backend) -> Url {
     if path == "std" {
-        match resolve(backend, "main") {
+        match resolve(backend, "main".to_string()).await {
             Some(path) => {
                 return path;
             }

@@ -7,10 +7,11 @@ use crate::backend::{AmberVersion, Backend};
 
 pub const STDLIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/");
 
-pub fn resolve<T: Into<String>>(backend: &Backend, path: T) -> Option<Url> {
+#[tracing::instrument(skip(backend))]
+pub async fn resolve(backend: &Backend, path: String) -> Option<Url> {
     let dir = temp_dir();
 
-    let file_name: String = path.into() + ".ab";
+    let file_name: String = path + ".ab";
 
     let path = match backend.amber_version {
         AmberVersion::Alpha034 => "alpha034/std/".to_string() + &file_name,
@@ -22,13 +23,15 @@ pub fn resolve<T: Into<String>>(backend: &Backend, path: T) -> Option<Url> {
         let tmp_file_path = dir.join(file_name);
         let tmp_file_path = tmp_file_path.to_str().unwrap();
 
-        if backend.fs.exists(tmp_file_path) {
+        if backend.files.fs.exists(tmp_file_path).await {
             return Url::from_file_path(tmp_file_path).ok();
         }
 
         if backend
+            .files
             .fs
             .write(tmp_file_path, &module.contents_utf8().unwrap().to_string())
+            .await
             .is_err()
         {
             return None;

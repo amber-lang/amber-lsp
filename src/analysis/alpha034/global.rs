@@ -1,26 +1,27 @@
-use rangemap::RangeInclusiveMap;
-
 use crate::{
     analysis::{
-        insert_symbol_definition,
+        import_symbol, insert_symbol_definition,
         types::{make_union_type, matches_type},
-        FunctionSymbol, SymbolInfo, SymbolLocation, SymbolType, VarSymbol,
-    }, backend::Backend, grammar::{
-        alpha034::{CompilerFlag, DataType, FunctionArgument, GlobalStatement, ImportContent},
+        FunctionSymbol, SymbolLocation, SymbolType, VarSymbol,
+    },
+    backend::Backend,
+    files::FileVersion,
+    grammar::{
+        alpha034::{DataType, FunctionArgument, GlobalStatement, ImportContent},
         Spanned,
-    }, paths::FileId
+    },
+    paths::FileId,
 };
 
 use super::{map_import_path, stmnts::analyze_stmnt};
 
-#[tracing::instrument]
-pub fn analyze_global_stmnt(
-    file_id: &FileId,
+#[tracing::instrument(skip_all)]
+pub async fn analyze_global_stmnt(
+    file_id: FileId,
+    file_version: FileVersion,
     ast: &Vec<Spanned<GlobalStatement>>,
     backend: &Backend,
 ) {
-    backend.generic_types.clean(file_id);
-
     for (global, span) in ast.iter() {
         match global {
             GlobalStatement::FunctionDefinition(
@@ -32,77 +33,66 @@ pub fn analyze_global_stmnt(
                 ty,
                 body,
             ) => {
-                compiler_flags.iter().for_each(|(flag, span)| {
-                    if let CompilerFlag::Error = *flag {
-                        backend.report_error(
-                            file_id,
-                            "Invalid compiler flag name. Choose one of: allow_nested_if_else, allow_generic_return, allow_absurd_cast",
-                            *span,
-                        );
-                    }
-                });
-
-
                 // We create scoped generics map, to not overwrite other generics, not defined here
-                let scoped_generics_map = backend.generic_types.clone();
-
-                let last_arg_span = args
-                    .last()
-                    .map(|(_, span)| span.end)
-                    .unwrap_or(name_span.end);
+                let scoped_generics_map = backend.files.generic_types.clone();
 
                 let mut new_generic_types = vec![];
                 args.iter().for_each(|(arg, _)| {
                     let (name, ty, name_span) = match arg {
                         FunctionArgument::Generic((name, span)) => {
                             let generic_id = scoped_generics_map.new_generic_id();
-                            scoped_generics_map.constrain_generic_type(
-                                (file_id.clone(), generic_id),
-                                DataType::Any,
-                            );
 
+                            scoped_generics_map.constrain_generic_type(generic_id, DataType::Any);
                             new_generic_types.push(generic_id);
-                            (name, DataType::Generic(file_id.clone(), generic_id), span)
+
+                            (name, DataType::Generic(generic_id), span)
                         }
                         FunctionArgument::Typed((name, span), (ty, _)) => (name, ty.clone(), span),
                         _ => return,
                     };
 
-                    let mut symbol_table = backend.symbol_table.get_mut(file_id).unwrap();
+                    let mut symbol_table = backend
+                        .files
+                        .symbol_table
+                        .get_mut(&(file_id, file_version))
+                        .unwrap();
 
                     insert_symbol_definition(
                         &mut symbol_table,
                         name,
-                        last_arg_span..=span.end,
+                        name_span.end..=span.end,
                         &SymbolLocation {
-                            file: *file_id,
+                            file: (file_id, file_version),
                             start: name_span.start,
                             end: name_span.end,
-                            is_public: false,
                         },
                         ty,
                         SymbolType::Variable(VarSymbol {}),
+                        false,
                     );
                 });
 
                 let mut return_types = vec![];
 
                 body.iter().for_each(|stmnt| {
-                    if let Some(ty) =
-                        analyze_stmnt(&file_id, stmnt, backend, span.end, &scoped_generics_map)
-                    {
+                    if let Some(ty) = analyze_stmnt(
+                        file_id,
+                        file_version,
+                        stmnt,
+                        &backend.files,
+                        span.end,
+                        &scoped_generics_map,
+                    ) {
                         return_types.push(ty);
                     }
                 });
 
                 new_generic_types.iter().for_each(|generic_id| {
-                    backend.generic_types.constrain_generic_type(
-                        (*file_id, *generic_id),
-                        scoped_generics_map.get(*file_id, *generic_id),
-                    );
                     backend
+                        .files
                         .generic_types
-                        .mark_as_inferred((*file_id, *generic_id));
+                        .constrain_generic_type(*generic_id, scoped_generics_map.get(*generic_id));
+                    backend.files.generic_types.mark_as_inferred(*generic_id);
                 });
 
                 let return_type = match return_types.len() {
@@ -112,9 +102,9 @@ pub fn analyze_global_stmnt(
 
                 let data_type = match ty {
                     Some((ty, ty_span)) => {
-                        if !matches_type(ty, &return_type, &backend.generic_types) {
-                            backend.report_error(
-                                file_id,
+                        if !matches_type(ty, &return_type, &backend.files.generic_types) {
+                            backend.files.report_error(
+                                &(file_id, file_version),
                                 &format!(
                                     "Function returns type {:?}, but expected {:?}",
                                     return_type, ty
@@ -128,17 +118,20 @@ pub fn analyze_global_stmnt(
                     None => return_type,
                 };
 
-                let mut symbol_table = backend.symbol_table.get_mut(file_id).unwrap();
+                let mut symbol_table = backend
+                    .files
+                    .symbol_table
+                    .entry((file_id, file_version))
+                    .or_insert_with(|| Default::default());
 
                 insert_symbol_definition(
                     &mut symbol_table,
                     name,
                     span.end..=usize::MAX,
                     &SymbolLocation {
-                        file: *file_id,
+                        file: (file_id, file_version),
                         start: name_span.start,
                         end: name_span.end,
-                        is_public: *is_pub,
                     },
                     data_type,
                     SymbolType::Function(FunctionSymbol {
@@ -147,7 +140,7 @@ pub fn analyze_global_stmnt(
                             .filter_map(|(arg, _)| match arg {
                                 FunctionArgument::Generic((name, _)) => Some((
                                     name.clone(),
-                                    DataType::Generic(*file_id, new_generic_types.remove(0)),
+                                    DataType::Generic(new_generic_types.remove(0)),
                                 )),
                                 FunctionArgument::Typed((name, _), (ty, _)) => {
                                     Some((name.clone(), ty.clone()))
@@ -156,144 +149,162 @@ pub fn analyze_global_stmnt(
                             })
                             .collect(),
                         is_public: *is_pub,
+                        compiler_flags: compiler_flags
+                            .iter()
+                            .map(|(flag, _)| flag.clone())
+                            .collect(),
                     }),
+                    *is_pub,
                 );
             }
-            GlobalStatement::Import((is_pub, _), _, (import_content, _), _, (path, path_span)) => {
-                let uri = &backend.paths.lookup(file_id);
+            GlobalStatement::Import(
+                (is_public_import, _),
+                _,
+                (import_content, _),
+                _,
+                (path, path_span),
+            ) => {
+                let uri = &backend.files.lookup(&file_id);
 
-                let result = backend.open_document(&map_import_path(uri, path, backend));
+                let result = backend
+                    .open_document(&map_import_path(uri, path, &backend).await)
+                    .await;
 
                 if result.is_err() {
-                    backend.report_error(file_id, "File doesn't exist", *path_span);
+                    backend.files.report_error(
+                        &(file_id, file_version),
+                        "File doesn't exist",
+                        *path_span,
+                    );
 
                     continue;
                 }
 
-                let import_file_id = result.unwrap();
+                let imported_file = result.clone().unwrap();
 
-                let imported_file_symbol_table = match backend.symbol_table.get(&import_file_id) {
-                    Some(symbol_table_ref) => {
-                        let symbol_table = symbol_table_ref.clone();
-                        symbol_table
-                    }
-                    None => continue,
-                };
+                let imported_file_symbol_table =
+                    match backend.files.symbol_table.get(&imported_file) {
+                        Some(symbol_table_ref) => {
+                            let symbol_table = symbol_table_ref.clone();
+                            symbol_table
+                        }
+                        None => continue,
+                    };
 
                 match import_content {
                     ImportContent::ImportSpecific(ident_list) => {
                         ident_list.iter().for_each(|(ident, span)| {
                             let symbol_definition =
-                                match imported_file_symbol_table.definitions.get(ident) {
-                                    Some(symbol_definitions) => symbol_definitions
-                                        .clone()
-                                        .into_iter()
-                                        .find(|(_, location)| location.is_public),
-                                    None => None,
-                                };
+                                imported_file_symbol_table.public_definitions.get(ident);
 
                             match symbol_definition {
-                                Some((_, symbol_definition)) => {
+                                Some(definition_location) => {
                                     let symbol_info = imported_file_symbol_table
                                         .symbols
-                                        .get(&symbol_definition.start)
+                                        .get(&definition_location.start)
                                         .unwrap();
 
-                                    let mut symbol_table =
-                                        backend.symbol_table.get_mut(file_id).unwrap();
+                                    let mut symbol_table = backend
+                                        .files
+                                        .symbol_table
+                                        .entry((file_id, file_version))
+                                        .or_insert_with(|| Default::default());
 
-                                    symbol_table.symbols.insert(
-                                        span.start..=span.end,
-                                        SymbolInfo {
-                                            is_definition: false,
-                                            ..symbol_info.clone()
-                                        },
-                                    );
-
-                                    let mut range_map = RangeInclusiveMap::new();
-
-                                    range_map.insert(
+                                    import_symbol(
+                                        &mut symbol_table,
+                                        ident,
                                         span.start..=usize::MAX,
-                                        SymbolLocation {
-                                            file: symbol_definition.file.clone(),
-                                            start: symbol_definition.start,
-                                            end: symbol_definition.end,
-                                            is_public: *is_pub,
-                                        },
+                                        Some(span.start..=span.end),
+                                        definition_location,
+                                        symbol_info.data_type.clone(),
+                                        symbol_info.symbol_type.clone(),
+                                        *is_public_import,
                                     );
-
-                                    symbol_table.definitions.insert(ident.clone(), range_map);
                                 }
                                 None => {
-                                    let mut symbol_table =
-                                        backend.symbol_table.get_mut(file_id).unwrap();
-                                    symbol_table.symbols.insert(
-                                        span.start..=span.end,
-                                        SymbolInfo {
-                                            name: ident.clone(),
-                                            symbol_type: SymbolType::Function(FunctionSymbol {
-                                                arguments: vec![],
-                                                is_public: *is_pub,
-                                            }),
-                                            data_type: DataType::Null,
-                                            is_definition: false,
-                                            undefined: true,
-                                        },
+                                    backend.files.report_error(
+                                        &(file_id, file_version),
+                                        &format!("Could not resolve '{}'", ident),
+                                        *span,
                                     );
                                 }
                             };
                         });
                     }
                     ImportContent::ImportAll => imported_file_symbol_table
-                        .definitions
+                        .public_definitions
                         .iter()
-                        .for_each(|(_, definition)| {
-                            definition.iter().for_each(|(_, location)| {
-                                if !location.is_public {
-                                    return;
-                                }
+                        .for_each(|(_, location)| {
+                            let symbol_info =
+                                match imported_file_symbol_table.symbols.get(&location.start) {
+                                    Some(symbol_info) => symbol_info,
+                                    None => return,
+                                };
 
-                                let symbol_info =
-                                    match imported_file_symbol_table.symbols.get(&location.start) {
-                                        Some(symbol_info) => symbol_info,
-                                        None => return,
-                                    };
+                            let mut symbol_table = backend
+                                .files
+                                .symbol_table
+                                .entry((file_id, file_version))
+                                .or_insert_with(|| Default::default());
 
-                                let mut symbol_table =
-                                    backend.symbol_table.get_mut(file_id).unwrap();
-
-                                insert_symbol_definition(
-                                    &mut symbol_table,
-                                    &symbol_info.name,
-                                    location.start..=usize::MAX,
-                                    location,
-                                    symbol_info.data_type.clone(),
-                                    symbol_info.symbol_type.clone(),
-                                );
-                            });
+                            import_symbol(
+                                &mut symbol_table,
+                                &symbol_info.name,
+                                span.start..=usize::MAX,
+                                None,
+                                location,
+                                symbol_info.data_type.clone(),
+                                symbol_info.symbol_type.clone(),
+                                *is_public_import,
+                            );
                         }),
                 }
+
+                let mut symbol_table = backend
+                    .files
+                    .symbol_table
+                    .entry((file_id, file_version))
+                    .or_insert_with(|| Default::default());
+
+                import_symbol(
+                    &mut symbol_table,
+                    &path,
+                    path_span.start..=path_span.end,
+                    Some(path_span.start..=path_span.end),
+                    &SymbolLocation {
+                        file: imported_file,
+                        start: 0,
+                        end: 1,
+                    },
+                    DataType::Null,
+                    SymbolType::ImportPath(path_span.clone()),
+                    false,
+                );
             }
             GlobalStatement::Main(_, body) => {
                 body.iter().for_each(|stmnt| {
                     analyze_stmnt(
-                        &file_id,
+                        file_id,
+                        file_version,
                         stmnt,
-                        backend,
+                        &backend.files,
                         stmnt.1.end,
-                        &backend.generic_types.clone(),
+                        &backend.files.generic_types.clone(),
                     );
                 });
             }
             GlobalStatement::Statement(stmnt) => {
                 analyze_stmnt(
-                    &file_id,
+                    file_id,
+                    file_version,
                     stmnt,
-                    backend,
+                    &backend.files,
                     usize::MAX,
-                    &backend.generic_types.clone(),
+                    &backend.files.generic_types.clone(),
                 );
             }
         }
     }
+
+    backend.files.mark_as_analyzed(&(file_id, file_version));
 }

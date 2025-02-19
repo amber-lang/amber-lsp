@@ -24,6 +24,7 @@ export function activate(context: ExtensionContext) {
 			env: {
 				...process.env,
 				RUST_LOG: "debug",
+				RUST_BACKTRACE: 1
 			},
 	  },
 	  args: ["--amber-version", version],

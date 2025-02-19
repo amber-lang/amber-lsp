@@ -15,6 +15,12 @@ expression: "parse(&tokenize(\"$command {unclosed\"))"
                                     [
                                         (
                                             Text(
+                                                "$",
+                                            ),
+                                            0..1,
+                                        ),
+                                        (
+                                            Text(
                                                 "command",
                                             ),
                                             1..8,
@@ -32,6 +38,12 @@ expression: "parse(&tokenize(\"$command {unclosed\"))"
                                                 ),
                                             ),
                                             9..18,
+                                        ),
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            18..18,
                                         ),
                                     ],
                                     None,

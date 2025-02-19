@@ -18,6 +18,7 @@ Some(
                     ),
                 ],
                 is_public: false,
+                compiler_flags: [],
             },
         ),
         data_type: Any,

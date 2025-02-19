@@ -36,7 +36,7 @@ expression: "parse(&tokenize(\"import { var1 var2 \\\"unclosed\"))"
                     ),
                     (
                         "unclosed",
-                        19..29,
+                        19..28,
                     ),
                 ),
                 0..28,

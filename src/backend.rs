@@ -1,23 +1,23 @@
-use chumsky::span::SimpleSpan;
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::Arc;
+
 use clap::builder::PossibleValue;
 use clap::ValueEnum;
-use dashmap::DashMap;
 use ropey::Rope;
-use serde_json::Value;
 use tower_lsp::jsonrpc::{Error, Result};
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
 
+use crate::analysis::alpha034::global::analyze_global_stmnt;
+use crate::analysis::{SymbolTable, SymbolType};
+use crate::files::{FileVersion, Files, DEFAULT_VERSION};
 use crate::fs::{LocalFs, FS};
-use crate::grammar::Spanned;
 use crate::grammar::{
     alpha034::{semantic_tokens::LEGEND_TYPE, AmberCompiler},
-    Grammar, LSPAnalysis, ParserResponse, SpannedSemanticToken,
+    Grammar, LSPAnalysis, ParserResponse,
 };
-use crate::paths::{FileId, PathInterner};
-use crate::analysis::alpha034::global::analyze_global_stmnt;
-use crate::analysis::types::GenericsMap;
-use crate::analysis::{FunctionSymbol, SymbolTable, SymbolType};
+use crate::paths::FileId;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AmberVersion {
@@ -45,19 +45,7 @@ impl ValueEnum for AmberVersion {
 #[derive(Debug)]
 pub struct Backend {
     pub client: Client,
-    pub paths: PathInterner,
-    pub fs: Box<dyn FS>,
-    /// A map from document URI to the parsed AST.
-    pub ast_map: DashMap<FileId, Grammar>,
-    /// A map from document URI to the parse errors.
-    pub errors: DashMap<FileId, Vec<Spanned<String>>>,
-    /// A map from document URI to the document content and version.
-    pub document_map: DashMap<FileId, (Rope, i32)>,
-    /// A map from document URI to the semantic tokens.
-    pub semantic_token_map: DashMap<FileId, Vec<SpannedSemanticToken>>,
-    /// A map from document URI to the symbol table.
-    pub symbol_table: DashMap<FileId, SymbolTable>,
-    pub generic_types: GenericsMap,
+    pub files: Files,
     /// The LSP analysis implementation.
     pub lsp_analysis: Box<dyn LSPAnalysis>,
     pub token_types: Box<[SemanticTokenType]>,
@@ -65,7 +53,7 @@ pub struct Backend {
 }
 
 impl Backend {
-    pub fn new(client: Client, amber_version: AmberVersion, fs: Option<Box<dyn FS>>) -> Self {
+    pub fn new(client: Client, amber_version: AmberVersion, fs: Option<Arc<dyn FS>>) -> Self {
         let (lsp_analysis, token_types) = match amber_version {
             _ => (Box::new(AmberCompiler::new()), Box::new(LEGEND_TYPE)),
         };
@@ -73,72 +61,76 @@ impl Backend {
         let fs = if let Some(fs) = fs {
             fs
         } else {
-            Box::new(LocalFs::new())
+            Arc::new(LocalFs::new())
         };
+
+        let files = Files::new(fs);
+
+        files.generic_types.reset_counter();
 
         Self {
             client,
-            paths: PathInterner::default(),
-            fs,
-            ast_map: DashMap::new(),
-            errors: DashMap::new(),
-            document_map: DashMap::new(),
-            semantic_token_map: DashMap::new(),
-            symbol_table: DashMap::new(),
-            generic_types: GenericsMap::new(),
+            files,
             lsp_analysis,
             token_types,
             amber_version,
         }
     }
 
-    pub fn get_document(&self, file_id: &FileId) -> Option<(Rope, i32)> {
-        match self.document_map.get(&file_id) {
-            Some(document) => Some(document.clone()),
-            None => None,
-        }
-    }
-
-    pub fn open_document(&self, uri: &Url) -> Result<FileId> {
-        if let Some(file_id) = self.paths.get(uri) {
-            return Ok(file_id);
-        }
-
-        let text = match self.fs.read(&uri.to_file_path().unwrap().to_string_lossy()) {
-            Ok(text) => Rope::from_str(&text),
-            Err(_) => {
-                return Err(Error::internal_error());
+    pub fn open_document<'a>(
+        &'a self,
+        uri: &'a Url,
+    ) -> Pin<Box<dyn Future<Output = Result<(FileId, FileVersion)>> + Send + 'a>> {
+        Box::pin(async move {
+            if let Some(file_id) = self.files.get(uri) {
+                let version = self.files.get_latest_version(file_id);
+                return Ok((file_id, version));
             }
-        };
 
-        let file_id = self.paths.insert(uri.clone());
+            let text = match self
+                .files
+                .fs
+                .read(&uri.to_file_path().unwrap().to_string_lossy())
+                .await
+            {
+                Ok(text) => Rope::from_str(&text),
+                Err(_) => {
+                    return Err(Error::internal_error());
+                }
+            };
 
-        self.document_map.insert(file_id, (text, 0));
+            let file_id = self.files.insert(uri.clone(), DEFAULT_VERSION);
 
-        self.analize_document(&file_id);
+            self.files
+                .document_map
+                .insert((file_id, DEFAULT_VERSION), text);
 
-        Ok(file_id)
+            self.analize_document(file_id).await;
+
+            Ok((file_id, DEFAULT_VERSION))
+        })
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn publish_diagnostics(
         &self,
         file_id: &FileId,
         diagnostics: Vec<Diagnostic>,
-        version: Option<i32>,
+        version: Option<FileVersion>,
     ) {
-        let uri = self.paths.lookup(file_id);
+        let uri = self.files.lookup(file_id);
         self.client
-            .publish_diagnostics(uri, diagnostics, version)
+            .publish_diagnostics(uri, diagnostics, version.map(|v| v.into()))
             .await;
     }
 
-    pub async fn publish_syntax_errors(&self, file_id: &FileId) {
-        let errors = match self.errors.get(file_id) {
+    pub async fn publish_syntax_errors(&self, file_id: FileId, file_version: FileVersion) {
+        let errors = match self.files.errors.get(&(file_id, file_version)) {
             Some(errors) => errors.clone(),
             None => return,
         };
 
-        let (rope, version) = match self.get_document(file_id) {
+        let (rope, version) = match self.files.get_document_latest_version(file_id) {
             Some(document) => document,
             None => return,
         };
@@ -158,12 +150,12 @@ impl Backend {
             })
             .collect::<Vec<_>>();
 
-        self.publish_diagnostics(file_id, diagnostics, Some(version))
+        self.publish_diagnostics(&file_id, diagnostics, Some(version))
             .await;
     }
 
-    pub fn analize_document(&self, file_id: &FileId) {
-        let (rope, _) = match self.get_document(file_id) {
+    pub async fn analize_document(&self, file_id: FileId) {
+        let (rope, version) = match self.files.get_document_latest_version(file_id) {
             Some(document) => document,
             None => return,
         };
@@ -176,21 +168,27 @@ impl Backend {
             semantic_tokens,
         } = self.lsp_analysis.parse(&tokens);
 
-        self.errors.insert(
-            *file_id,
+        self.files.errors.insert(
+            (file_id, version),
             errors
                 .iter()
                 .map(|err| (err.to_string(), *err.span()))
                 .collect(),
         );
-        self.ast_map.insert(*file_id, ast.clone());
-        self.semantic_token_map.insert(*file_id, semantic_tokens);
+        self.files.ast_map.insert((file_id, version), ast.clone());
+        self.files
+            .semantic_token_map
+            .insert((file_id, version), semantic_tokens);
 
-        self.symbol_table.insert(*file_id, SymbolTable::default());
+        self.publish_syntax_errors(file_id, version).await;
+
+        self.files
+            .symbol_table
+            .insert((file_id, version), SymbolTable::default());
 
         match ast {
             Grammar::Alpha034(Some(ast)) => {
-                analyze_global_stmnt(file_id, &ast, self);
+                analyze_global_stmnt(file_id, version, &ast, self).await;
             }
             _ => {}
         }
@@ -204,15 +202,6 @@ impl Backend {
         let first_char_of_line = rope.try_line_to_char(line).ok().unwrap_or(rope.len_chars());
         let column = offset - first_char_of_line;
         Some(Position::new(line as u32, column as u32))
-    }
-
-    pub fn report_error(&self, file_id: &FileId, msg: &str, span: SimpleSpan) {
-        let mut errors = match self.errors.get(file_id) {
-            Some(errors) => errors.clone(),
-            None => vec![],
-        };
-        errors.push((msg.to_string(), span));
-        self.errors.insert(*file_id, errors);
     }
 }
 
@@ -293,26 +282,36 @@ impl LanguageServer for Backend {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all)]
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        let file_id = self.paths.insert(params.text_document.uri);
+        let version = FileVersion(params.text_document.version);
 
-        self.document_map.insert(
-            file_id,
-            (
-                Rope::from_str(&params.text_document.text),
-                params.text_document.version,
-            ),
+        if let Some(file_id) = self.files.get(&params.text_document.uri) {
+            self.files.change_latest_file_version(file_id, version);
+            self.publish_syntax_errors(file_id, version).await;
+            return;
+        }
+
+        let version = FileVersion(params.text_document.version);
+
+        let file_id = self.files.insert(params.text_document.uri, version);
+
+        self.files.document_map.insert(
+            (file_id, version),
+            Rope::from_str(&params.text_document.text),
         );
 
-        self.analize_document(&file_id);
+        self.analize_document(file_id).await;
 
-        self.publish_syntax_errors(&file_id).await;
+        self.publish_syntax_errors(file_id, version).await;
     }
 
+    #[tracing::instrument(skip_all)]
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri.to_string();
+        let new_version = FileVersion(params.text_document.version);
 
-        let file_id = match self.paths.get(&params.text_document.uri) {
+        let file_id = match self.files.get(&params.text_document.uri) {
             Some(file_id) => file_id,
             None => {
                 return self
@@ -322,7 +321,14 @@ impl LanguageServer for Backend {
             }
         };
 
-        if !self.document_map.contains_key(&file_id) {
+        if self.files.is_analyzed(&(file_id, new_version)) {
+            self.publish_syntax_errors(file_id, new_version).await;
+            return;
+        }
+
+        let version = self.files.get_latest_version(file_id);
+
+        if !self.files.document_map.contains_key(&(file_id, version)) {
             return self
                 .client
                 .log_message(MessageType::ERROR, format!("document {uri} is not open"))
@@ -345,12 +351,16 @@ impl LanguageServer for Backend {
             .iter()
             .find(|change| change.range.is_none() && change.range_length.is_none())
         {
-            self.document_map.insert(
-                file_id,
-                (Rope::from_str(&change.text), params.text_document.version),
-            );
+            self.files
+                .document_map
+                .insert((file_id, new_version), Rope::from_str(&change.text));
         } else {
-            let mut document = self.document_map.get_mut(&file_id).unwrap();
+            let mut document = self
+                .files
+                .document_map
+                .get(&(file_id, version))
+                .unwrap()
+                .clone();
 
             params
                 .content_changes
@@ -358,21 +368,25 @@ impl LanguageServer for Backend {
                 .filter(|change| change.range.is_some())
                 .for_each(|change| {
                     let range = change.range.as_ref().unwrap();
-                    let start = document.0.line_to_char(range.start.line as usize)
+                    let start = document.line_to_char(range.start.line as usize)
                         + range.start.character as usize;
-                    let end = document.0.line_to_char(range.end.line as usize)
+                    let end = document.line_to_char(range.end.line as usize)
                         + range.end.character as usize;
 
-                    document.0.remove(start..end);
-                    document.0.insert(start, &change.text);
+                    document.remove(start..end);
+                    document.insert(start, &change.text);
                 });
 
-            document.1 = params.text_document.version;
+            self.files
+                .document_map
+                .insert((file_id, new_version), document);
         }
 
-        self.analize_document(&file_id);
+        self.files.add_new_file_version(file_id, new_version);
 
-        self.publish_syntax_errors(&file_id).await;
+        self.analize_document(file_id).await;
+
+        self.publish_syntax_errors(file_id, new_version).await;
     }
 
     async fn did_change_watched_files(&self, _: DidChangeWatchedFilesParams) {
@@ -391,27 +405,28 @@ impl LanguageServer for Backend {
             .await;
     }
 
+    #[tracing::instrument(skip_all)]
     async fn semantic_tokens_full(
         &self,
         params: SemanticTokensParams,
     ) -> Result<Option<SemanticTokensResult>> {
-        let file_id = match self.paths.get(&params.text_document.uri) {
+        let file_id = match self.files.get(&params.text_document.uri) {
             Some(file_id) => file_id,
             None => {
                 return Ok(None);
             }
         };
 
-        let semantic_tokens = match self.semantic_token_map.get(&file_id) {
-            Some(tokens) => tokens.clone(),
+        let (rope, file_version) = match self.files.get_document_latest_version(file_id) {
+            Some(document) => document,
+            None => return Ok(None),
+        };
+
+        let semantic_tokens = match self.files.semantic_token_map.get(&(file_id, file_version)) {
+            Some(tokens) => tokens,
             None => {
                 return Ok(None);
             }
-        };
-
-        let (rope, _) = match self.get_document(&file_id) {
-            Some(document) => document,
-            None => return Ok(None),
         };
 
         let mut pre_line = 0;
@@ -463,28 +478,30 @@ impl LanguageServer for Backend {
         })))
     }
 
+    #[tracing::instrument(skip_all)]
     async fn semantic_tokens_range(
         &self,
         params: SemanticTokensRangeParams,
     ) -> Result<Option<SemanticTokensRangeResult>> {
-        let file_id = match self.paths.get(&params.text_document.uri) {
+        let file_id = match self.files.get(&params.text_document.uri) {
             Some(file_id) => file_id,
             None => {
                 return Ok(None);
             }
         };
+
+        let (rope, file_version) = match self.files.get_document_latest_version(file_id) {
+            Some(document) => document,
+            None => return Ok(None),
+        };
+
         let requested_range = params.range;
 
-        let semantic_tokens = match self.semantic_token_map.get(&file_id) {
-            Some(tokens) => tokens.clone(),
+        let semantic_tokens = match self.files.semantic_token_map.get(&(file_id, file_version)) {
+            Some(tokens) => tokens,
             None => {
                 return Ok(None);
             }
-        };
-
-        let (rope, _) = match self.get_document(&file_id) {
-            Some(document) => document,
-            None => return Ok(None),
         };
 
         let mut pre_line = 0;
@@ -542,13 +559,13 @@ impl LanguageServer for Backend {
     ) -> Result<Option<GotoDefinitionResponse>> {
         let definition = {
             let uri = params.text_document_position_params.text_document.uri;
-            let file_id = match self.paths.get(&uri) {
+            let file_id = match self.files.get(&uri) {
                 Some(file_id) => file_id,
                 None => return Ok(None),
             };
 
-            let (rope, _) = match self.document_map.get(&file_id) {
-                Some(document) => document.clone(),
+            let (rope, version) = match self.files.get_document_latest_version(file_id) {
+                Some(document) => document,
                 None => return Ok(None),
             };
 
@@ -559,8 +576,8 @@ impl LanguageServer for Backend {
                 .unwrap_or(rope.len_chars());
             let offset = char + position.character as usize;
 
-            let symbol_table = match self.symbol_table.get(&file_id) {
-                Some(symbol_table) => symbol_table,
+            let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
+                Some(symbol_table) => symbol_table.clone(),
                 None => return Ok(None),
             };
 
@@ -576,28 +593,51 @@ impl LanguageServer for Backend {
             let response = match symbol_table.definitions.get(&symbol_info.name) {
                 Some(definitions) => match definitions.get(&offset) {
                     Some(definition) => {
-                        let file_rope = match self.document_map.get(&definition.file) {
-                            Some(document) => document.0.clone(),
-                            None => {
-                                return Ok(None);
-                            }
-                        };
+                        let definition_file_rope =
+                            match self.files.document_map.get(&definition.file) {
+                                Some(document) => document.clone(),
+                                None => {
+                                    return Ok(None);
+                                }
+                            };
 
                         let start_position = self
-                            .offset_to_position(definition.start, &file_rope)
+                            .offset_to_position(definition.start, &definition_file_rope)
                             .unwrap();
-                        let end_position =
-                            self.offset_to_position(definition.end, &file_rope).unwrap();
+                        let end_position = self
+                            .offset_to_position(definition.end, &definition_file_rope)
+                            .unwrap();
 
-                        let file_url = self.paths.lookup(&definition.file);
+                        let file_url = self.files.lookup(&definition.file.0);
 
-                        Some(GotoDefinitionResponse::Scalar(Location::new(
-                            file_url,
-                            Range {
-                                start: start_position,
-                                end: end_position,
-                            },
-                        )))
+                        match symbol_info.symbol_type {
+                            SymbolType::ImportPath(path_span) => {
+                                let selection_range = Range {
+                                    start: self.offset_to_position(path_span.start, &rope).unwrap(),
+                                    end: self.offset_to_position(path_span.end, &rope).unwrap(),
+                                };
+
+                                Some(GotoDefinitionResponse::Link(vec![LocationLink {
+                                    target_uri: file_url,
+                                    target_range: Range {
+                                        start: start_position,
+                                        end: end_position,
+                                    },
+                                    target_selection_range: Range {
+                                        start: start_position,
+                                        end: end_position,
+                                    },
+                                    origin_selection_range: Some(selection_range),
+                                }]))
+                            }
+                            _ => Some(GotoDefinitionResponse::Scalar(Location::new(
+                                file_url,
+                                Range {
+                                    start: start_position,
+                                    end: end_position,
+                                },
+                            ))),
+                        }
                     }
                     None => None,
                 },
@@ -622,28 +662,14 @@ impl LanguageServer for Backend {
             .await;
     }
 
-    async fn execute_command(&self, _: ExecuteCommandParams) -> Result<Option<Value>> {
-        self.client
-            .log_message(MessageType::INFO, "command executed!")
-            .await;
-
-        match self.client.apply_edit(WorkspaceEdit::default()).await {
-            Ok(res) if res.applied => self.client.log_message(MessageType::INFO, "applied").await,
-            Ok(_) => self.client.log_message(MessageType::INFO, "rejected").await,
-            Err(err) => self.client.log_message(MessageType::ERROR, err).await,
-        }
-
-        Ok(None)
-    }
-
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
         let uri = params.text_document_position_params.text_document.uri;
-        let file_id = match self.paths.get(&uri) {
+        let file_id = match self.files.get(&uri) {
             Some(file_id) => file_id,
             None => return Ok(None),
         };
 
-        let (rope, _) = match self.document_map.get(&file_id) {
+        let (rope, version) = match self.files.get_document_latest_version(file_id) {
             Some(document) => document.clone(),
             None => return Ok(None),
         };
@@ -655,8 +681,8 @@ impl LanguageServer for Backend {
             .unwrap_or(rope.len_chars());
         let offset = char + position.character as usize;
 
-        let symbol_table = match self.symbol_table.get(&file_id) {
-            Some(symbol_table) => symbol_table,
+        let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
+            Some(symbol_table) => symbol_table.clone(),
             None => return Ok(None),
         };
 
@@ -673,27 +699,8 @@ impl LanguageServer for Backend {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
                 value: format!(
-                    "```ab\n{}{}: {}\n```",
-                    symbol_info.name,
-                    match symbol_info.symbol_type {
-                        SymbolType::Function(FunctionSymbol {
-                            arguments,
-                            is_public: _,
-                        }) => format!(
-                            "({})",
-                            arguments
-                                .iter()
-                                .map(|(name, ty)| format!(
-                                    "{}: {}",
-                                    name,
-                                    ty.to_string(&self.generic_types)
-                                ))
-                                .collect::<Vec<String>>()
-                                .join(", ")
-                        ),
-                        _ => "".to_string(),
-                    },
-                    symbol_info.data_type.to_string(&self.generic_types),
+                    "```amber\n{}\n```",
+                    symbol_info.to_string(&self.files.generic_types)
                 ),
             }),
             range: Some(Range {

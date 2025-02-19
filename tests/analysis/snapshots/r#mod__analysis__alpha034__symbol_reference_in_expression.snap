@@ -4,131 +4,195 @@ expression: a_refs
 ---
 [
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 28,
         end: 29,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 69,
         end: 70,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 80,
         end: 81,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 91,
         end: 92,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 99,
         end: 100,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 107,
         end: 108,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 122,
         end: 123,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 140,
         end: 141,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 155,
         end: 156,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 169,
         end: 170,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 183,
         end: 184,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 195,
         end: 196,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 207,
         end: 208,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 228,
         end: 229,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 242,
         end: 243,
-        is_public: false,
     },
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 256,
         end: 257,
-        is_public: false,
     },
 ]

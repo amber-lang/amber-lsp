@@ -22,10 +22,21 @@
 	"contributes": {
 		"languages": [{
 			"id": "amber",
-			"extensions": [".ab"],
-			"aliases": ["Amber", "ab"],
-			"configuration": "language-configuration.json"
+			"extensions": [".ab", ".amber"],
+			"aliases": ["Amber", "amber"],
+			"configuration": "language-configuration.json",
+			"icon": {
+				"dark": "icon.png",
+				"light": "icon.png"
+			}
 		}],
+		"grammars": [
+			{
+				"language": "amber",
+				"scopeName": "source.amber",
+				"path": "./amber.tmLanguage.json"
+			}
+		],
 		"configuration": {
 			"type": "object",
 			"title": "Example configuration",

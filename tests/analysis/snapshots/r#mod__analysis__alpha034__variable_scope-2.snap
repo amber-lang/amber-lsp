@@ -4,11 +4,15 @@ expression: "a_defs.get(&usize::MAX)"
 ---
 Some(
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 9,
         end: 10,
-        is_public: false,
     },
 )

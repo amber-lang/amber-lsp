@@ -9,6 +9,7 @@ Some(
             FunctionSymbol {
                 arguments: [],
                 is_public: true,
+                compiler_flags: [],
             },
         ),
         data_type: Null,

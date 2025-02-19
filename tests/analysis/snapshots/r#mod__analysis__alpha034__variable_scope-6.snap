@@ -4,11 +4,15 @@ expression: a_defs.get(&166)
 ---
 Some(
     SymbolLocation {
-        file: FileId(
-            0,
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 154,
         end: 155,
-        is_public: false,
     },
 )

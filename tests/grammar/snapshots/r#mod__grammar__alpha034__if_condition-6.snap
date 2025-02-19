@@ -1,6 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "semantic_tokens_from_ast(&parse(r#\"\nfun bar(a: Text) {\n    if true {\n    }\n}\n    \"#).0)"
+expression: "semantic_tokens_from_ast(parse(&tokenize(r#\"\nfun bar(a: Text) {\n    if true {\n    }\n}\n    \"#)).0.as_ref())"
 ---
 [
     (
@@ -24,7 +24,7 @@ expression: "semantic_tokens_from_ast(&parse(r#\"\nfun bar(a: Text) {\n    if tr
         24..26,
     ),
     (
-        5,
+        12,
         27..31,
     ),
 ]

@@ -10,7 +10,20 @@ expression: "parse_unwrap(&tokenize(\"$$?\"))"
                     (
                         Command(
                             [],
-                            [],
+                            [
+                                (
+                                    Text(
+                                        "$",
+                                    ),
+                                    0..1,
+                                ),
+                                (
+                                    Text(
+                                        "$",
+                                    ),
+                                    1..2,
+                                ),
+                            ],
                             Some(
                                 (
                                     Propagate,

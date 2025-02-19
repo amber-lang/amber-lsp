@@ -4,11 +4,15 @@ expression: foo_refs
 ---
 [
     SymbolLocation {
-        file: FileId(
-            1,
+        file: (
+            FileId(
+                1,
+            ),
+            FileVersion(
+                1,
+            ),
         ),
         start: 39,
         end: 42,
-        is_public: false,
     },
 ]
