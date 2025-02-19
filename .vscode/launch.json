@@ -1,0 +1,27 @@
+// A launch configuration that compiles the extension and then opens it inside a new window
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        // Used for testing the extension with a local build of the LSP server (in `target/release`).
+        "name": "Run Extension (Release Build)",
+        "type": "extensionHost",
+        "request": "launch",
+        "runtimeExecutable": "${execPath}",
+        "args": [
+          "--disable-extensions",
+          "--extensionDevelopmentPath=${workspaceFolder}/clients/vscode"
+        ],
+        "outFiles": [
+          "${workspaceFolder}/clients/vscode/out/**/*.js"
+        ],
+        "preLaunchTask": "Build Server (Release) and Extension",
+        "skipFiles": [
+          "<node_internals>/**/*.js"
+        ],
+        "env": {
+          "SERVER_PATH": "${workspaceFolder}/target/release/amber-lsp"
+        }
+      },
+    ],
+  }

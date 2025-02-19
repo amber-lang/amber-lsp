@@ -1,0 +1,30 @@
+// See https://go.microsoft.com/fwlink/?LinkId=733558
+// for the documentation about the tasks.json format
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+      "label": "Build Extension",
+      "group": "build",
+      "type": "npm",
+      "script": "build",
+      "path": "clients/vscode/",
+      "problemMatcher": {
+        "base": "$tsc",
+        "fileLocation": ["relative", "${workspaceFolder}/clients/vscode/"]
+      },
+    },
+		{
+      "label": "Build Server (Release)",
+      "group": "build",
+      "type": "shell",
+      "command": "cargo build --release",
+      "problemMatcher": "$rustc"
+    },
+		{
+      "label": "Build Server (Release) and Extension",
+      "dependsOn": ["Build Server (Release)", "Build Extension"],
+      "problemMatcher": "$rustc"
+    }
+	]
+}

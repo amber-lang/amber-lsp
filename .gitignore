@@ -21,4 +21,4 @@ Cargo.lock
 # Added by cargo
 
 /target
-.vscode/
+.vscode/settings.json
