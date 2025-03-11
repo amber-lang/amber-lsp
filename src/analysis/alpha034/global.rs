@@ -160,7 +160,7 @@ pub async fn analyze_global_stmnt(
             GlobalStatement::Import(
                 (is_public_import, _),
                 _,
-                (import_content, _),
+                (import_content, import_content_span),
                 _,
                 (path, path_span),
             ) => {
@@ -169,6 +169,29 @@ pub async fn analyze_global_stmnt(
                 let result = backend
                     .open_document(&map_import_path(uri, path, &backend).await)
                     .await;
+
+                {
+                    let mut symbol_table = backend
+                        .files
+                        .symbol_table
+                        .entry((file_id, file_version))
+                        .or_insert_with(|| Default::default());
+
+                    import_symbol(
+                        &mut symbol_table,
+                        &path,
+                        path_span.start..=path_span.end,
+                        Some(path_span.start..=path_span.end),
+                        &SymbolLocation {
+                            file: result.clone().unwrap_or((file_id, file_version)),
+                            start: 0,
+                            end: 1,
+                        },
+                        DataType::Null,
+                        SymbolType::ImportPath,
+                        false,
+                    );
+                }
 
                 if result.is_err() {
                     backend.files.report_error(
@@ -199,10 +222,22 @@ pub async fn analyze_global_stmnt(
 
                             match symbol_definition {
                                 Some(definition_location) => {
-                                    let symbol_info = imported_file_symbol_table
+                                    let definition_file_symbol_table = match backend
+                                        .files
+                                        .symbol_table
+                                        .get(&definition_location.file)
+                                    {
+                                        Some(symbol_table) => symbol_table.clone(),
+                                        None => return,
+                                    };
+
+                                    let symbol_info = match definition_file_symbol_table
                                         .symbols
                                         .get(&definition_location.start)
-                                        .unwrap();
+                                    {
+                                        Some(symbol_info) => symbol_info,
+                                        None => return,
+                                    };
 
                                     let mut symbol_table = backend
                                         .files
@@ -230,13 +265,53 @@ pub async fn analyze_global_stmnt(
                                 }
                             };
                         });
+
+                        imported_file_symbol_table
+                            .public_definitions
+                            .iter()
+                            .for_each(|(symbol, location)| {
+                                let definition_file_symbol_table =
+                                    match backend.files.symbol_table.get(&location.file) {
+                                        Some(symbol_table) => symbol_table.clone(),
+                                        None => return,
+                                    };
+
+                                let symbol_info =
+                                    match definition_file_symbol_table.symbols.get(&location.start)
+                                    {
+                                        Some(symbol_info) => symbol_info,
+                                        None => return,
+                                    };
+
+                                let mut symbol_table = backend
+                                    .files
+                                    .symbol_table
+                                    .entry((file_id, file_version))
+                                    .or_insert_with(|| Default::default());
+
+                                insert_symbol_definition(
+                                    &mut symbol_table,
+                                    symbol,
+                                    import_content_span.start..=import_content_span.end,
+                                    location,
+                                    symbol_info.data_type.clone(),
+                                    symbol_info.symbol_type.clone(),
+                                    false,
+                                );
+                            });
                     }
                     ImportContent::ImportAll => imported_file_symbol_table
                         .public_definitions
                         .iter()
                         .for_each(|(_, location)| {
+                            let definition_file_symbol_table =
+                                match backend.files.symbol_table.get(&location.file) {
+                                    Some(symbol_table) => symbol_table.clone(),
+                                    None => return,
+                                };
+
                             let symbol_info =
-                                match imported_file_symbol_table.symbols.get(&location.start) {
+                                match definition_file_symbol_table.symbols.get(&location.start) {
                                     Some(symbol_info) => symbol_info,
                                     None => return,
                                 };
@@ -259,27 +334,6 @@ pub async fn analyze_global_stmnt(
                             );
                         }),
                 }
-
-                let mut symbol_table = backend
-                    .files
-                    .symbol_table
-                    .entry((file_id, file_version))
-                    .or_insert_with(|| Default::default());
-
-                import_symbol(
-                    &mut symbol_table,
-                    &path,
-                    path_span.start..=path_span.end,
-                    Some(path_span.start..=path_span.end),
-                    &SymbolLocation {
-                        file: imported_file,
-                        start: 0,
-                        end: 1,
-                    },
-                    DataType::Null,
-                    SymbolType::ImportPath,
-                    false,
-                );
             }
             GlobalStatement::Main(_, body) => {
                 body.iter().for_each(|stmnt| {
@@ -305,6 +359,4 @@ pub async fn analyze_global_stmnt(
             }
         }
     }
-
-    backend.files.mark_as_analyzed(&(file_id, file_version));
 }

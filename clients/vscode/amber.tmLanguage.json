@@ -58,7 +58,7 @@
 				"name": "entity.name.function"
 			},
 			{
-				"name" : "support.function.git-rebase.amber.symbol",
+				"name" : "keyword.operator",
 				"match" : "(\\+|\\-|\\^|\\*|\\=|\\||\\%|!|>|<|[.]{2}|\\?)"
 			},
 			{

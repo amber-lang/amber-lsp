@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use chumsky::span::SimpleSpan;
 use ropey::Rope;
+use tokio::sync::RwLock;
 use tower_lsp::lsp_types::Url;
 
 use crate::{
@@ -9,7 +10,7 @@ use crate::{
     fs::FS,
     grammar::{Grammar, Spanned, SpannedSemanticToken},
     paths::{FileId, PathInterner},
-    utils::{FastDashMap, FastDashSet},
+    utils::FastDashMap,
 };
 
 #[derive(Copy, Debug, Clone, PartialEq, Eq, Hash)]
@@ -21,11 +22,21 @@ impl Into<i32> for FileVersion {
     }
 }
 
+impl FileVersion {
+    pub fn prev_n_version(&self, n: i32) -> FileVersion {
+        if self.0 - n < 1 {
+            return FileVersion(1);
+        }
+
+        FileVersion(self.0 - n)
+    }
+}
+
 #[derive(Debug)]
 pub struct Files {
     paths: PathInterner,
     file_versions: FastDashMap<FileId, FileVersion>,
-    analyzed_files: FastDashSet<(FileId, FileVersion)>,
+    pub analyze_lock: FastDashMap<(FileId, FileVersion), RwLock<()>>,
     pub fs: Arc<dyn FS>,
     pub ast_map: FastDashMap<(FileId, FileVersion), Grammar>,
     pub errors: FastDashMap<(FileId, FileVersion), Vec<Spanned<String>>>,
@@ -49,13 +60,13 @@ impl Files {
             semantic_token_map: FastDashMap::default(),
             symbol_table: FastDashMap::default(),
             generic_types: GenericsMap::new(),
-            analyzed_files: FastDashSet::default(),
+            analyze_lock: FastDashMap::default(),
         }
     }
 
-    pub fn insert(&self, url: Url, version: FileVersion) -> FileId {
+    pub async fn insert(&self, url: Url, version: FileVersion) -> FileId {
         let file_id = self.paths.insert(url);
-        self.add_new_file_version(file_id, version);
+        self.add_new_file_version(file_id, version).await;
 
         file_id
     }
@@ -68,27 +79,28 @@ impl Files {
         self.paths.get(url)
     }
 
-    pub fn add_new_file_version(&self, file_id: FileId, version: FileVersion) {
+    pub async fn add_new_file_version(&self, file_id: FileId, version: FileVersion) {
         match self.file_versions.insert(file_id, version) {
             Some(old_version) => {
-                self.remove_file_version(file_id, old_version);
+                self.remove_file_version(file_id, old_version).await;
             }
             None => {}
         }
     }
 
-    fn remove_file_version(&self, file_id: FileId, version: FileVersion) {
+    async fn remove_file_version(&self, file_id: FileId, version: FileVersion) {
         self.ast_map.remove(&(file_id, version));
         self.errors.remove(&(file_id, version));
         self.document_map.remove(&(file_id, version));
         self.semantic_token_map.remove(&(file_id, version));
         self.symbol_table.remove(&(file_id, version));
         self.generic_types.clean(file_id, version);
-        self.analyzed_files.remove(&(file_id, version));
-    }
 
-    pub fn add_new_file_default(&self, file_id: FileId) {
-        self.add_new_file_version(file_id, DEFAULT_VERSION);
+        if 10 > version.0 {
+            return
+        }
+        // Remove the lock from 10 versions ago
+        self.analyze_lock.remove(&(file_id, version.prev_n_version(10)));
     }
 
     pub fn change_latest_file_version(&self, file_id: FileId, new_version: FileVersion) {
@@ -134,7 +146,6 @@ impl Files {
                 .get_generics(file_id, current_versions)
                 .clone(),
         );
-        self.analyzed_files.insert((file_id, new_version));
     }
 
     pub fn get_latest_version(&self, file_id: FileId) -> FileVersion {
@@ -159,11 +170,14 @@ impl Files {
         self.errors.insert(*file, errors);
     }
 
-    pub fn mark_as_analyzed(&self, file: &(FileId, FileVersion)) {
-        self.analyzed_files.insert(*file);
-    }
-
-    pub fn is_analyzed(&self, file: &(FileId, FileVersion)) -> bool {
-        self.analyzed_files.contains(file)
+    #[tracing::instrument(skip_all)]
+    pub async fn is_file_analyzed(&self, file: &(FileId, FileVersion)) -> bool {
+        match self.analyze_lock.get(file) {
+            Some(lock) => {
+                let _ = lock.read().await;
+                true
+            }
+            None => false,
+        }
     }
 }

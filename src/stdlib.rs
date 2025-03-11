@@ -1,44 +1,127 @@
-use std::env::temp_dir;
+use std::{env::temp_dir, future::Future, path::PathBuf, pin::Pin};
 
-use include_dir::{include_dir, Dir};
+use include_dir::{include_dir, Dir, DirEntry};
 use tower_lsp::lsp_types::Url;
 
-use crate::backend::{AmberVersion, Backend};
+use crate::backend::Backend;
 
 pub const STDLIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/");
 
-#[tracing::instrument(skip(backend))]
-pub async fn resolve(backend: &Backend, path: String) -> Option<Url> {
-    let dir = temp_dir();
-
-    let file_name: String = path + ".ab";
+async fn save_stdlib(backend: &Backend) -> PathBuf {
+    let cache_dir = temp_dir().join("amber-lsp");
 
     let path = match backend.amber_version {
-        AmberVersion::Alpha034 => "alpha034/std/".to_string() + &file_name,
-        AmberVersion::Alpha035 => "alpha035/std/".to_string() + &file_name,
-        _ => "alpha034/std/".to_string() + &file_name,
+        _ => "alpha034/std/".to_string(),
+        // AmberVersion::Alpha034 => "alpha034/std/".to_string(),
+        // AmberVersion::Alpha035 => "alpha035/std/".to_string(),
+        // AmberVersion::Alpha040 => "alpha040/std/".to_string(),
     };
 
-    if let Some(module) = STDLIB.get_file(path.clone()) {
-        let tmp_file_path = dir.join(file_name);
-        let tmp_file_path = tmp_file_path.to_str().unwrap();
+    let _ = backend
+        .files
+        .fs
+        .create_dir_all(&cache_dir.join(path.clone()).to_str().unwrap())
+        .await;
 
-        if backend.files.fs.exists(tmp_file_path).await {
-            return Url::from_file_path(tmp_file_path).ok();
+    if let Some(dir) = STDLIB.get_dir(path.clone()) {
+        for entry in dir.entries() {
+            save_entry(backend, &cache_dir, entry).await;
         }
+    }
 
-        if backend
-            .files
-            .fs
-            .write(tmp_file_path, &module.contents_utf8().unwrap().to_string())
-            .await
-            .is_err()
-        {
-            return None;
+    cache_dir.join(path.clone())
+}
+
+fn save_entry<'a>(
+    backend: &'a Backend,
+    current_path: &'a PathBuf,
+    entry: &'a DirEntry<'a>,
+) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> {
+    Box::pin(async move {
+        match entry {
+            DirEntry::Dir(dir) => {
+                let path = current_path.join(dir.path());
+
+                let _ = backend
+                    .files
+                    .fs
+                    .create_dir_all(&path.to_str().unwrap())
+                    .await;
+                for entry in dir.entries() {
+                    save_entry(backend, &path, entry).await;
+                }
+            }
+            DirEntry::File(file) => {
+                let path = current_path.join(file.path());
+                let contents = file.contents_utf8().unwrap().to_string();
+
+                backend
+                    .files
+                    .fs
+                    .write(&path.to_str().unwrap(), &contents)
+                    .await
+                    .unwrap();
+            }
         }
+    })
+}
 
-        return Url::from_file_path(tmp_file_path).ok();
-    } else {
-        None
+#[tracing::instrument(skip(backend))]
+pub async fn resolve(backend: &Backend, path: String) -> Option<Url> {
+    let file_path: String = path + ".ab";
+
+    let memory_path = match backend.amber_version {
+        _ => PathBuf::from("alpha034/std"), // AmberVersion::Alpha034 => PathBuf::from("alpha034"),
+                                            // AmberVersion::Alpha035 => PathBuf::from("alpha035"),
+                                            // AmberVersion::Alpha040 => PathBuf::from("alpha040"),
+    }
+    .join(file_path.clone());
+
+    if !STDLIB.contains(memory_path) {
+        return None;
+    }
+
+    let base_path = save_stdlib(backend).await;
+
+    let file_path = base_path.join(file_path);
+
+    Url::from_file_path(file_path).ok()
+}
+
+pub async fn find_in_stdlib(backend: &Backend, path: &str) -> Vec<String> {
+    let parts = path.split('/').collect::<Vec<&str>>();
+
+    match backend.amber_version {
+        _ => {
+            if parts.len() > 1 {
+                return vec![];
+            }
+
+            vec!["std".to_string()]
+        } // AmberVersion::Alpha034 => {
+          //     vec!["std".to_string()]
+          // }
+          // _ => {
+          //     if parts.len() <= 1 {
+          //         return vec!["std".to_string()];
+          //     }
+
+          //     if parts.len() > 1 && parts[0] != "std" {
+          //         return vec![];
+          //     }
+
+          //     let stdlib_dir = save_stdlib(backend).await;
+
+          //     let path_in_std = stdlib_dir.join(parts[1..].join("/"));
+
+          //     backend
+          //         .files
+          //         .fs
+          //         .read_dir(path_in_std.to_str().unwrap())
+          //         .await
+          //         .iter()
+          //         .map(|p| p.to_str().unwrap().to_string())
+          //         .collect()
+          // }
     }
 }

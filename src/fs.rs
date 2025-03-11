@@ -3,11 +3,12 @@ use std::{
     fmt::Debug,
     future::Future,
     io::Result,
+    path::PathBuf,
     pin::Pin,
     sync::{Arc, Mutex},
 };
 
-use tokio::fs::{metadata, read_to_string, write};
+use tokio::fs::{create_dir_all, metadata, read_dir, read_to_string, write};
 
 pub trait FS: Sync + Send + Debug {
     fn read<'a>(
@@ -20,6 +21,14 @@ pub trait FS: Sync + Send + Debug {
         content: &'a str,
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
     fn exists<'a>(&'a self, path: &'a str) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>>;
+    fn read_dir<'a>(
+        &'a self,
+        path: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Vec<PathBuf>> + Send + 'a>>;
+    fn create_dir_all<'a>(
+        &'a self,
+        path: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
 }
 
 #[derive(Debug)]
@@ -65,6 +74,31 @@ impl FS for MemoryFS {
             files.contains_key(path)
         })
     }
+
+    fn read_dir<'a>(
+        &'a self,
+        path: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Vec<PathBuf>> + Send + 'a>> {
+        Box::pin(async move {
+            let files = self.files.lock().unwrap();
+
+            let mut entries = Vec::new();
+            for (file, _) in files.iter() {
+                if file.starts_with(path) {
+                    entries.push(PathBuf::from(file));
+                }
+            }
+
+            return entries;
+        })
+    }
+
+    fn create_dir_all<'a>(
+        &'a self,
+        _: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
+        Box::pin(async move { Ok(()) })
+    }
 }
 
 #[derive(Debug)]
@@ -94,5 +128,31 @@ impl FS for LocalFs {
 
     fn exists<'a>(&'a self, path: &'a str) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>> {
         Box::pin(async move { metadata(path).await.is_ok() })
+    }
+
+    fn read_dir<'a>(
+        &'a self,
+        path: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Vec<PathBuf>> + Send + 'a>> {
+        Box::pin(async move {
+            let mut dir = match read_dir(path).await {
+                Ok(dir) => dir,
+                Err(_) => return Vec::new(),
+            };
+            let mut entries = Vec::new();
+
+            while let Some(child) = dir.next_entry().await.unwrap_or(None) {
+                entries.push(child.path());
+            }
+
+            entries
+        })
+    }
+
+    fn create_dir_all<'a>(
+        &'a self,
+        path: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
+        Box::pin(async move { create_dir_all(path).await })
     }
 }

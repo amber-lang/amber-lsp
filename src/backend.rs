@@ -2,15 +2,14 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use clap::builder::PossibleValue;
-use clap::ValueEnum;
 use ropey::Rope;
+use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::{Error, Result};
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
 
 use crate::analysis::alpha034::global::analyze_global_stmnt;
-use crate::analysis::{SymbolTable, SymbolType};
+use crate::analysis::{get_symbol_definition_info, FunctionSymbol, SymbolTable, SymbolType};
 use crate::files::{FileVersion, Files, DEFAULT_VERSION};
 use crate::fs::{LocalFs, FS};
 use crate::grammar::{
@@ -18,28 +17,13 @@ use crate::grammar::{
     Grammar, LSPAnalysis, ParserResponse,
 };
 use crate::paths::FileId;
+use crate::stdlib::find_in_stdlib;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AmberVersion {
-    Auto,
     Alpha034,
     Alpha035,
     Alpha040,
-}
-
-impl ValueEnum for AmberVersion {
-    fn value_variants<'a>() -> &'a [AmberVersion] {
-        &[AmberVersion::Auto, AmberVersion::Alpha034]
-    }
-
-    fn to_possible_value(&self) -> Option<PossibleValue> {
-        match self {
-            AmberVersion::Auto => Some(PossibleValue::new("auto")),
-            AmberVersion::Alpha034 => Some(PossibleValue::new("0.3.4-alpha")),
-            AmberVersion::Alpha035 => Some(PossibleValue::new("0.3.5-alpha")),
-            AmberVersion::Alpha040 => Some(PossibleValue::new("0.4.0-alpha")),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -99,7 +83,7 @@ impl Backend {
                 }
             };
 
-            let file_id = self.files.insert(uri.clone(), DEFAULT_VERSION);
+            let file_id = self.files.insert(uri.clone(), DEFAULT_VERSION).await;
 
             self.files
                 .document_map
@@ -160,6 +144,14 @@ impl Backend {
             None => return,
         };
 
+        self.files
+            .analyze_lock
+            .insert((file_id, version), RwLock::new(()));
+
+        let analyze_lock = self.files.analyze_lock.get(&(file_id, version)).unwrap();
+
+        let write_lock = analyze_lock.write().await;
+
         let tokens = self.lsp_analysis.tokenize(&rope.to_string());
 
         let ParserResponse {
@@ -192,6 +184,8 @@ impl Backend {
             }
             _ => {}
         }
+
+        let _ = write_lock.downgrade();
     }
 
     pub fn offset_to_position(&self, offset: usize, rope: &Rope) -> Option<Position> {
@@ -250,6 +244,20 @@ impl LanguageServer for Backend {
                 references_provider: Some(OneOf::Left(true)),
                 rename_provider: Some(OneOf::Left(true)),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
+                completion_provider: Some(CompletionOptions {
+                    resolve_provider: Some(false),
+                    trigger_characters: Some(vec![
+                        ":".to_string(),
+                        '"'.to_string(),
+                        ".".to_string(),
+                        "/".to_string(),
+                    ]),
+                    all_commit_characters: None,
+                    completion_item: Some(CompletionOptionsCompletionItem {
+                        label_details_support: Some(true),
+                    }),
+                    work_done_progress_options: WorkDoneProgressOptions::default(),
+                }),
                 ..ServerCapabilities::default()
             },
         })
@@ -294,7 +302,7 @@ impl LanguageServer for Backend {
 
         let version = FileVersion(params.text_document.version);
 
-        let file_id = self.files.insert(params.text_document.uri, version);
+        let file_id = self.files.insert(params.text_document.uri, version).await;
 
         self.files.document_map.insert(
             (file_id, version),
@@ -320,11 +328,6 @@ impl LanguageServer for Backend {
                     .await;
             }
         };
-
-        if self.files.is_analyzed(&(file_id, new_version)) {
-            self.publish_syntax_errors(file_id, new_version).await;
-            return;
-        }
 
         let version = self.files.get_latest_version(file_id);
 
@@ -382,7 +385,7 @@ impl LanguageServer for Backend {
                 .insert((file_id, new_version), document);
         }
 
-        self.files.add_new_file_version(file_id, new_version);
+        self.files.add_new_file_version(file_id, new_version).await;
 
         self.analize_document(file_id).await;
 
@@ -421,6 +424,10 @@ impl LanguageServer for Backend {
             Some(document) => document,
             None => return Ok(None),
         };
+
+        if !self.files.is_file_analyzed(&(file_id, file_version)).await {
+            return Ok(None);
+        }
 
         let semantic_tokens = match self.files.semantic_token_map.get(&(file_id, file_version)) {
             Some(tokens) => tokens,
@@ -494,6 +501,10 @@ impl LanguageServer for Backend {
             Some(document) => document,
             None => return Ok(None),
         };
+
+        if !self.files.is_file_analyzed(&(file_id, file_version)).await {
+            return Ok(None);
+        }
 
         let requested_range = params.range;
 
@@ -569,6 +580,10 @@ impl LanguageServer for Backend {
                 None => return Ok(None),
             };
 
+            if !self.files.is_file_analyzed(&(file_id, version)).await {
+                return Ok(None);
+            }
+
             let position = params.text_document_position_params.position;
             let char = rope
                 .try_line_to_char(position.line as usize)
@@ -613,8 +628,12 @@ impl LanguageServer for Backend {
                         match symbol_info.symbol_type {
                             SymbolType::ImportPath => {
                                 let selection_range = Range {
-                                    start: self.offset_to_position(symbol_info.span.start, &rope).unwrap(),
-                                    end: self.offset_to_position(symbol_info.span.end, &rope).unwrap(),
+                                    start: self
+                                        .offset_to_position(symbol_info.span.start, &rope)
+                                        .unwrap(),
+                                    end: self
+                                        .offset_to_position(symbol_info.span.end, &rope)
+                                        .unwrap(),
                                 };
 
                                 Some(GotoDefinitionResponse::Link(vec![LocationLink {
@@ -674,6 +693,10 @@ impl LanguageServer for Backend {
             None => return Ok(None),
         };
 
+        if !self.files.is_file_analyzed(&(file_id, version)).await {
+            return Ok(None);
+        }
+
         let position = params.text_document_position_params.position;
         let char = rope
             .try_line_to_char(position.line as usize)
@@ -714,5 +737,200 @@ impl LanguageServer for Backend {
                 },
             }),
         }))
+    }
+
+    #[tracing::instrument(skip_all)]
+    async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
+        let uri = params.text_document_position.text_document.uri;
+
+        let file_id = match self.files.get(&uri) {
+            Some(file_id) => file_id,
+            None => {
+                return Ok(None);
+            }
+        };
+        let (rope, version) = match self.files.get_document_latest_version(file_id) {
+            Some(document) => document.clone(),
+            None => {
+                return Ok(None);
+            }
+        };
+
+        if !self.files.is_file_analyzed(&(file_id, version)).await {
+            return Ok(None);
+        }
+
+        let position = params.text_document_position.position;
+        let char = rope
+            .try_line_to_char(position.line as usize)
+            .ok()
+            .unwrap_or(rope.len_chars());
+        let offset = char + position.character as usize;
+
+        let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
+            Some(symbol_table) => symbol_table.clone(),
+            None => {
+                return Ok(None);
+            }
+        };
+
+        let symbol_info = match symbol_table.symbols.get(&offset) {
+            Some(symbol) => symbol.clone(),
+            None => {
+                return Ok(None);
+            }
+        };
+
+        let completions = match symbol_info.symbol_type {
+            SymbolType::ImportPath => {
+                let stdlib_paths = find_in_stdlib(self, &symbol_info.name).await;
+
+                if stdlib_paths.contains(&symbol_info.name) {
+                    return Ok(None);
+                }
+
+                let mut completions: Vec<CompletionItem> = stdlib_paths
+                    .iter()
+                    .map(|file| CompletionItem {
+                        label: file.clone(),
+                        kind: Some(CompletionItemKind::MODULE),
+                        ..CompletionItem::default()
+                    })
+                    .collect();
+
+                let file_path = uri.to_file_path().unwrap().canonicalize().unwrap();
+                let mut searched_path = file_path.parent().unwrap().to_path_buf();
+                searched_path.push(symbol_info.name.clone());
+
+                if let Ok(path) = searched_path.canonicalize() {
+                    if path.is_file() {
+                        return Ok(None);
+                    }
+                }
+
+                let dir_to_search = if symbol_info.name.ends_with("/") || searched_path.is_dir() {
+                    searched_path.as_path()
+                } else {
+                    searched_path.parent().unwrap()
+                };
+
+                for entry_path in self
+                    .files
+                    .fs
+                    .read_dir(dir_to_search.to_str().unwrap())
+                    .await
+                {
+                    let entry_name = entry_path
+                        .file_name()
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string();
+
+                    let entry_kind = if entry_path.is_symlink() {
+                        let target = entry_path.read_link();
+
+                        match target {
+                            Ok(target) if target.is_dir() => CompletionItemKind::FOLDER,
+                            _ => CompletionItemKind::FILE,
+                        }
+                    } else {
+                        if entry_path.is_dir() {
+                            CompletionItemKind::FOLDER
+                        } else {
+                            CompletionItemKind::FILE
+                        }
+                    };
+
+                    let absolute_entry_path = entry_path.canonicalize().unwrap();
+
+                    if absolute_entry_path != file_path
+                        && (entry_path.is_dir()
+                            || entry_path.extension().map(|ext| ext.to_str().unwrap())
+                                == Some("ab"))
+                    {
+                        completions.push(CompletionItem {
+                            label: entry_name.clone(),
+                            kind: Some(entry_kind),
+                            text_edit: Some(CompletionTextEdit::Edit(TextEdit {
+                                range: Range {
+                                    start: Position {
+                                        line: position.line,
+                                        character: position.character
+                                            - symbol_info.name.split("/").last().unwrap_or("").len()
+                                                as u32, // Move back by prefix length
+                                    },
+                                    end: Position {
+                                        line: position.line,
+                                        character: position.character,
+                                    },
+                                },
+                                new_text: entry_name,
+                            })),
+                            ..CompletionItem::default()
+                        });
+                    }
+                }
+
+                completions
+            }
+            SymbolType::Variable(_) | SymbolType::Function(_) => {
+                // TODO: completion of possible imports in import specific blocks
+                let mut completions = vec![];
+
+                for (name, _) in symbol_table.definitions.iter() {
+                    let symbol_info = match get_symbol_definition_info(
+                        &self.files,
+                        name,
+                        &(file_id, version),
+                        offset,
+                    ) {
+                        Some(symbol_info) => symbol_info,
+                        None => {
+                            continue;
+                        }
+                    };
+
+                    match symbol_info.symbol_type {
+                        SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {
+                            completions.push(CompletionItem {
+                                label: name.clone(),
+                                insert_text: Some(format!(
+                                    "{}({})",
+                                    name,
+                                    arguments
+                                        .iter()
+                                        .enumerate()
+                                        .map(|(idx, (arg, _))| format!("${{{}:{}}}", idx + 1, arg))
+                                        .collect::<Vec<String>>()
+                                        .join(", ")
+                                )),
+                                kind: Some(CompletionItemKind::FUNCTION),
+                                detail: Some(symbol_info.to_string(&self.files.generic_types)),
+                                insert_text_format: Some(InsertTextFormat::SNIPPET),
+                                ..CompletionItem::default()
+                            });
+                        }
+                        SymbolType::Variable(_) => {
+                            completions.push(CompletionItem {
+                                label: name.clone(),
+                                kind: Some(CompletionItemKind::VARIABLE),
+                                label_details: Some(CompletionItemLabelDetails {
+                                    description: Some(
+                                        symbol_info.data_type.to_string(&self.files.generic_types),
+                                    ),
+                                    detail: None,
+                                }),
+                                ..CompletionItem::default()
+                            });
+                        }
+                        _ => continue,
+                    };
+                }
+
+                completions
+            }
+        };
+
+        Ok(Some(CompletionResponse::Array(completions)))
     }
 }

@@ -4,17 +4,56 @@ use std::{
 };
 
 use amber_lsp::backend::{AmberVersion, Backend};
-use clap::Parser;
+use clap::{builder::PossibleValue, Parser, ValueEnum};
 use tower_lsp::{LspService, Server};
 use tracing::subscriber;
 use tracing_subscriber::fmt::format::FmtSpan;
+
+#[derive(Clone, Debug, PartialEq)]
+enum CliAmberVersion {
+    Auto,
+    Alpha034,
+    Alpha035,
+    Alpha040,
+}
+
+impl Into<AmberVersion> for CliAmberVersion {
+    fn into(self) -> AmberVersion {
+        match self {
+            CliAmberVersion::Auto => AmberVersion::Alpha034,
+            CliAmberVersion::Alpha034 => AmberVersion::Alpha034,
+            CliAmberVersion::Alpha035 => AmberVersion::Alpha035,
+            CliAmberVersion::Alpha040 => AmberVersion::Alpha040,
+        }
+    }
+}
+
+impl ValueEnum for CliAmberVersion {
+    fn value_variants<'a>() -> &'a [CliAmberVersion] {
+        &[
+            CliAmberVersion::Auto,
+            CliAmberVersion::Alpha034,
+            CliAmberVersion::Alpha035,
+            CliAmberVersion::Alpha040,
+        ]
+    }
+
+    fn to_possible_value(&self) -> Option<PossibleValue> {
+        match self {
+            CliAmberVersion::Auto => Some(PossibleValue::new("auto")),
+            CliAmberVersion::Alpha034 => Some(PossibleValue::new("0.3.4-alpha")),
+            CliAmberVersion::Alpha035 => Some(PossibleValue::new("0.3.5-alpha")),
+            CliAmberVersion::Alpha040 => Some(PossibleValue::new("0.4.0-alpha")),
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
     /// Version of the Amber language to use.
     #[arg(value_enum, long, short, default_value = "auto")]
-    amber_version: AmberVersion,
+    amber_version: CliAmberVersion,
 }
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
@@ -36,7 +75,13 @@ async fn main() {
         // Log to stderr
         // .with_writer(std::io::stderr)
         // log to a file
-        .with_writer(std::fs::OpenOptions::new().create(true).append(true).open("amber-lsp.log").unwrap())
+        .with_writer(
+            std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open("amber-lsp.log")
+                .unwrap(),
+        )
         // Disabled ANSI color codes for better compatibility with some terminals
         .with_ansi(false)
         // Build the subscriber
@@ -50,10 +95,10 @@ async fn main() {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
-    let amber_version = if args.amber_version == AmberVersion::Auto {
+    let amber_version = if args.amber_version == CliAmberVersion::Auto {
         detect_amber_version()
     } else {
-        args.amber_version
+        args.amber_version.into()
     };
 
     let (service, socket) = LspService::new(|client| Backend::new(client, amber_version, None));
@@ -81,6 +126,6 @@ fn detect_amber_version() -> AmberVersion {
         Some("0.3.4-alpha") => AmberVersion::Alpha034,
         Some("0.3.5-alpha") => AmberVersion::Alpha035,
         Some("0.4.0-alpha") => AmberVersion::Alpha040,
-        _ => AmberVersion::Auto,
+        _ => AmberVersion::Alpha034,
     }
 }

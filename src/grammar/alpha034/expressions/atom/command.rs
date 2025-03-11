@@ -21,7 +21,7 @@ pub fn command_parser<'a>(
 
     let command_option = just(T!["-"])
         .then(just(T!["-"]).or_not())
-        .then(any().or_not())
+        .then(none_of([T!["{"], T!["$"], T!["\\"], T!["-"]]).or_not())
         .map(|((_, second_dash), option)| {
             let dashes = if second_dash.is_some() { "--" } else { "-" };
 

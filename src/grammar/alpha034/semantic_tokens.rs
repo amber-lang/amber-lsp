@@ -37,23 +37,29 @@ pub fn semantic_tokens_from_ast(
 
         for (statement, _) in ast {
             match statement {
-                GlobalStatement::Import(is_pub, imp, import_content, from, path) => {
-                    if is_pub.0 {
+                GlobalStatement::Import(
+                    (is_pub, is_pub_span),
+                    (_, import_keyword_span),
+                    import_content,
+                    (_, from_keyword_span),
+                    (_, path_span),
+                ) => {
+                    if *is_pub {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::MODIFIER),
-                            is_pub.1.clone(),
+                            is_pub_span.clone(),
                         ));
                     }
 
                     tokens.push((
                         hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                        imp.1.clone(),
+                        import_keyword_span.clone(),
                     ));
 
                     match import_content {
                         (ImportContent::ImportAll, span) => {
                             tokens.push((
-                                hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                                hash_semantic_token_type(SemanticTokenType::VARIABLE),
                                 span.clone(),
                             ));
                         }
@@ -69,12 +75,12 @@ pub fn semantic_tokens_from_ast(
 
                     tokens.push((
                         hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                        from.1.clone(),
+                        from_keyword_span.clone(),
                     ));
 
                     tokens.push((
                         hash_semantic_token_type(SemanticTokenType::STRING),
-                        path.1.clone(),
+                        *path_span,
                     ));
                 }
                 GlobalStatement::FunctionDefinition(
@@ -488,10 +494,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
             .iter()
             .flat_map(|expr| semantic_tokens_from_expr(expr))
             .collect(),
-        Expression::Boolean(_) => vec![(
-            hash_semantic_token_type(CONSTANT),
-            span.clone(),
-        )],
+        Expression::Boolean(_) => vec![(hash_semantic_token_type(CONSTANT), span.clone())],
         Expression::Cast(expr, (_, as_span), (_, ty_span)) => {
             let mut tokens = vec![];
 
@@ -528,16 +531,10 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
                     tokens.extend(semantic_tokens_from_expr(expr));
                 }
                 InterpolatedCommand::CommandOption(_) => {
-                    tokens.push((
-                        hash_semantic_token_type(CONSTANT),
-                        span.clone(),
-                    ));
+                    tokens.push((hash_semantic_token_type(CONSTANT), span.clone()));
                 }
                 InterpolatedCommand::Escape(_) => {
-                    tokens.push((
-                        hash_semantic_token_type(ESCAPE_SEQUENCE),
-                        span.clone(),
-                    ));
+                    tokens.push((hash_semantic_token_type(ESCAPE_SEQUENCE), span.clone()));
                 }
             });
 
@@ -719,10 +716,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
 
             tokens
         }
-        Expression::Null => vec![(
-            hash_semantic_token_type(CONSTANT),
-            span.clone(),
-        )],
+        Expression::Null => vec![(hash_semantic_token_type(CONSTANT), span.clone())],
         Expression::Number(_) => vec![(
             hash_semantic_token_type(SemanticTokenType::NUMBER),
             span.clone(),
