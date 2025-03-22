@@ -71,13 +71,10 @@ export function activate(context: ExtensionContext) {
 					return;
 				}
 
-				console.log('[pathEdits] Cursor is inside a string');
 				// Trigger the completion request
 				const result = await commands.executeCommand('vscode.executeCompletionItemProvider', document.uri, position)
 
-				console.log('result', result)
 				if ((Array.isArray(result) && result.length) || (result as CompletionList).items.length) {
-					console.log('[pathEdits] Completion result:', result);
 					commands.executeCommand('editor.action.triggerSuggest');
 				}
 			}
@@ -86,25 +83,9 @@ export function activate(context: ExtensionContext) {
 
 	context.subscriptions.push(pathEdits);
 
-
 	client.setTrace(Trace.Verbose)
 	client.start();
 }
-
-// const completeProvider = languages.registerCompletionItemProvider('amber', {
-// 	provideCompletionItems(document: TextDocument, position: Position) {
-// 		const lineText = document.lineAt(position.line).text;
-
-// 		// Check if the cursor is inside a string
-// 		if (isInsideString(lineText, position.character)) {
-// 			console.log('Cursor is inside a string');
-// 			// Trigger the LSP completion request
-// 			return commands.executeCommand('vscode.executeCompletionItemProvider', document.uri, position);
-// 		}
-
-// 		return [];
-// 	}
-// });
 
 const isInsideString = (lineText: string, charPosition: number): boolean => {
 	const textBeforeCursor = lineText.substring(0, charPosition);
