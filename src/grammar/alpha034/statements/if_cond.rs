@@ -15,7 +15,7 @@ fn else_cond_parser<'a>(
 ) -> impl AmberParser<'a, Spanned<ElseCondition>> {
     let else_condition = just(T!["else"])
         .map_with(|_, e| ("else".to_string(), e.span()))
-        .then(block_parser(stmnts.clone()))
+        .then(block_parser(stmnts.clone(), false))
         .map_with(|(else_keyword, body), e| (ElseCondition::Else(else_keyword, body), e.span()));
 
     let else_inline = just(T!["else"])
@@ -58,7 +58,7 @@ fn cond_parser<'a>(
         });
 
     let if_condition = parse_expr(stmnts.clone())
-        .then(block_parser(stmnts))
+        .then(block_parser(stmnts, false))
         .map_with(|(cond, body), e| (IfCondition::IfCondition(Box::new(cond), body), e.span()));
 
     choice((inline_if, if_condition)).boxed()

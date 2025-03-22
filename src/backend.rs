@@ -9,7 +9,9 @@ use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
 
 use crate::analysis::alpha034::global::analyze_global_stmnt;
-use crate::analysis::{get_symbol_definition_info, FunctionSymbol, SymbolTable, SymbolType};
+use crate::analysis::{
+    get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType,
+};
 use crate::files::{FileVersion, Files, DEFAULT_VERSION};
 use crate::fs::{LocalFs, FS};
 use crate::grammar::{
@@ -601,7 +603,7 @@ impl LanguageServer for Backend {
                 None => return Ok(None),
             };
 
-            if symbol_info.undefined || symbol_info.is_definition {
+            if symbol_info.symbol_type != SymbolType::ImportPath && (symbol_info.undefined || symbol_info.is_definition) {
                 return Ok(None);
             }
 
@@ -757,8 +759,10 @@ impl LanguageServer for Backend {
         };
 
         if !self.files.is_file_analyzed(&(file_id, version)).await {
+            self.client.log_message(MessageType::INFO, format!("file not analyzed!")).await;
             return Ok(None);
         }
+        self.client.log_message(MessageType::INFO, format!("file analyzed!")).await;
 
         let position = params.text_document_position.position;
         let char = rope
@@ -774,12 +778,16 @@ impl LanguageServer for Backend {
             }
         };
 
+        self.client.log_message(MessageType::INFO, format!("symbol table: {:?}", symbol_table)).await;
+
         let symbol_info = match symbol_table.symbols.get(&offset) {
             Some(symbol) => symbol.clone(),
             None => {
                 return Ok(None);
             }
         };
+
+        self.client.log_message(MessageType::INFO, format!("symbol_info: {:?}", symbol_info)).await;
 
         let completions = match symbol_info.symbol_type {
             SymbolType::ImportPath => {
@@ -873,46 +881,77 @@ impl LanguageServer for Backend {
 
                 completions
             }
-            SymbolType::Variable(_) | SymbolType::Function(_) => {
-                // TODO: completion of possible imports in import specific blocks
+            SymbolType::Variable | SymbolType::Function(_) => {
                 let mut completions = vec![];
 
-                for (name, _) in symbol_table.definitions.iter() {
-                    let symbol_info = match get_symbol_definition_info(
-                        &self.files,
-                        name,
-                        &(file_id, version),
-                        offset,
-                    ) {
-                        Some(symbol_info) => symbol_info,
-                        None => {
-                            continue;
-                        }
-                    };
+                let import_context = symbol_info
+                    .contexts
+                    .iter()
+                    .find(|ctx| matches!(ctx, Context::Import(_)));
 
+                let definitions = match import_context {
+                    Some(Context::Import(import_ctx)) => import_ctx
+                        .public_definitions
+                        .iter()
+                        .filter_map(|(name, location)| {
+                            if import_ctx.imported_symbols.contains(name) {
+                                return None
+                            }
+
+                            return get_symbol_definition_info(
+                                &self.files,
+                                name,
+                                &location.file,
+                                usize::MAX,
+                            )
+                        })
+                        .collect::<Vec<SymbolInfo>>(),
+                    _ => symbol_table
+                        .definitions
+                        .iter()
+                        .filter_map(|(name, _)| {
+                            get_symbol_definition_info(
+                                &self.files,
+                                name,
+                                &(file_id, version),
+                                offset,
+                            )
+                        })
+                        .collect::<Vec<SymbolInfo>>(),
+                };
+
+                for symbol_info in definitions.iter() {
                     match symbol_info.symbol_type {
                         SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {
                             completions.push(CompletionItem {
-                                label: name.clone(),
-                                insert_text: Some(format!(
-                                    "{}({})",
-                                    name,
-                                    arguments
-                                        .iter()
-                                        .enumerate()
-                                        .map(|(idx, (arg, _))| format!("${{{}:{}}}", idx + 1, arg))
-                                        .collect::<Vec<String>>()
-                                        .join(", ")
-                                )),
+                                label: symbol_info.name.clone(),
+                                insert_text: if import_context.is_some() {
+                                    Some(symbol_info.name.clone())
+                                } else {
+                                    Some(format!(
+                                        "{}({})",
+                                        symbol_info.name,
+                                        arguments
+                                            .iter()
+                                            .enumerate()
+                                            .map(|(idx, (arg, _))| format!(
+                                                "${{{}:{}}}",
+                                                idx + 1,
+                                                arg
+                                            ))
+                                            .collect::<Vec<String>>()
+                                            .join(", ")
+                                    ))
+                                },
                                 kind: Some(CompletionItemKind::FUNCTION),
                                 detail: Some(symbol_info.to_string(&self.files.generic_types)),
                                 insert_text_format: Some(InsertTextFormat::SNIPPET),
                                 ..CompletionItem::default()
                             });
                         }
-                        SymbolType::Variable(_) => {
+                        SymbolType::Variable => {
                             completions.push(CompletionItem {
-                                label: name.clone(),
+                                label: symbol_info.name.clone(),
                                 kind: Some(CompletionItemKind::VARIABLE),
                                 label_details: Some(CompletionItemLabelDetails {
                                     description: Some(

@@ -17,7 +17,7 @@ pub fn inf_loop_parser<'a>(
 ) -> impl AmberParser<'a, Spanned<Statement>> {
     just(T!["loop"])
         .map_with(|_, e| ("loop".to_string(), e.span()))
-        .then(block_parser(stmnts))
+        .then(block_parser(stmnts, false))
         .map_with(|(loop_keyword, block), e| {
             (Statement::InfiniteLoop(loop_keyword, block), e.span())
         })
@@ -61,7 +61,7 @@ pub fn iter_loop_parser<'a>(
             )),
         )
         .then(
-            block_parser(stmnts).recover_with(via_parser(
+            block_parser(stmnts, false).recover_with(via_parser(
                 default_recovery()
                     .or_not()
                     .map_with(|_, e| (Block::Error, e.span())),

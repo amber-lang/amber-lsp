@@ -2,7 +2,7 @@ use crate::{
     analysis::{
         get_symbol_definition_info, insert_symbol_reference,
         types::{make_union_type, matches_type, GenericsMap},
-        SymbolInfo, SymbolLocation, SymbolType, VarSymbol,
+        Context, SymbolInfo, SymbolLocation, SymbolType,
     },
     files::{FileVersion, Files},
     grammar::{
@@ -22,6 +22,7 @@ pub fn analyze_exp(
     expected_type: DataType,
     files: &Files,
     scoped_generic_types: &GenericsMap,
+    contexts: &Vec<Context>,
 ) -> DataType {
     let exp_span_inclusive = exp_span.start..=exp_span.end;
 
@@ -59,6 +60,7 @@ pub fn analyze_exp(
                             ty.clone(),
                             files,
                             scoped_generic_types,
+                            contexts,
                         );
 
                         match ty {
@@ -96,6 +98,7 @@ pub fn analyze_exp(
                     failure,
                     files,
                     scoped_generic_types,
+                    contexts,
                 );
             }
 
@@ -108,6 +111,7 @@ pub fn analyze_exp(
                     end: name_span.end,
                 },
                 scoped_generic_types,
+                contexts,
             );
 
             return_type
@@ -122,6 +126,7 @@ pub fn analyze_exp(
                     end: name_span.end,
                 },
                 scoped_generic_types,
+                contexts,
             );
 
             match get_symbol_definition_info(files, &name, &file, name_span.start) {
@@ -144,6 +149,7 @@ pub fn analyze_exp(
                 ]),
                 files,
                 scoped_generic_types,
+                contexts,
             );
             let right_hand_ty = analyze_exp(
                 file_id,
@@ -152,6 +158,7 @@ pub fn analyze_exp(
                 ty.clone(),
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             if let DataType::Generic(id) = ty {
@@ -180,6 +187,7 @@ pub fn analyze_exp(
                 DataType::Boolean,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -188,6 +196,7 @@ pub fn analyze_exp(
                 DataType::Boolean,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -203,6 +212,7 @@ pub fn analyze_exp(
                         DataType::Union(vec![DataType::Number, DataType::Text]),
                         files,
                         scoped_generic_types,
+                        contexts,
                     )
                 })
                 .collect();
@@ -230,6 +240,7 @@ pub fn analyze_exp(
                 DataType::Any,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             ty.clone()
@@ -244,6 +255,7 @@ pub fn analyze_exp(
                         DataType::Any,
                         files,
                         scoped_generic_types,
+                        contexts,
                     );
                 }
                 _ => {}
@@ -256,6 +268,7 @@ pub fn analyze_exp(
                     failure,
                     files,
                     scoped_generic_types,
+                    contexts,
                 );
             }
 
@@ -269,6 +282,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -277,6 +291,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Number
@@ -289,6 +304,7 @@ pub fn analyze_exp(
                 DataType::Any,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -297,6 +313,7 @@ pub fn analyze_exp(
                 DataType::Any,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -309,6 +326,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -317,6 +335,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -329,6 +348,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -337,6 +357,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -349,6 +370,7 @@ pub fn analyze_exp(
                 DataType::Any,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -361,6 +383,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -369,6 +392,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -381,6 +405,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -389,6 +414,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -401,6 +427,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -409,6 +436,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Number
@@ -421,6 +449,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -429,6 +458,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Number
@@ -441,6 +471,7 @@ pub fn analyze_exp(
                 DataType::Any,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Text
@@ -453,6 +484,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Number
@@ -465,6 +497,7 @@ pub fn analyze_exp(
                 DataType::Any,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -473,6 +506,7 @@ pub fn analyze_exp(
                 DataType::Any,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -485,6 +519,7 @@ pub fn analyze_exp(
                 DataType::Boolean,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -497,6 +532,7 @@ pub fn analyze_exp(
                 DataType::Boolean,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -505,6 +541,7 @@ pub fn analyze_exp(
                 DataType::Boolean,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Boolean
@@ -516,6 +553,7 @@ pub fn analyze_exp(
             DataType::Any,
             files,
             scoped_generic_types,
+            contexts,
         ),
         Expression::Range(exp1, exp2) => {
             analyze_exp(
@@ -525,6 +563,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -533,6 +572,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Array(Box::new(DataType::Number))
@@ -545,6 +585,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             analyze_exp(
                 file_id,
@@ -553,6 +594,7 @@ pub fn analyze_exp(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             DataType::Number
@@ -565,6 +607,7 @@ pub fn analyze_exp(
                 DataType::Boolean,
                 files,
                 scoped_generic_types,
+                contexts,
             );
             let if_true = analyze_exp(
                 file_id,
@@ -573,6 +616,7 @@ pub fn analyze_exp(
                 expected_type.clone(),
                 files,
                 scoped_generic_types,
+                contexts,
             );
             let if_false = analyze_exp(
                 file_id,
@@ -581,6 +625,7 @@ pub fn analyze_exp(
                 expected_type.clone(),
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             make_union_type(vec![if_true, if_false])
@@ -595,6 +640,7 @@ pub fn analyze_exp(
                         DataType::Any,
                         files,
                         scoped_generic_types,
+                        contexts,
                     );
                 }
                 _ => {}
@@ -611,11 +657,12 @@ pub fn analyze_exp(
                 exp_span_inclusive,
                 SymbolInfo {
                     name: "status".to_string(),
-                    symbol_type: SymbolType::Variable(VarSymbol {}),
+                    symbol_type: SymbolType::Variable,
                     data_type: DataType::Number,
                     is_definition: false,
                     undefined: false,
                     span: *exp_span,
+                    contexts: contexts.clone(),
                 },
             );
 

@@ -1,8 +1,10 @@
+use tracing::info;
+
 use crate::{
     analysis::{
         get_symbol_definition_info, insert_symbol_definition, insert_symbol_reference,
         types::{make_union_type, matches_type, GenericsMap},
-        DataType, SymbolLocation, SymbolType, VarSymbol,
+        BlockContext, Context, DataType, SymbolLocation, SymbolType,
     },
     files::{FileVersion, Files},
     grammar::{alpha034::*, Spanned},
@@ -22,12 +24,20 @@ pub fn analyze_stmnt(
     files: &Files,
     scope_end: usize,
     scoped_generic_types: &GenericsMap,
+    contexts: &Vec<Context>,
 ) -> Option<DataType> {
     let file = (file_id, file_version);
 
     match stmnt {
         Statement::Block(block) => {
-            return analyze_block(file_id, file_version, block, files, scoped_generic_types);
+            return analyze_block(
+                file_id,
+                file_version,
+                block,
+                files,
+                scoped_generic_types,
+                contexts,
+            );
         }
         Statement::IfChain(_, if_chain) => {
             for (if_chain_content, _) in if_chain.iter() {
@@ -41,6 +51,7 @@ pub fn analyze_stmnt(
                                 DataType::Boolean,
                                 files,
                                 scoped_generic_types,
+                                contexts,
                             );
                             return analyze_block(
                                 file_id,
@@ -48,6 +59,7 @@ pub fn analyze_stmnt(
                                 block,
                                 files,
                                 scoped_generic_types,
+                                contexts,
                             );
                         }
                         IfCondition::InlineIfCondition(exp, boxed_stmnt) => {
@@ -58,6 +70,7 @@ pub fn analyze_stmnt(
                                 DataType::Boolean,
                                 files,
                                 scoped_generic_types,
+                                contexts,
                             );
                             return analyze_stmnt(
                                 file_id,
@@ -66,6 +79,7 @@ pub fn analyze_stmnt(
                                 files,
                                 boxed_stmnt.1.end,
                                 scoped_generic_types,
+                                contexts,
                             );
                         }
                         _ => {}
@@ -78,6 +92,7 @@ pub fn analyze_stmnt(
                                 block,
                                 files,
                                 scoped_generic_types,
+                                contexts,
                             );
                         }
                         ElseCondition::InlineElse(_, stmnt) => {
@@ -88,6 +103,7 @@ pub fn analyze_stmnt(
                                 files,
                                 stmnt.1.end,
                                 scoped_generic_types,
+                                contexts,
                             );
                         }
                     },
@@ -104,6 +120,7 @@ pub fn analyze_stmnt(
                         DataType::Boolean,
                         files,
                         scoped_generic_types,
+                        contexts,
                     );
                     return analyze_block(
                         file_id,
@@ -111,6 +128,7 @@ pub fn analyze_stmnt(
                         block,
                         files,
                         scoped_generic_types,
+                        contexts,
                     );
                 }
                 IfCondition::InlineIfCondition(exp, boxed_stmnt) => {
@@ -121,6 +139,7 @@ pub fn analyze_stmnt(
                         DataType::Boolean,
                         files,
                         scoped_generic_types,
+                        contexts,
                     );
                     return analyze_stmnt(
                         file_id,
@@ -129,6 +148,7 @@ pub fn analyze_stmnt(
                         files,
                         boxed_stmnt.1.end,
                         scoped_generic_types,
+                        contexts,
                     );
                 }
                 _ => {}
@@ -143,6 +163,7 @@ pub fn analyze_stmnt(
                             block,
                             files,
                             scoped_generic_types,
+                            contexts,
                         );
                     }
                     ElseCondition::InlineElse(_, stmnt) => {
@@ -153,13 +174,23 @@ pub fn analyze_stmnt(
                             files,
                             stmnt.1.end,
                             scoped_generic_types,
+                            contexts,
                         );
                     }
                 }
             }
         }
         Statement::InfiniteLoop(_, block) => {
-            return analyze_block(file_id, file_version, block, files, scoped_generic_types);
+            let mut new_contexts = contexts.clone();
+            new_contexts.push(Context::Loop);
+            return analyze_block(
+                file_id,
+                file_version,
+                block,
+                files,
+                scoped_generic_types,
+                &new_contexts,
+            );
         }
         Statement::IterLoop(_, (vars, _), _, exp, block) => {
             let block_span = block.1.clone();
@@ -171,6 +202,7 @@ pub fn analyze_stmnt(
                 DataType::Array(Box::new(DataType::Any)),
                 files,
                 scoped_generic_types,
+                contexts,
             ) {
                 DataType::Array(ty) => *ty,
                 _ => DataType::Any,
@@ -192,8 +224,9 @@ pub fn analyze_stmnt(
                             end: var1_span.end,
                         },
                         DataType::Number,
-                        SymbolType::Variable(VarSymbol {}),
+                        SymbolType::Variable,
                         false,
+                        contexts,
                     );
 
                     insert_symbol_definition(
@@ -206,8 +239,9 @@ pub fn analyze_stmnt(
                             end: var2_span.end,
                         },
                         iter_type,
-                        SymbolType::Variable(VarSymbol {}),
+                        SymbolType::Variable,
                         false,
+                        contexts,
                     );
                 }
                 IterLoopVars::Single((var, var_span)) => {
@@ -225,14 +259,24 @@ pub fn analyze_stmnt(
                             end: var_span.end,
                         },
                         iter_type,
-                        SymbolType::Variable(VarSymbol {}),
+                        SymbolType::Variable,
                         false,
+                        contexts,
                     );
                 }
                 _ => {}
             }
 
-            return analyze_block(file_id, file_version, block, files, scoped_generic_types);
+            let mut new_contexts = contexts.clone();
+            new_contexts.push(Context::Loop);
+            return analyze_block(
+                file_id,
+                file_version,
+                block,
+                files,
+                scoped_generic_types,
+                &new_contexts,
+            );
         }
         Statement::VariableInit(_, (var_name, var_span), (value, _)) => {
             let var_type = match value {
@@ -243,6 +287,7 @@ pub fn analyze_stmnt(
                     DataType::Any,
                     files,
                     scoped_generic_types,
+                    contexts,
                 ),
                 VariableInitType::DataType((ty, _)) => ty.clone(),
                 _ => DataType::Error,
@@ -262,8 +307,9 @@ pub fn analyze_stmnt(
                     end: var_span.end,
                 },
                 scoped_generic_types.deref_type(&var_type),
-                SymbolType::Variable(VarSymbol {}),
+                SymbolType::Variable,
                 false,
+                contexts,
             );
         }
         Statement::Echo(_, exp) => {
@@ -274,6 +320,7 @@ pub fn analyze_stmnt(
                 DataType::Any,
                 files,
                 scoped_generic_types,
+                contexts,
             );
         }
         Statement::Expression(exp) => {
@@ -284,9 +331,18 @@ pub fn analyze_stmnt(
                 DataType::Any,
                 files,
                 scoped_generic_types,
+                contexts,
             );
         }
         Statement::Fail(_, exp) => {
+            if !contexts.iter().any(|c| matches!(c, Context::Function(_) | Context::Main)) {
+                files.report_error(
+                    &file,
+                    "Fail statements can only be used inside of functions or the main block",
+                    span.clone(),
+                );
+            }
+
             if let Some(exp) = exp {
                 analyze_exp(
                     file_id,
@@ -295,10 +351,19 @@ pub fn analyze_stmnt(
                     DataType::Number,
                     files,
                     scoped_generic_types,
+                    contexts,
                 );
             }
         }
         Statement::Return(_, exp) => {
+            if !contexts.iter().any(|c| matches!(c, Context::Function(_))) {
+                files.report_error(
+                    &file,
+                    "Return statement outside of function",
+                    span.clone(),
+                );
+            }
+
             if let Some(exp) = exp {
                 let ty = analyze_exp(
                     file_id,
@@ -307,6 +372,7 @@ pub fn analyze_stmnt(
                     DataType::Any,
                     files,
                     scoped_generic_types,
+                    contexts,
                 );
 
                 return Some(ty);
@@ -336,6 +402,7 @@ pub fn analyze_stmnt(
                 var_ty.clone(),
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             if !matches_type(&default_ty, &var_ty, scoped_generic_types)
@@ -360,6 +427,7 @@ pub fn analyze_stmnt(
                     end: var_span.end,
                 },
                 scoped_generic_types,
+                contexts,
             );
         }
         Statement::ShorthandDiv((var, var_span), exp) => {
@@ -386,6 +454,7 @@ pub fn analyze_stmnt(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             insert_symbol_reference(
@@ -397,6 +466,7 @@ pub fn analyze_stmnt(
                     end: var_span.end,
                 },
                 scoped_generic_types,
+                contexts,
             );
         }
         Statement::ShorthandModulo((var, var_span), exp) => {
@@ -423,6 +493,7 @@ pub fn analyze_stmnt(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             insert_symbol_reference(
@@ -434,6 +505,7 @@ pub fn analyze_stmnt(
                     end: var_span.end,
                 },
                 scoped_generic_types,
+                contexts,
             );
         }
         Statement::ShorthandMul((var, var_span), exp) => {
@@ -460,6 +532,7 @@ pub fn analyze_stmnt(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             insert_symbol_reference(
@@ -471,6 +544,7 @@ pub fn analyze_stmnt(
                     end: var_span.end,
                 },
                 scoped_generic_types,
+                contexts,
             );
         }
         Statement::ShorthandSub((var, var_span), exp) => {
@@ -497,6 +571,7 @@ pub fn analyze_stmnt(
                 DataType::Number,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             insert_symbol_reference(
@@ -508,6 +583,7 @@ pub fn analyze_stmnt(
                     end: var_span.end,
                 },
                 scoped_generic_types,
+                contexts,
             );
         }
         Statement::VariableSet((var, var_span), exp) => {
@@ -523,6 +599,7 @@ pub fn analyze_stmnt(
                 var_ty,
                 files,
                 scoped_generic_types,
+                contexts,
             );
 
             insert_symbol_reference(
@@ -534,9 +611,20 @@ pub fn analyze_stmnt(
                     end: var_span.end,
                 },
                 scoped_generic_types,
+                contexts,
             );
         }
-        _ => {}
+        Statement::Break => {
+            if !contexts.iter().any(|c| matches!(c, Context::Loop)) {
+                files.report_error(&file, "Break statement outside of loop", span.clone());
+            }
+        }
+        Statement::Continue => {
+            if !contexts.iter().any(|c| matches!(c, Context::Loop)) {
+                files.report_error(&file, "Continue statement outside of loop", span.clone());
+            }
+        }
+        Statement::Comment(_) | Statement::Error => {}
     };
 
     None
@@ -548,9 +636,18 @@ pub fn analyze_block(
     (block, span): &Spanned<Block>,
     files: &Files,
     scoped_generic_types: &GenericsMap,
+    contexts: &Vec<Context>,
 ) -> Option<DataType> {
     let mut types: Vec<DataType> = vec![];
-    if let Block::Block(_, stmnt) = block {
+
+    info!("Analyzing block, {}", span);
+
+    if let Block::Block(modifiers, stmnt) = block {
+        let mut new_contexts = contexts.clone();
+        new_contexts.push(Context::Block(BlockContext {
+            modifiers: modifiers.iter().map(|(m, _)| m.clone()).collect(),
+        }));
+
         for stmnt in stmnt.iter() {
             if let Some(ty) = analyze_stmnt(
                 file_id,
@@ -559,6 +656,7 @@ pub fn analyze_block(
                 files,
                 span.end,
                 scoped_generic_types,
+                &new_contexts,
             ) {
                 types.push(ty);
             }
@@ -578,6 +676,7 @@ pub fn analyze_failure_handler(
     (failure, span): &Spanned<FailureHandler>,
     files: &Files,
     scoped_generic_types: &GenericsMap,
+    contexts: &Vec<Context>,
 ) {
     match failure {
         FailureHandler::Handle(_, stmnts) => {
@@ -589,6 +688,7 @@ pub fn analyze_failure_handler(
                     files,
                     span.end,
                     scoped_generic_types,
+                    contexts,
                 );
             });
         }

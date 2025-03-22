@@ -5,7 +5,7 @@ use types::GenericsMap;
 use crate::{
     files::{FileVersion, Files},
     grammar::{
-        alpha034::{CompilerFlag, DataType},
+        alpha034::{CommandModifier, CompilerFlag, DataType},
         Span,
     },
     paths::FileId,
@@ -22,12 +22,9 @@ pub struct FunctionSymbol {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct VarSymbol {}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SymbolType {
     Function(FunctionSymbol),
-    Variable(VarSymbol),
+    Variable,
     ImportPath,
 }
 
@@ -40,6 +37,32 @@ pub struct SymbolInfo {
     pub is_definition: bool,
     pub undefined: bool,
     pub span: Span,
+    pub contexts: Vec<Context>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Context {
+    Import(ImportContext),
+    Function(FunctionContext),
+    Block(BlockContext),
+    Main,
+    Loop,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct ImportContext {
+    pub public_definitions: HashMap<String, SymbolLocation>,
+    pub imported_symbols: Vec<String>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FunctionContext {
+    pub compiler_flags: Vec<CompilerFlag>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct BlockContext {
+    pub modifiers: Vec<CommandModifier>,
 }
 
 impl SymbolInfo {
@@ -123,6 +146,7 @@ pub fn insert_symbol_definition(
     data_type: DataType,
     symbol_type: SymbolType,
     is_public: bool,
+    contexts: &Vec<Context>,
 ) {
     if definition_scope.is_empty() {
         return;
@@ -143,6 +167,7 @@ pub fn insert_symbol_definition(
             is_definition: true,
             undefined: false,
             span: (definition_location.start..definition_location.end).into(),
+            contexts: contexts.clone(),
         },
     );
 
@@ -166,20 +191,17 @@ pub fn insert_symbol_definition(
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub fn import_symbol(
     symbol_table: &mut SymbolTable,
     symbol: &str,
-    definition_scope: RangeInclusive<usize>,
     symbol_span: Option<RangeInclusive<usize>>,
     definition_location: &SymbolLocation,
     data_type: DataType,
     symbol_type: SymbolType,
     is_public: bool,
+    import_context: &ImportContext,
 ) {
-    if definition_scope.is_empty() {
-        return;
-    }
-
     let definition_location_span = definition_location.start..=definition_location.end;
 
     if definition_location_span.is_empty() {
@@ -200,6 +222,7 @@ pub fn import_symbol(
                 is_definition: false,
                 undefined: false,
                 span: Span::new(*symbol_span.start(), *symbol_span.end()),
+                contexts: vec![Context::Import(import_context.clone())],
             },
         );
     }
@@ -215,7 +238,7 @@ pub fn import_symbol(
         }
     };
 
-    symbol_definitions.insert(definition_scope, definition_location.clone());
+    symbol_definitions.insert(0..=usize::MAX, definition_location.clone());
 
     if is_public {
         symbol_table
@@ -230,6 +253,7 @@ pub fn insert_symbol_reference(
     files: &Files,
     reference_location: &SymbolLocation,
     scoped_generics: &GenericsMap,
+    contexts: &Vec<Context>,
 ) {
     let span = reference_location.start..=reference_location.end;
 
@@ -291,6 +315,7 @@ pub fn insert_symbol_reference(
                     is_definition: false,
                     undefined: false,
                     span: Span::new(*span.start(), *span.end()),
+                    contexts: contexts.clone(),
                 },
             );
         }
@@ -310,11 +335,12 @@ pub fn insert_symbol_reference(
                 span.clone(),
                 SymbolInfo {
                     name: symbol.to_string(),
-                    symbol_type: SymbolType::Variable(VarSymbol {}),
+                    symbol_type: SymbolType::Variable,
                     data_type: DataType::Null,
                     is_definition: false,
                     undefined: true,
                     span: Span::new(*span.start(), *span.end()),
+                    contexts: contexts.clone(),
                 },
             );
         }

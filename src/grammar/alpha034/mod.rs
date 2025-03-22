@@ -190,7 +190,7 @@ pub enum IterLoopVars {
     Error,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum CommandModifier {
     Unsafe,
     Silent,
