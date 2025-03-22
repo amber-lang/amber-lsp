@@ -436,8 +436,8 @@ fn test_main_block() {
             echo 10
         }
 
-        main {
-            echo 3;
+        main (args) {
+            echo args;
         }
     "
     )));

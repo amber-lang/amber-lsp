@@ -2,4 +2,4 @@
 source: tests/analysis/alpha034.rs
 expression: backend.files.generic_types.to_string()
 ---
-"[0]: Num | Text | [Num | Text]\n[1]: Num | Text | [Num | Text]"
+"Num | Text | [Num | Text]\nNum | Text | [Num | Text]"

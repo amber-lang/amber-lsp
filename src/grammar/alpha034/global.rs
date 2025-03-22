@@ -233,6 +233,19 @@ pub fn main_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
     just(T!["main"])
         .map_with(|_, e| ("main".to_string(), e.span()))
         .then(
+            just(T!['('])
+                .ignore_then(
+                    ident("argument".to_string())
+                        .recover_with(via_parser(default_recovery().map(|_| "".to_string()))),
+                )
+                .then_ignore(
+                    just(T![')'])
+                        .recover_with(via_parser(default_recovery().or_not().map(|_| T![')']))),
+                )
+                .map_with(|name, e| (name, e.span()))
+                .or_not(),
+        )
+        .then(
             just(T!["{"])
                 .recover_with(via_parser(
                     default_recovery()
@@ -254,7 +267,7 @@ pub fn main_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
                         .recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
                 ),
         )
-        .map_with(|(main, body), e| (GlobalStatement::Main(main, body), e.span()))
+        .map_with(|((main, args), body), e| (GlobalStatement::Main(main, args, body), e.span()))
         .boxed()
 }
 

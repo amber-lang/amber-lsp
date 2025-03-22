@@ -9,6 +9,7 @@ expression: "parse_unwrap(&tokenize(\"\n        main {\n            echo 10;\n  
                 "main",
                 9..13,
             ),
+            None,
             [
                 (
                     Echo(

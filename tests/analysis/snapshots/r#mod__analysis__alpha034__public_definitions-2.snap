@@ -15,5 +15,7 @@ Some(
         data_type: Null,
         is_definition: true,
         undefined: false,
+        span: 8..11,
+        contexts: [],
     },
 )

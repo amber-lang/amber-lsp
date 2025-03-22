@@ -603,7 +603,9 @@ impl LanguageServer for Backend {
                 None => return Ok(None),
             };
 
-            if symbol_info.symbol_type != SymbolType::ImportPath && (symbol_info.undefined || symbol_info.is_definition) {
+            if symbol_info.symbol_type != SymbolType::ImportPath
+                && (symbol_info.undefined || symbol_info.is_definition)
+            {
                 return Ok(None);
             }
 
@@ -639,16 +641,28 @@ impl LanguageServer for Backend {
                                 };
 
                                 Some(GotoDefinitionResponse::Link(vec![LocationLink {
+                                    origin_selection_range: Some(selection_range),
                                     target_uri: file_url,
                                     target_range: Range {
-                                        start: start_position,
-                                        end: end_position,
+                                        start: Position {
+                                            line: 0,
+                                            character: 0,
+                                        },
+                                        end: Position {
+                                            line: 0,
+                                            character: 0,
+                                        },
                                     },
                                     target_selection_range: Range {
-                                        start: start_position,
-                                        end: end_position,
+                                        start: Position {
+                                            line: 0,
+                                            character: 0,
+                                        },
+                                        end: Position {
+                                            line: 0,
+                                            character: 0,
+                                        },
                                     },
-                                    origin_selection_range: Some(selection_range),
                                 }]))
                             }
                             _ => Some(GotoDefinitionResponse::Scalar(Location::new(
@@ -759,10 +773,14 @@ impl LanguageServer for Backend {
         };
 
         if !self.files.is_file_analyzed(&(file_id, version)).await {
-            self.client.log_message(MessageType::INFO, format!("file not analyzed!")).await;
+            self.client
+                .log_message(MessageType::INFO, format!("file not analyzed!"))
+                .await;
             return Ok(None);
         }
-        self.client.log_message(MessageType::INFO, format!("file analyzed!")).await;
+        self.client
+            .log_message(MessageType::INFO, format!("file analyzed!"))
+            .await;
 
         let position = params.text_document_position.position;
         let char = rope
@@ -778,7 +796,12 @@ impl LanguageServer for Backend {
             }
         };
 
-        self.client.log_message(MessageType::INFO, format!("symbol table: {:?}", symbol_table)).await;
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!("symbol table: {:?}", symbol_table),
+            )
+            .await;
 
         let symbol_info = match symbol_table.symbols.get(&offset) {
             Some(symbol) => symbol.clone(),
@@ -787,7 +810,9 @@ impl LanguageServer for Backend {
             }
         };
 
-        self.client.log_message(MessageType::INFO, format!("symbol_info: {:?}", symbol_info)).await;
+        self.client
+            .log_message(MessageType::INFO, format!("symbol_info: {:?}", symbol_info))
+            .await;
 
         let completions = match symbol_info.symbol_type {
             SymbolType::ImportPath => {
@@ -895,7 +920,7 @@ impl LanguageServer for Backend {
                         .iter()
                         .filter_map(|(name, location)| {
                             if import_ctx.imported_symbols.contains(name) {
-                                return None
+                                return None;
                             }
 
                             return get_symbol_definition_info(
@@ -903,7 +928,7 @@ impl LanguageServer for Backend {
                                 name,
                                 &location.file,
                                 usize::MAX,
-                            )
+                            );
                         })
                         .collect::<Vec<SymbolInfo>>(),
                     _ => symbol_table

@@ -184,7 +184,7 @@ impl GenericsMap {
             .map(|entry| {
                 (
                     *entry.key(),
-                    format!("[{}]: {}", entry.key(), entry.value().to_string(self)),
+                    entry.value().to_string(self),
                 )
             })
             .collect::<Vec<(usize, String)>>();

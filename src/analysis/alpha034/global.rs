@@ -368,7 +368,26 @@ pub async fn analyze_global_stmnt(
                         }),
                 }
             }
-            GlobalStatement::Main(_, body) => {
+            GlobalStatement::Main(_, args, body) => {
+                if let Some((args, args_span)) = args {
+                    let mut symbol_table = backend
+                        .files
+                        .symbol_table
+                        .entry((file_id, file_version))
+                        .or_insert_with(|| Default::default());
+
+                    insert_symbol_definition(
+                        &mut symbol_table,
+                        args,
+                        args_span.end..=span.end,
+                        &SymbolLocation { file: (file_id, file_version), start: args_span.start, end: args_span.end },
+                        DataType::Array(Box::new(DataType::Text)),
+                        SymbolType::Variable,
+                        false,
+                        &vec![],
+                    );
+                }
+
                 body.iter().for_each(|stmnt| {
                     analyze_stmnt(
                         file_id,

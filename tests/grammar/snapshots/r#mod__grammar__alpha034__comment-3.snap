@@ -9,6 +9,7 @@ expression: "parse_unwrap(&tokenize(\"\n        main {\n            // abc\n    
                 "main",
                 9..13,
             ),
+            None,
             [
                 (
                     Comment(

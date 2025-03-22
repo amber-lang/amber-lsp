@@ -280,7 +280,7 @@ pub enum GlobalStatement {
         Option<Spanned<DataType>>,
         Vec<Spanned<Statement>>,
     ),
-    Main(Spanned<String>, Vec<Spanned<Statement>>),
+    Main(Spanned<String>, Option<Spanned<String>>, Vec<Spanned<Statement>>),
     Statement(Spanned<Statement>),
 }
 

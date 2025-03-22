@@ -11,6 +11,7 @@ expression: "parse(&tokenize(\"main\"))"
                         "main",
                         0..4,
                     ),
+                    None,
                     [],
                 ),
                 0..4,
@@ -18,7 +19,7 @@ expression: "parse(&tokenize(\"main\"))"
         ],
     ),
     [
-        found end of input at 4..4 expected '"{"',
+        found end of input at 4..4 expected '"("', or '"{"',
         found end of input at 4..4 expected '"{"', "statement", or '"}"',
     ],
 )

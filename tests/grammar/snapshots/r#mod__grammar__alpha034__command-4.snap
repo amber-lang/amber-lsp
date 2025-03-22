@@ -27,15 +27,15 @@ expression: "parse(&tokenize(\"$command -$\"))"
                                         ),
                                         (
                                             CommandOption(
-                                                "-$",
+                                                "-",
                                             ),
-                                            9..11,
+                                            9..10,
                                         ),
                                         (
                                             Text(
                                                 "$",
                                             ),
-                                            11..11,
+                                            10..11,
                                         ),
                                     ],
                                     None,
@@ -50,7 +50,5 @@ expression: "parse(&tokenize(\"$command -$\"))"
             ),
         ],
     ),
-    [
-        found end of input at 11..11 expected '"\\"', '"-"', '"{"', or '"$"',
-    ],
+    [],
 )

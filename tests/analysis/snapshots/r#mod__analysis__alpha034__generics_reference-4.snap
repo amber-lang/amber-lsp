@@ -24,42 +24,56 @@ expression: symbol_table.symbols
         data_type: Any,
         is_definition: true,
         undefined: false,
+        span: 9..12,
+        contexts: [],
     },
     13..=14: SymbolInfo {
         name: "a",
-        symbol_type: Variable(
-            VarSymbol,
-        ),
+        symbol_type: Variable,
         data_type: Any,
         is_definition: true,
         undefined: false,
+        span: 13..14,
+        contexts: [],
     },
     16..=17: SymbolInfo {
         name: "b",
-        symbol_type: Variable(
-            VarSymbol,
-        ),
+        symbol_type: Variable,
         data_type: Any,
         is_definition: true,
         undefined: false,
+        span: 16..17,
+        contexts: [],
     },
     36..=37: SymbolInfo {
         name: "a",
-        symbol_type: Variable(
-            VarSymbol,
-        ),
+        symbol_type: Variable,
         data_type: Any,
         is_definition: false,
         undefined: false,
+        span: 36..37,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
     },
     40..=41: SymbolInfo {
         name: "b",
-        symbol_type: Variable(
-            VarSymbol,
-        ),
+        symbol_type: Variable,
         data_type: Any,
         is_definition: false,
         undefined: false,
+        span: 40..41,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
     },
     53..=56: SymbolInfo {
         name: "foo",
@@ -82,6 +96,8 @@ expression: symbol_table.symbols
         data_type: Num,
         is_definition: false,
         undefined: false,
+        span: 53..56,
+        contexts: [],
     },
     67..=70: SymbolInfo {
         name: "foo",
@@ -104,6 +120,8 @@ expression: symbol_table.symbols
         data_type: Text,
         is_definition: false,
         undefined: false,
+        span: 67..70,
+        contexts: [],
     },
     85..=88: SymbolInfo {
         name: "foo",
@@ -126,6 +144,8 @@ expression: symbol_table.symbols
         data_type: Num | Text | [Num | Text],
         is_definition: false,
         undefined: false,
+        span: 85..88,
+        contexts: [],
     },
     106..=109: SymbolInfo {
         name: "foo",
@@ -148,5 +168,7 @@ expression: symbol_table.symbols
         data_type: Num,
         is_definition: false,
         undefined: false,
+        span: 106..109,
+        contexts: [],
     },
 }

@@ -145,11 +145,19 @@ pub fn semantic_tokens_from_ast(
 
                     tokens.extend(semantic_tokens_from_stmnts(body));
                 }
-                GlobalStatement::Main((_, main_span), stmnts) => {
+                GlobalStatement::Main((_, main_span), args, stmnts) => {
                     tokens.push((
                         hash_semantic_token_type(SemanticTokenType::KEYWORD),
                         *main_span,
                     ));
+
+                    if let Some((_, args_span)) = args {
+                        tokens.push((
+                            hash_semantic_token_type(SemanticTokenType::VARIABLE),
+                            args_span.clone(),
+                        ));
+                    }
+
                     tokens.extend(semantic_tokens_from_stmnts(stmnts));
                 }
                 GlobalStatement::Statement(stmnt) => {

@@ -2,4 +2,4 @@
 source: tests/analysis/alpha034.rs
 expression: backend.files.generic_types.to_string()
 ---
-"[0]: Text\n[1]: Bool\n[2]: Any"
+"Text\nBool\nAny"
