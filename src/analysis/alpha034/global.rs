@@ -17,7 +17,7 @@ use crate::{
 use super::{map_import_path, stmnts::analyze_stmnt};
 
 #[tracing::instrument(skip_all)]
-pub async fn analyze_global_stmnt<'a>(
+pub async fn analyze_global_stmnt(
     file_id: FileId,
     file_version: FileVersion,
     ast: &Vec<Spanned<GlobalStatement>>,
