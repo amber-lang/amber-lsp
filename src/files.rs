@@ -36,7 +36,8 @@ impl FileVersion {
 pub struct Files {
     paths: PathInterner,
     file_versions: FastDashMap<FileId, FileVersion>,
-    pub analyze_lock: FastDashMap<(FileId, FileVersion), RwLock<()>>,
+    file_dependencies: FastDashMap<(FileId, FileVersion), Vec<FileId>>,
+    pub analyze_lock: FastDashMap<(FileId, FileVersion), Arc<RwLock<bool>>>,
     pub fs: Arc<dyn FS>,
     pub ast_map: FastDashMap<(FileId, FileVersion), Grammar>,
     pub errors: FastDashMap<(FileId, FileVersion), Vec<Spanned<String>>>,
@@ -54,6 +55,7 @@ impl Files {
             paths: PathInterner::default(),
             fs,
             file_versions: FastDashMap::default(),
+            file_dependencies: FastDashMap::default(),
             ast_map: FastDashMap::default(),
             errors: FastDashMap::default(),
             document_map: FastDashMap::default(),
@@ -95,12 +97,14 @@ impl Files {
         self.semantic_token_map.remove(&(file_id, version));
         self.symbol_table.remove(&(file_id, version));
         self.generic_types.clean(file_id, version);
+        self.file_dependencies.remove(&(file_id, version));
 
         if 10 > version.0 {
-            return
+            return;
         }
         // Remove the lock from 10 versions ago
-        self.analyze_lock.remove(&(file_id, version.prev_n_version(10)));
+        self.analyze_lock
+            .remove(&(file_id, version.prev_n_version(10)));
     }
 
     pub fn change_latest_file_version(&self, file_id: FileId, new_version: FileVersion) {
@@ -174,9 +178,42 @@ impl Files {
     pub async fn is_file_analyzed(&self, file: &(FileId, FileVersion)) -> bool {
         match self.analyze_lock.get(file) {
             Some(lock) => {
-                let _ = lock.read().await;
-                true
+                let result = lock.read().await;
+
+                *result
             }
+            None => false,
+        }
+    }
+
+    pub fn get_files_dependant_on(&self, file_id: FileId) -> Vec<(FileId, FileVersion)> {
+        self.file_dependencies
+            .iter()
+            .filter_map(|file_ref| {
+                let file = file_ref.key();
+                let file_deps = file_ref.value();
+
+                if file_deps.contains(&file_id) {
+                    Some(file.clone())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>()
+    }
+
+    pub fn add_file_dependency(&self, file: &(FileId, FileVersion), dependency: FileId) {
+        let mut dependencies = self.file_dependencies.entry(*file).or_insert(vec![]);
+
+        dependencies.push(dependency);
+    }
+
+    pub fn is_depending_on(&self, file: &(FileId, FileVersion), dependency: FileId) -> bool {
+        match self.file_dependencies.get(file) {
+            Some(deps) => deps.iter().any(|dep| {
+                *dep == dependency
+                    || self.is_depending_on(&(*dep, self.get_latest_version(*dep)), dependency)
+            }),
             None => false,
         }
     }

@@ -140,19 +140,20 @@ impl Backend {
             .await;
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn analize_document(&self, file_id: FileId) {
         let (rope, version) = match self.files.get_document_latest_version(file_id) {
             Some(document) => document,
             None => return,
         };
 
+        let lock = Arc::new(RwLock::new(false));
+
+        let mut lock_w = lock.write().await;
+
         self.files
             .analyze_lock
-            .insert((file_id, version), RwLock::new(()));
-
-        let analyze_lock = self.files.analyze_lock.get(&(file_id, version)).unwrap();
-
-        let write_lock = analyze_lock.write().await;
+            .insert((file_id, version), lock.clone());
 
         let tokens = self.lsp_analysis.tokenize(&rope.to_string());
 
@@ -187,7 +188,13 @@ impl Backend {
             _ => {}
         }
 
-        let _ = write_lock.downgrade();
+        *lock_w = true;
+        drop(lock_w);
+
+        Box::pin(async {
+            self.analyze_dependencies(file_id).await;
+        })
+        .await;
     }
 
     pub fn offset_to_position(&self, offset: usize, rope: &Rope) -> Option<Position> {
@@ -198,6 +205,20 @@ impl Backend {
         let first_char_of_line = rope.try_line_to_char(line).ok().unwrap_or(rope.len_chars());
         let column = offset - first_char_of_line;
         Some(Position::new(line as u32, column as u32))
+    }
+
+    async fn analyze_dependencies(&self, file_id: FileId) {
+        let deps = self.files.get_files_dependant_on(file_id);
+
+        for (dep_file_id, dep_file_version) in deps {
+            if dep_file_id == file_id {
+                continue;
+            }
+
+            self.analize_document(dep_file_id).await;
+            self.publish_syntax_errors(dep_file_id, dep_file_version)
+                .await;
+        }
     }
 }
 
@@ -613,8 +634,8 @@ impl LanguageServer for Backend {
                 Some(definitions) => match definitions.get(&offset) {
                     Some(definition) => {
                         let definition_file_rope =
-                            match self.files.document_map.get(&definition.file) {
-                                Some(document) => document.clone(),
+                            match self.files.get_document_latest_version(definition.file.0) {
+                                Some((document, _)) => document.clone(),
                                 None => {
                                     return Ok(None);
                                 }

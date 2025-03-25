@@ -17,7 +17,7 @@ use crate::{
 use super::{map_import_path, stmnts::analyze_stmnt};
 
 #[tracing::instrument(skip_all)]
-pub async fn analyze_global_stmnt(
+pub async fn analyze_global_stmnt<'a>(
     file_id: FileId,
     file_version: FileVersion,
     ast: &Vec<Spanned<GlobalStatement>>,
@@ -211,6 +211,20 @@ pub async fn analyze_global_stmnt(
 
                 let imported_file = result.clone().unwrap();
 
+                if backend.files.is_depending_on(&imported_file, file_id) {
+                    backend.files.report_error(
+                        &(file_id, file_version),
+                        "Circular dependency",
+                        *path_span,
+                    );
+
+                    continue;
+                }
+
+                backend
+                    .files
+                    .add_file_dependency(&(file_id, file_version), imported_file.0);
+
                 let imported_file_symbol_table =
                     match backend.files.symbol_table.get(&imported_file) {
                         Some(symbol_table_ref) => {
@@ -380,7 +394,11 @@ pub async fn analyze_global_stmnt(
                         &mut symbol_table,
                         args,
                         args_span.end..=span.end,
-                        &SymbolLocation { file: (file_id, file_version), start: args_span.start, end: args_span.end },
+                        &SymbolLocation {
+                            file: (file_id, file_version),
+                            start: args_span.start,
+                            end: args_span.end,
+                        },
                         DataType::Array(Box::new(DataType::Text)),
                         SymbolType::Variable,
                         false,
