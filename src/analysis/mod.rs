@@ -6,7 +6,7 @@ use crate::{
     files::{FileVersion, Files},
     grammar::{
         alpha034::{CommandModifier, CompilerFlag, DataType},
-        Span,
+        Span, Spanned,
     },
     paths::FileId,
 };
@@ -16,9 +16,15 @@ pub mod types;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FunctionSymbol {
-    pub arguments: Vec<(String, DataType)>,
+    pub arguments: Vec<Spanned<FunctionArgument>>,
     pub is_public: bool,
     pub compiler_flags: Vec<CompilerFlag>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FunctionArgument {
+    pub name: String,
+    pub data_type: DataType,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -90,7 +96,11 @@ impl SymbolInfo {
                     self.name,
                     arguments
                         .iter()
-                        .map(|(name, ty)| format!("{}: {}", name, ty.to_string(generics_map)))
+                        .map(|(FunctionArgument { name, data_type }, _)| format!(
+                            "{}: {}",
+                            name,
+                            data_type.to_string(generics_map)
+                        ))
                         .collect::<Vec<String>>()
                         .join(", "),
                     self.data_type.to_string(generics_map)
@@ -298,7 +308,15 @@ pub fn insert_symbol_reference(
                 }) => SymbolType::Function(FunctionSymbol {
                     arguments: arguments
                         .iter()
-                        .map(|(name, ty)| (name.clone(), scoped_generics.deref_type(ty)))
+                        .map(|(arg, span)| {
+                            (
+                                FunctionArgument {
+                                    name: arg.name.clone(),
+                                    data_type: scoped_generics.deref_type(&arg.data_type),
+                                },
+                                span.clone(),
+                            )
+                        })
                         .collect(),
                     is_public,
                     compiler_flags,

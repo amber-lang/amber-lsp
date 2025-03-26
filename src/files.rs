@@ -66,9 +66,9 @@ impl Files {
         }
     }
 
-    pub async fn insert(&self, url: Url, version: FileVersion) -> FileId {
+    pub fn insert(&self, url: Url, version: FileVersion) -> FileId {
         let file_id = self.paths.insert(url);
-        self.add_new_file_version(file_id, version).await;
+        self.add_new_file_version(file_id, version);
 
         file_id
     }
@@ -81,16 +81,18 @@ impl Files {
         self.paths.get(url)
     }
 
-    pub async fn add_new_file_version(&self, file_id: FileId, version: FileVersion) {
+    #[tracing::instrument(skip_all)]
+    pub fn add_new_file_version(&self, file_id: FileId, version: FileVersion) {
         match self.file_versions.insert(file_id, version) {
             Some(old_version) => {
-                self.remove_file_version(file_id, old_version).await;
+                self.remove_file_version(file_id, old_version);
             }
             None => {}
         }
     }
 
-    async fn remove_file_version(&self, file_id: FileId, version: FileVersion) {
+    #[tracing::instrument(skip_all)]
+    fn remove_file_version(&self, file_id: FileId, version: FileVersion) {
         self.ast_map.remove(&(file_id, version));
         self.errors.remove(&(file_id, version));
         self.document_map.remove(&(file_id, version));

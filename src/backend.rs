@@ -2,6 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use chumsky::container::Seq;
 use ropey::Rope;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::{Error, Result};
@@ -63,6 +64,7 @@ impl Backend {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn open_document<'a>(
         &'a self,
         uri: &'a Url,
@@ -85,7 +87,7 @@ impl Backend {
                 }
             };
 
-            let file_id = self.files.insert(uri.clone(), DEFAULT_VERSION).await;
+            let file_id = self.files.insert(uri.clone(), DEFAULT_VERSION);
 
             self.files
                 .document_map
@@ -220,6 +222,41 @@ impl Backend {
                 .await;
         }
     }
+
+    async fn get_symbol_at_position(
+        &self,
+        file_id: FileId,
+        position: Position,
+    ) -> Option<(SymbolInfo, usize)> {
+        let (rope, version) = match self.files.get_document_latest_version(file_id) {
+            Some(document) => document,
+            None => return None,
+        };
+
+        let file = (file_id, version);
+
+        if !self.files.is_file_analyzed(&file).await {
+            return None;
+        }
+
+        let char = rope
+            .try_line_to_char(position.line as usize)
+            .ok()
+            .unwrap_or(rope.len_chars());
+        let offset = char + position.character as usize;
+
+        let symbol_table = match self.files.symbol_table.get(&file) {
+            Some(symbol_table) => symbol_table.clone(),
+            None => return None,
+        };
+
+        let symbol_info = match symbol_table.symbols.get(&offset) {
+            Some(symbol) => symbol.clone(),
+            None => return None,
+        };
+
+        Some((symbol_info, offset))
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -269,17 +306,17 @@ impl LanguageServer for Backend {
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 completion_provider: Some(CompletionOptions {
                     resolve_provider: Some(false),
-                    trigger_characters: Some(vec![
-                        ":".to_string(),
-                        '"'.to_string(),
-                        ".".to_string(),
-                        "/".to_string(),
-                    ]),
+                    trigger_characters: Some(vec![":".to_string(), ".".to_string()]),
                     all_commit_characters: None,
                     completion_item: Some(CompletionOptionsCompletionItem {
                         label_details_support: Some(true),
                     }),
                     work_done_progress_options: WorkDoneProgressOptions::default(),
+                }),
+                signature_help_provider: Some(SignatureHelpOptions {
+                    trigger_characters: Some(vec!["(".to_string(), ",".to_string()]), // Trigger on '(' and ','
+                    retrigger_characters: Some(vec![",".to_string()]), // Retrigger on ','
+                    ..Default::default()
                 }),
                 ..ServerCapabilities::default()
             },
@@ -325,7 +362,7 @@ impl LanguageServer for Backend {
 
         let version = FileVersion(params.text_document.version);
 
-        let file_id = self.files.insert(params.text_document.uri, version).await;
+        let file_id = self.files.insert(params.text_document.uri, version);
 
         self.files.document_map.insert(
             (file_id, version),
@@ -408,7 +445,7 @@ impl LanguageServer for Backend {
                 .insert((file_id, new_version), document);
         }
 
-        self.files.add_new_file_version(file_id, new_version).await;
+        self.files.add_new_file_version(file_id, new_version);
 
         self.analize_document(file_id).await;
 
@@ -719,41 +756,24 @@ impl LanguageServer for Backend {
     }
 
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
-        let uri = params.text_document_position_params.text_document.uri;
-        let file_id = match self.files.get(&uri) {
+        let file_id = match self
+            .files
+            .get(&params.text_document_position_params.text_document.uri)
+        {
             Some(file_id) => file_id,
-            None => return Ok(None),
+            None => {
+                return Ok(None);
+            }
         };
-
-        let (rope, version) = match self.files.get_document_latest_version(file_id) {
-            Some(document) => document.clone(),
-            None => return Ok(None),
-        };
-
-        if !self.files.is_file_analyzed(&(file_id, version)).await {
-            return Ok(None);
-        }
 
         let position = params.text_document_position_params.position;
-        let char = rope
-            .try_line_to_char(position.line as usize)
-            .ok()
-            .unwrap_or(rope.len_chars());
-        let offset = char + position.character as usize;
 
-        let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
-            Some(symbol_table) => symbol_table.clone(),
-            None => return Ok(None),
+        let symbol_info = match self.get_symbol_at_position(file_id, position).await {
+            Some((symbol_info, _)) if !symbol_info.undefined => symbol_info,
+            _ => {
+                return Ok(None);
+            }
         };
-
-        let symbol_info = match symbol_table.symbols.get(&offset) {
-            Some(symbol) => symbol.clone(),
-            None => return Ok(None),
-        };
-
-        if symbol_info.undefined {
-            return Ok(None);
-        }
 
         Ok(Some(Hover {
             contents: HoverContents::Markup(MarkupContent {
@@ -786,54 +806,24 @@ impl LanguageServer for Backend {
                 return Ok(None);
             }
         };
-        let (rope, version) = match self.files.get_document_latest_version(file_id) {
-            Some(document) => document.clone(),
-            None => {
-                return Ok(None);
-            }
-        };
-
-        if !self.files.is_file_analyzed(&(file_id, version)).await {
-            self.client
-                .log_message(MessageType::INFO, format!("file not analyzed!"))
-                .await;
-            return Ok(None);
-        }
-        self.client
-            .log_message(MessageType::INFO, format!("file analyzed!"))
-            .await;
 
         let position = params.text_document_position.position;
-        let char = rope
-            .try_line_to_char(position.line as usize)
-            .ok()
-            .unwrap_or(rope.len_chars());
-        let offset = char + position.character as usize;
 
-        let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
-            Some(symbol_table) => symbol_table.clone(),
+        let symbol_info = match self.get_symbol_at_position(file_id, position).await {
+            Some((symbol_info, _)) => symbol_info,
             None => {
                 return Ok(None);
             }
         };
 
-        self.client
-            .log_message(
-                MessageType::INFO,
-                format!("symbol table: {:?}", symbol_table),
-            )
-            .await;
+        let version = self.files.get_latest_version(file_id);
 
-        let symbol_info = match symbol_table.symbols.get(&offset) {
-            Some(symbol) => symbol.clone(),
-            None => {
-                return Ok(None);
-            }
-        };
-
-        self.client
-            .log_message(MessageType::INFO, format!("symbol_info: {:?}", symbol_info))
-            .await;
+        let symbol_table = self
+            .files
+            .symbol_table
+            .get(&(file_id, version))
+            .unwrap()
+            .clone();
 
         let completions = match symbol_info.symbol_type {
             SymbolType::ImportPath => {
@@ -960,7 +950,7 @@ impl LanguageServer for Backend {
                                 &self.files,
                                 name,
                                 &(file_id, version),
-                                offset,
+                                symbol_info.span.start,
                             )
                         })
                         .collect::<Vec<SymbolInfo>>(),
@@ -983,7 +973,7 @@ impl LanguageServer for Backend {
                                             .map(|(idx, (arg, _))| format!(
                                                 "${{{}:{}}}",
                                                 idx + 1,
-                                                arg
+                                                arg.name
                                             ))
                                             .collect::<Vec<String>>()
                                             .join(", ")
@@ -992,6 +982,11 @@ impl LanguageServer for Backend {
                                 kind: Some(CompletionItemKind::FUNCTION),
                                 detail: Some(symbol_info.to_string(&self.files.generic_types)),
                                 insert_text_format: Some(InsertTextFormat::SNIPPET),
+                                command: Some(Command {
+                                    title: "triggerParameterHints".to_string(),
+                                    command: "editor.action.triggerParameterHints".to_string(),
+                                    arguments: None,
+                                }),
                                 ..CompletionItem::default()
                             });
                         }
@@ -1017,5 +1012,65 @@ impl LanguageServer for Backend {
         };
 
         Ok(Some(CompletionResponse::Array(completions)))
+    }
+
+    async fn signature_help(&self, params: SignatureHelpParams) -> Result<Option<SignatureHelp>> {
+        let file_id = match self
+            .files
+            .get(&params.text_document_position_params.text_document.uri)
+        {
+            Some(file_id) => file_id,
+            None => {
+                return Ok(None);
+            }
+        };
+
+        let position = params.text_document_position_params.position;
+
+        let (symbol_info, offset) = match self.get_symbol_at_position(file_id, position).await {
+            Some((symbol_info, offset)) if !symbol_info.undefined => (symbol_info, offset),
+            _ => {
+                return Ok(None);
+            }
+        };
+
+        match symbol_info.symbol_type {
+            SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {
+                let mut active_parameter = 0 as u32;
+                
+                arguments.iter().enumerate().for_each(|(idx, (_, span))| {
+                    let start = span.start;
+                    let end = span.end;
+
+                    if offset >= start && offset <= end {
+                        active_parameter = idx as u32;
+                    }
+                });
+
+                Ok(Some(SignatureHelp {
+                    signatures: vec![SignatureInformation {
+                        label: symbol_info.to_string(&self.files.generic_types),
+                        documentation: None,
+                        parameters: Some(
+                            arguments
+                                .iter()
+                                .map(|(arg, _)| ParameterInformation {
+                                    label: ParameterLabel::Simple(format!(
+                                        "{}: {}",
+                                        arg.name,
+                                        arg.data_type.to_string(&self.files.generic_types)
+                                    )),
+                                    documentation: None,
+                                })
+                                .collect::<Vec<ParameterInformation>>(),
+                        ),
+                        active_parameter: Some(active_parameter),
+                    }],
+                    active_signature: Some(0),
+                    active_parameter: Some(active_parameter),
+                }))
+            }
+            _ => Ok(None),
+        }
     }
 }

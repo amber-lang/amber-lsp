@@ -1,8 +1,12 @@
+use std::vec;
+
+use chumsky::span::SimpleSpan;
+
 use crate::{
     analysis::{
         get_symbol_definition_info, insert_symbol_reference,
         types::{make_union_type, matches_type, GenericsMap},
-        Context, SymbolInfo, SymbolLocation, SymbolType,
+        Context, FunctionArgument, FunctionSymbol, SymbolInfo, SymbolLocation, SymbolType,
     },
     files::{FileVersion, Files},
     grammar::{
@@ -34,61 +38,62 @@ pub fn analyze_exp(
 
     let ty: DataType = match exp {
         Expression::FunctionInvocation(_, (name, name_span), args, failure) => {
-            let return_type = {
-                let fun_symbol = get_symbol_definition_info(&files, name, &file, name_span.start);
+            let fun_symbol = get_symbol_definition_info(&files, name, &file, name_span.start);
 
-                let expected_types = fun_symbol
-                    .clone()
-                    .and_then(|fun_symbol| {
-                        if let SymbolType::Function(fun_symbol) = fun_symbol.symbol_type {
-                            Some(fun_symbol.arguments)
-                        } else {
-                            None
-                        }
-                    })
-                    .unwrap_or(vec![])
+            let expected_types = match fun_symbol {
+                Some(SymbolInfo {
+                    symbol_type: SymbolType::Function(ref fun_symbol),
+                    ..
+                }) => fun_symbol
+                    .arguments
                     .iter()
-                    .map(|(_, ty)| ty.clone())
-                    .collect::<Vec<DataType>>();
+                    .map(|(arg, _)| arg.data_type.clone())
+                    .collect::<Vec<DataType>>(),
+                Some(_) => {
+                    files.report_error(&file, &format!("{} is not a function", name), *name_span);
 
-                args.iter().enumerate().for_each(|(idx, arg)| {
-                    if let Some(ty) = expected_types.get(idx) {
-                        let exp_ty = analyze_exp(
-                            file_id,
-                            file_version,
-                            arg,
-                            ty.clone(),
-                            files,
-                            scoped_generic_types,
-                            contexts,
-                        );
+                    vec![]
+                }
+                None => {
+                    files.report_error(&file, &format!("{} is not defined", name), *name_span);
 
-                        match ty {
-                            DataType::Generic(id) => {
-                                scoped_generic_types.constrain_generic_type(*id, exp_ty.clone());
-                            }
-                            _ => {}
+                    vec![]
+                }
+            };
+
+            args.iter().enumerate().for_each(|(idx, arg)| {
+                if let Some(ty) = expected_types.get(idx) {
+                    let exp_ty = analyze_exp(
+                        file_id,
+                        file_version,
+                        arg,
+                        ty.clone(),
+                        files,
+                        scoped_generic_types,
+                        contexts,
+                    );
+
+                    match ty {
+                        DataType::Generic(id) => {
+                            scoped_generic_types.constrain_generic_type(*id, exp_ty.clone());
                         }
-                    } else {
-                        files.report_error(
-                            &file,
-                            &format!("Function takes only {} arguments", expected_types.len()),
-                            arg.1,
-                        );
+                        _ => {}
                     }
-                });
-
-                if expected_types.len() > args.len() {
+                } else {
                     files.report_error(
                         &file,
-                        &format!("Function takes {} arguments", expected_types.len()),
-                        *name_span,
+                        &format!("Function takes only {} arguments", expected_types.len()),
+                        arg.1,
                     );
-                };
+                }
+            });
 
-                fun_symbol
-                    .and_then(|fun_symbol| Some(fun_symbol.data_type))
-                    .unwrap_or(DataType::Null)
+            if expected_types.len() > args.len() {
+                files.report_error(
+                    &file,
+                    &format!("Function takes {} arguments", expected_types.len()),
+                    *name_span,
+                );
             };
 
             if let Some(failure) = failure {
@@ -102,19 +107,55 @@ pub fn analyze_exp(
                 );
             }
 
-            insert_symbol_reference(
-                &name,
-                files,
-                &SymbolLocation {
-                    file,
-                    start: name_span.start,
-                    end: name_span.end,
-                },
-                scoped_generic_types,
-                contexts,
-            );
+            if let Some(SymbolInfo {
+                symbol_type: SymbolType::Function(ref fun_symbol),
+                ref data_type,
+                ..
+            }) = fun_symbol
+            {
+                let mut symbol_table = files.symbol_table.get_mut(&file).unwrap();
 
-            return_type
+                let mut last_span = SimpleSpan::new(name_span.end, name_span.end);
+                symbol_table.symbols.insert(
+                    exp_span_inclusive,
+                    SymbolInfo {
+                        name: name.clone(),
+                        symbol_type: SymbolType::Function(FunctionSymbol {
+                            arguments: fun_symbol
+                                .arguments
+                                .iter()
+                                .enumerate()
+                                .map(|(idx, (arg, _))| {
+                                    let arg_span = args
+                                        .get(idx)
+                                        .map(|(_, span)| span.clone())
+                                        .unwrap_or(SimpleSpan::new(last_span.end, exp_span.end));
+
+                                    last_span = arg_span;
+                                    (
+                                        FunctionArgument {
+                                            name: arg.name.clone(),
+                                            data_type: scoped_generic_types
+                                                .deref_type(&arg.data_type),
+                                        },
+                                        arg_span,
+                                    )
+                                })
+                                .collect(),
+                            ..fun_symbol.clone()
+                        }),
+                        data_type: scoped_generic_types.deref_type(&data_type),
+                        is_definition: false,
+                        undefined: false,
+                        span: *exp_span,
+                        contexts: contexts.clone(),
+                    },
+                );
+            }
+
+            fun_symbol
+                .and_then(|fun_symbol| Some(fun_symbol.data_type))
+                .unwrap_or(DataType::Null)
         }
         Expression::Var((name, name_span)) => {
             insert_symbol_reference(

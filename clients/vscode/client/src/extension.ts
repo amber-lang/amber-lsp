@@ -64,7 +64,7 @@ export function activate(context: ExtensionContext) {
 			const lineText = document.lineAt(position.line).text;
 
 			// Check if the cursor is inside a string
-			if (isInsideString(lineText, position.character)) {
+			if (isInsideImportString(lineText, position.character)) {
 				if (lastEditWasCompletion) {
 					// Reset the flag and skip triggering a new request
 					lastEditWasCompletion = false;
@@ -87,10 +87,14 @@ export function activate(context: ExtensionContext) {
 	client.start();
 }
 
-const isInsideString = (lineText: string, charPosition: number): boolean => {
+const isInsideImportString = (lineText: string, charPosition: number): boolean => {
 	const textBeforeCursor = lineText.substring(0, charPosition);
-	const quoteCount = (textBeforeCursor.match(/"/g) || []).length;
-	return quoteCount % 2 !== 0;
+
+	const match = textBeforeCursor.match(/\bfrom\b([^"]*)"([^"]*)$/)
+
+	console.log("match", !!match.length)
+
+	return !!match.length;
 }
 
 export function deactivate(): Thenable<void> | undefined {

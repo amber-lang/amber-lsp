@@ -1,6 +1,6 @@
 use crate::{
     analysis::{
-        import_symbol, insert_symbol_definition,
+        self, import_symbol, insert_symbol_definition,
         types::{make_union_type, matches_type},
         Context, FunctionContext, FunctionSymbol, ImportContext, SymbolInfo, SymbolLocation,
         SymbolType,
@@ -142,17 +142,24 @@ pub async fn analyze_global_stmnt(
                     SymbolType::Function(FunctionSymbol {
                         arguments: args
                             .iter()
-                            .filter_map(|(arg, _)| match arg {
+                            .filter_map(|(arg, span)| match arg {
                                 FunctionArgument::Generic((name, _)) => Some((
-                                    name.clone(),
-                                    DataType::Generic(new_generic_types.remove(0)),
+                                    analysis::FunctionArgument {
+                                        name: name.clone(),
+                                        data_type: DataType::Generic(new_generic_types.remove(0)),
+                                    },
+                                    span.clone(),
                                 )),
-                                FunctionArgument::Typed((name, _), (ty, _)) => {
-                                    Some((name.clone(), ty.clone()))
-                                }
+                                FunctionArgument::Typed((name, _), (ty, _)) => Some((
+                                    analysis::FunctionArgument {
+                                        name: name.clone(),
+                                        data_type: ty.clone(),
+                                    },
+                                    span.clone(),
+                                )),
                                 _ => None,
                             })
-                            .collect(),
+                            .collect::<Vec<_>>(),
                         is_public: *is_pub,
                         compiler_flags: compiler_flags
                             .iter()
