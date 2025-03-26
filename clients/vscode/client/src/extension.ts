@@ -92,8 +92,6 @@ const isInsideImportString = (lineText: string, charPosition: number): boolean =
 
 	const match = textBeforeCursor.match(/\bfrom\b([^"]*)"([^"]*)$/)
 
-	console.log("match", !!match.length)
-
 	return !!match.length;
 }
 
