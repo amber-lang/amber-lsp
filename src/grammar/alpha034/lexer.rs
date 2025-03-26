@@ -58,6 +58,11 @@ pub fn get_rules() -> Rules {
             end: "\n",
             allow_unclosed_region: true
         }),
+        reg!(comment as "shebang" => {
+            begin: "#!",
+            end: "\n",
+            allow_unclosed_region: true
+        }),
         reg!(interp as "interpolation" => {
             begin: "{",
             end: "}",

@@ -253,6 +253,7 @@ pub enum Statement {
     Echo(Spanned<String>, Box<Spanned<Expression>>),
     Block(Spanned<Block>),
     Comment(String),
+    Shebang(String),
     Error,
 }
 

@@ -335,7 +335,10 @@ pub fn analyze_stmnt(
             );
         }
         Statement::Fail(_, exp) => {
-            if !contexts.iter().any(|c| matches!(c, Context::Function(_) | Context::Main)) {
+            if !contexts
+                .iter()
+                .any(|c| matches!(c, Context::Function(_) | Context::Main))
+            {
                 files.report_error(
                     &file,
                     "Fail statements can only be used inside of functions or the main block",
@@ -357,11 +360,7 @@ pub fn analyze_stmnt(
         }
         Statement::Return(_, exp) => {
             if !contexts.iter().any(|c| matches!(c, Context::Function(_))) {
-                files.report_error(
-                    &file,
-                    "Return statement outside of function",
-                    span.clone(),
-                );
+                files.report_error(&file, "Return statement outside of function", span.clone());
             }
 
             if let Some(exp) = exp {
@@ -624,7 +623,7 @@ pub fn analyze_stmnt(
                 files.report_error(&file, "Continue statement outside of loop", span.clone());
             }
         }
-        Statement::Comment(_) | Statement::Error => {}
+        Statement::Comment(_) | Statement::Shebang(_) | Statement::Error => {}
     };
 
     None

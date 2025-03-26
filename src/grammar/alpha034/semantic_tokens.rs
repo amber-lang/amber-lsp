@@ -199,6 +199,10 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                 hash_semantic_token_type(SemanticTokenType::COMMENT),
                 span.clone(),
             )],
+            Statement::Shebang(_) => vec![(
+                hash_semantic_token_type(SemanticTokenType::COMMENT),
+                span.clone(),
+            )],
             Statement::Continue => vec![(
                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
                 span.clone(),
