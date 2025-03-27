@@ -1,13 +1,13 @@
 use std::fmt::Debug;
-
-use alpha034::GlobalStatement;
 use chumsky::{error::Rich, span::SimpleSpan};
 
 pub mod alpha034;
+pub mod alpha035;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Grammar {
-    Alpha034(Option<Vec<Spanned<GlobalStatement>>>),
+    Alpha034(Option<Vec<Spanned<alpha034::GlobalStatement>>>),
+    Alpha035(Option<Vec<Spanned<alpha035::GlobalStatement>>>),
 }
 
 pub type Span = SimpleSpan;

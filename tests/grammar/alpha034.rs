@@ -26,6 +26,7 @@ fn parse<'a>(
 
     let ast = match ast {
         amber_lsp::grammar::Grammar::Alpha034(ast) => ast,
+        _ => panic!("Unexpected AST"),
     };
 
     (ast, errors)
