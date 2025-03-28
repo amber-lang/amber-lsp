@@ -1,17 +1,18 @@
 use rangemap::RangeInclusiveMap;
 use std::{collections::HashMap, ops::RangeInclusive};
-use types::GenericsMap;
+use tower_lsp::lsp_types::Url;
+use types::{DataType, GenericsMap};
 
 use crate::{
+    backend::{AmberVersion, Backend},
     files::{FileVersion, Files},
-    grammar::{
-        alpha034::{CommandModifier, CompilerFlag, DataType},
-        Span, Spanned,
-    },
+    grammar::{CommandModifier, CompilerFlag, Span, Spanned},
     paths::FileId,
+    stdlib::resolve,
 };
 
 pub mod alpha034;
+pub mod alpha035;
 pub mod types;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -53,6 +54,7 @@ pub enum Context {
     Block(BlockContext),
     Main,
     Loop,
+    DocString(String),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -422,4 +424,26 @@ pub fn get_symbol_definition_info(
         }
         None => None,
     }
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn map_import_path(uri: &Url, path: &str, backend: &Backend) -> Url {
+    if path.starts_with("std/") || path == "std" {
+        match backend.amber_version {
+            AmberVersion::Alpha034 if path == "std" => {
+                if let Some(url) = resolve(backend, "std/main".to_string()).await {
+                    return url;
+                }
+            }
+            _ => {
+                if let Some(url) = resolve(backend, path.to_string()).await {
+                    return url;
+                }
+            }
+        }
+    }
+
+    let path = uri.to_file_path().unwrap().parent().unwrap().join(path);
+
+    Url::from_file_path(path).unwrap()
 }

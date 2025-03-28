@@ -10,8 +10,8 @@ use crate::{
     },
     files::{FileVersion, Files},
     grammar::{
-        alpha034::{Expression, InterpolatedCommand, InterpolatedText},
-        Spanned,
+        alpha035::{Expression, InterpolatedCommand, InterpolatedText},
+        CommandModifier, Spanned,
     },
     paths::FileId,
 };
@@ -37,7 +37,7 @@ pub fn analyze_exp(
     let file = (file_id, file_version);
 
     let ty: DataType = match exp {
-        Expression::FunctionInvocation(_, (name, name_span), args, failure) => {
+        Expression::FunctionInvocation(modifiers, (name, name_span), args, failure) => {
             let fun_symbol = get_symbol_definition_info(&files, name, &file, name_span.start);
 
             let expected_types = match fun_symbol {
@@ -153,9 +153,25 @@ pub fn analyze_exp(
                 );
             }
 
-            fun_symbol
+            let return_type = fun_symbol
                 .and_then(|fun_symbol| Some(fun_symbol.data_type))
-                .unwrap_or(DataType::Null)
+                .unwrap_or(DataType::Null);
+
+            if matches!(
+                scoped_generic_types.deref_type(&return_type),
+                DataType::Failable(_)
+            ) && modifiers
+                .iter()
+                .all(|(modifier, _)| *modifier != CommandModifier::Unsafe) && failure.is_none()
+            {
+                files.report_error(
+                    &file,
+                    "Failable function must be handled with a failure handler or marked as unsafe",
+                    *name_span,
+                );
+            }
+
+            return_type
         }
         Expression::Var((name, name_span)) => {
             insert_symbol_reference(
@@ -286,7 +302,7 @@ pub fn analyze_exp(
 
             ty.clone()
         }
-        Expression::Command(_, inter_cmd, failure) => {
+        Expression::Command(modifiers, inter_cmd, failure) => {
             inter_cmd.iter().for_each(|(inter_cmd, _)| match inter_cmd {
                 InterpolatedCommand::Expression(exp) => {
                     analyze_exp(
@@ -311,6 +327,11 @@ pub fn analyze_exp(
                     scoped_generic_types,
                     contexts,
                 );
+            } else if !modifiers
+                .iter()
+                .any(|(modifier, _)| *modifier == CommandModifier::Unsafe)
+            {
+                files.report_error(&file, "Command must have a failure handler", *exp_span);
             }
 
             DataType::Text

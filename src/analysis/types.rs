@@ -1,12 +1,60 @@
+use std::fmt;
 use std::sync::atomic::Ordering::SeqCst;
 use std::{collections::HashSet, sync::atomic::AtomicUsize};
 
 use crate::{
     files::FileVersion,
-    grammar::alpha034::DataType,
     paths::FileId,
     utils::{FastDashMap, FastDashSet},
 };
+
+#[derive(PartialEq, Eq, Clone, Hash)]
+pub enum DataType {
+    Any,
+    Number,
+    Boolean,
+    Text,
+    Null,
+    Array(Box<DataType>),
+    Union(Vec<DataType>),
+    Generic(usize),
+    Failable(Box<DataType>),
+    Error,
+}
+
+impl DataType {
+    pub fn to_string(&self, generics_map: &GenericsMap) -> String {
+        match self {
+            DataType::Any => "Any".to_string(),
+            DataType::Number => "Num".to_string(),
+            DataType::Boolean => "Bool".to_string(),
+            DataType::Text => "Text".to_string(),
+            DataType::Null => "Null".to_string(),
+            DataType::Array(t) => format!("[{}]", t.to_string(generics_map)),
+            DataType::Union(types) => {
+                let mut seen = HashSet::new();
+                types
+                    .iter()
+                    .map(|t| t.to_string(generics_map))
+                    .filter(|t| seen.insert(t.clone()))
+                    .collect::<Vec<String>>()
+                    .join(" | ")
+            }
+            DataType::Generic(id) => generics_map.get(*id).to_string(generics_map),
+            DataType::Failable(t) => match *t.clone() {
+                DataType::Union(_) => format!("({})?", t.to_string(generics_map)),
+                _ => format!("{}?", t.to_string(generics_map)),
+            },
+            DataType::Error => "<Invalid type>".to_string(),
+        }
+    }
+}
+
+impl fmt::Debug for DataType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string(&GenericsMap::new()))
+    }
+}
 
 #[derive(Debug)]
 pub struct GenericsMap {
@@ -98,6 +146,7 @@ impl GenericsMap {
                 DataType::Union(types.iter().map(|ty| self.deref_type(ty)).collect())
             }
             DataType::Array(ty) => DataType::Array(Box::new(self.deref_type(ty))),
+            DataType::Failable(ty) => DataType::Failable(Box::new(self.deref_type(ty))),
             ty => ty.clone(),
         }
     }
@@ -116,7 +165,8 @@ impl GenericsMap {
     }
 
     pub fn insert(&self, file_id: FileId, file_version: FileVersion, generics: Vec<usize>) {
-        self.generics_per_file.insert((file_id, file_version), generics);
+        self.generics_per_file
+            .insert((file_id, file_version), generics);
     }
 
     pub fn get_generics(&self, file_id: FileId, file_version: FileVersion) -> Vec<usize> {
@@ -181,12 +231,7 @@ impl GenericsMap {
         let mut collection = self
             .map
             .iter()
-            .map(|entry| {
-                (
-                    *entry.key(),
-                    entry.value().to_string(self),
-                )
-            })
+            .map(|entry| (*entry.key(), entry.value().to_string(self)))
             .collect::<Vec<(usize, String)>>();
 
         collection.sort_unstable_by_key(|(id, _)| *id);

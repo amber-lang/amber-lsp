@@ -1,9 +1,7 @@
-use std::{collections::HashSet, fmt};
-
-use crate::analysis::types::GenericsMap;
+use crate::analysis::types::DataType;
 
 pub use super::Spanned;
-use super::{Grammar, LSPAnalysis, ParserResponse, Span};
+use super::{CommandModifier, CompilerFlag, Grammar, LSPAnalysis, ParserResponse, Span};
 use chumsky::{
     error::Rich,
     extra::Err,
@@ -48,56 +46,6 @@ pub enum InterpolatedCommand {
     CommandOption(String),
     Expression(Box<Spanned<Expression>>),
     Text(String),
-}
-
-#[derive(PartialEq, Eq, Clone, Hash)]
-pub enum DataType {
-    Any,
-    Number,
-    Boolean,
-    Text,
-    Null,
-    Array(Box<DataType>),
-    Union(Vec<DataType>),
-    Generic(usize),
-    Failable(Box<DataType>),
-    Error,
-}
-
-impl DataType {
-    pub fn to_string(&self, generics_map: &GenericsMap) -> String {
-        match self {
-            DataType::Any => "Any".to_string(),
-            DataType::Number => "Num".to_string(),
-            DataType::Boolean => "Bool".to_string(),
-            DataType::Text => "Text".to_string(),
-            DataType::Null => "Null".to_string(),
-            DataType::Array(t) => format!("[{}]", t.to_string(generics_map)),
-            DataType::Union(types) => {
-                let mut seen = HashSet::new();
-                types
-                    .iter()
-                    .map(|t| t.to_string(generics_map))
-                    .filter(|t| seen.insert(t.clone()))
-                    .collect::<Vec<String>>()
-                    .join(" | ")
-            }
-            DataType::Generic(id) => generics_map.get(*id).to_string(generics_map),
-            DataType::Failable(t) => {
-                match *t.clone() {
-                    DataType::Union(_) => format!("({})?", t.to_string(generics_map)),
-                    _ => format!("{}?", t.to_string(generics_map)),
-                }
-            }
-            DataType::Error => "<Invalid type>".to_string(),
-        }
-    }
-}
-
-impl fmt::Debug for DataType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string(&GenericsMap::new()))
-    }
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -178,8 +126,8 @@ pub enum FunctionArgument {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum IfCondition {
-    IfCondition(Box<Spanned<Expression>>, Spanned<Block>),
-    InlineIfCondition(Box<Spanned<Expression>>, Box<Spanned<Statement>>),
+    IfCondition(Spanned<Expression>, Spanned<Block>),
+    InlineIfCondition(Spanned<Expression>, Box<Spanned<Statement>>),
     Error,
 }
 
@@ -200,31 +148,6 @@ pub enum IterLoopVars {
     Single(Spanned<String>),
     WithIndex(Spanned<String>, Spanned<String>),
     Error,
-}
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub enum CommandModifier {
-    Unsafe,
-    Silent,
-}
-
-#[derive(PartialEq, Debug, Clone, Eq)]
-pub enum CompilerFlag {
-    AllowNestedIfElse,
-    AllowGenericReturn,
-    AllowAbsurdCast,
-    Error,
-}
-
-impl fmt::Display for CompilerFlag {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            CompilerFlag::AllowNestedIfElse => write!(f, "allow_nested_if_else"),
-            CompilerFlag::AllowGenericReturn => write!(f, "allow_generic_return"),
-            CompilerFlag::AllowAbsurdCast => write!(f, "allow_absurd_cast"),
-            CompilerFlag::Error => write!(f, "<Invalid flag>"),
-        }
-    }
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -265,7 +188,7 @@ pub enum Statement {
     Echo(Spanned<String>, Box<Spanned<Expression>>),
     Cd(Spanned<String>, Box<Spanned<Expression>>),
     MoveFiles(
-        Option<Spanned<CommandModifier>>,
+        Vec<Spanned<CommandModifier>>,
         Spanned<String>,
         Box<Spanned<Expression>>,
         Box<Spanned<Expression>>,

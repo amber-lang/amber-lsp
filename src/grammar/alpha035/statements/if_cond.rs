@@ -52,14 +52,14 @@ fn cond_parser<'a>(
         )
         .map_with(|(condition, body), e| {
             (
-                IfCondition::InlineIfCondition(Box::new(condition), Box::new(body)),
+                IfCondition::InlineIfCondition(condition, Box::new(body)),
                 e.span(),
             )
         });
 
     let if_condition = parse_expr(stmnts.clone())
         .then(block_parser(stmnts, false))
-        .map_with(|(cond, body), e| (IfCondition::IfCondition(Box::new(cond), body), e.span()));
+        .map_with(|(cond, body), e| (IfCondition::IfCondition(cond, body), e.span()));
 
     choice((inline_if, if_condition)).boxed()
 }

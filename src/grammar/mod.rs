@@ -1,5 +1,5 @@
-use std::fmt::Debug;
 use chumsky::{error::Rich, span::SimpleSpan};
+use std::fmt::{self, Debug};
 
 pub mod alpha034;
 pub mod alpha035;
@@ -52,4 +52,29 @@ pub enum JumpDefinitionResult {
     InFile(Span),
     OpenFile(String),
     None,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub enum CommandModifier {
+    Unsafe,
+    Silent,
+}
+
+#[derive(PartialEq, Debug, Clone, Eq)]
+pub enum CompilerFlag {
+    AllowNestedIfElse,
+    AllowGenericReturn,
+    AllowAbsurdCast,
+    Error,
+}
+
+impl fmt::Display for CompilerFlag {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CompilerFlag::AllowNestedIfElse => write!(f, "allow_nested_if_else"),
+            CompilerFlag::AllowGenericReturn => write!(f, "allow_generic_return"),
+            CompilerFlag::AllowAbsurdCast => write!(f, "allow_absurd_cast"),
+            CompilerFlag::Error => write!(f, "<Invalid flag>"),
+        }
+    }
 }

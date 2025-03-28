@@ -1,11 +1,14 @@
 use crate::{
     analysis::{
-        self, import_symbol, insert_symbol_definition, map_import_path, types::{make_union_type, matches_type, DataType}, Context, FunctionContext, FunctionSymbol, ImportContext, SymbolInfo, SymbolLocation, SymbolType
+        self, import_symbol, insert_symbol_definition, map_import_path,
+        types::{make_union_type, matches_type, DataType},
+        Context, FunctionContext, FunctionSymbol, ImportContext, SymbolInfo, SymbolLocation,
+        SymbolType,
     },
     backend::Backend,
     files::FileVersion,
     grammar::{
-        alpha034::{FunctionArgument, GlobalStatement, ImportContent},
+        alpha035::{FunctionArgument, GlobalStatement, ImportContent},
         Span, Spanned,
     },
     paths::FileId,
@@ -46,7 +49,23 @@ pub async fn analyze_global_stmnt(
                             (name, DataType::Generic(generic_id), span)
                         }
                         FunctionArgument::Typed((name, span), (ty, _)) => (name, ty.clone(), span),
-                        _ => return,
+                        FunctionArgument::Optional((name, span), ty, _) => (
+                            name,
+                            match ty {
+                                Some((ty, _)) => ty.clone(),
+                                None => {
+                                    let generic_id = scoped_generics_map.new_generic_id();
+
+                                    scoped_generics_map
+                                        .constrain_generic_type(generic_id, DataType::Any);
+                                    new_generic_types.push(generic_id);
+
+                                    DataType::Generic(generic_id)
+                                }
+                            },
+                            span,
+                        ),
+                        FunctionArgument::Error => return,
                     };
 
                     let mut symbol_table = backend
@@ -73,6 +92,10 @@ pub async fn analyze_global_stmnt(
 
                 let mut return_types = vec![];
 
+                let mut contexts = vec![Context::Function(FunctionContext {
+                    compiler_flags: vec![],
+                })];
+
                 body.iter().for_each(|stmnt| {
                     if let Some(ty) = analyze_stmnt(
                         file_id,
@@ -81,9 +104,7 @@ pub async fn analyze_global_stmnt(
                         &backend.files,
                         span.end,
                         &scoped_generics_map,
-                        &vec![Context::Function(FunctionContext {
-                            compiler_flags: vec![],
-                        })],
+                        &mut contexts,
                     ) {
                         return_types.push(ty);
                     }
@@ -154,7 +175,17 @@ pub async fn analyze_global_stmnt(
                                     },
                                     span.clone(),
                                 )),
-                                _ => None,
+                                FunctionArgument::Optional((name, _), ty, _) => Some((
+                                    analysis::FunctionArgument {
+                                        name: name.clone(),
+                                        data_type: match ty {
+                                            Some((ty, _)) => ty.clone(),
+                                            None => DataType::Generic(new_generic_types.remove(0)),
+                                        },
+                                    },
+                                    span.clone(),
+                                )),
+                                FunctionArgument::Error => None,
                             })
                             .collect::<Vec<_>>(),
                         is_public: *is_pub,
@@ -418,7 +449,7 @@ pub async fn analyze_global_stmnt(
                         &backend.files,
                         span.end,
                         &backend.files.generic_types.clone(),
-                        &vec![Context::Main],
+                        &mut vec![Context::Main],
                     );
                 });
             }
@@ -430,7 +461,7 @@ pub async fn analyze_global_stmnt(
                     &backend.files,
                     usize::MAX,
                     &backend.files.generic_types.clone(),
-                    &vec![],
+                    &mut vec![],
                 );
             }
         }

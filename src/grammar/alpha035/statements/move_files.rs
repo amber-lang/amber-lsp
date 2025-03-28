@@ -14,7 +14,8 @@ pub fn keywords_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,
 ) -> impl AmberParser<'a, Spanned<Statement>> {
     modifier_parser()
-        .or_not()
+        .repeated()
+        .collect()
         .then(just(T!["mv"]).map_with(|modif, e| (modif.to_string(), e.span())))
         .then(
             parse_expr(stmnts.clone()).recover_with(via_parser(

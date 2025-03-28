@@ -8,17 +8,14 @@ use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::{Error, Result};
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
+use tracing::info;
 
-use crate::analysis::alpha034::global::analyze_global_stmnt;
 use crate::analysis::{
-    get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType,
+    self, get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType
 };
 use crate::files::{FileVersion, Files, DEFAULT_VERSION};
 use crate::fs::{LocalFs, FS};
-use crate::grammar::{
-    alpha034::{semantic_tokens::LEGEND_TYPE, AmberCompiler},
-    Grammar, LSPAnalysis, ParserResponse,
-};
+use crate::grammar::{self, Grammar, LSPAnalysis, ParserResponse};
 use crate::paths::FileId;
 use crate::stdlib::find_in_stdlib;
 
@@ -41,10 +38,6 @@ pub struct Backend {
 
 impl Backend {
     pub fn new(client: Client, amber_version: AmberVersion, fs: Option<Arc<dyn FS>>) -> Self {
-        let (lsp_analysis, token_types) = match amber_version {
-            _ => (Box::new(AmberCompiler::new()), Box::new(LEGEND_TYPE)),
-        };
-
         let fs = if let Some(fs) = fs {
             fs
         } else {
@@ -58,8 +51,16 @@ impl Backend {
         Self {
             client,
             files,
-            lsp_analysis,
-            token_types,
+            lsp_analysis: match amber_version {
+                AmberVersion::Alpha034 => Box::new(grammar::alpha034::AmberCompiler::new()),
+                AmberVersion::Alpha035 => Box::new(grammar::alpha035::AmberCompiler::new()),
+                AmberVersion::Alpha040 => Box::new(grammar::alpha035::AmberCompiler::new()),
+            },
+            token_types: match amber_version {
+                AmberVersion::Alpha034 => Box::new(grammar::alpha034::semantic_tokens::LEGEND_TYPE),
+                AmberVersion::Alpha035 => Box::new(grammar::alpha035::semantic_tokens::LEGEND_TYPE),
+                AmberVersion::Alpha040 => Box::new(grammar::alpha035::semantic_tokens::LEGEND_TYPE),
+            },
             amber_version,
         }
     }
@@ -185,7 +186,10 @@ impl Backend {
 
         match ast {
             Grammar::Alpha034(Some(ast)) => {
-                analyze_global_stmnt(file_id, version, &ast, self).await;
+                analysis::alpha034::global::analyze_global_stmnt(file_id, version, &ast, self).await;
+            }
+            Grammar::Alpha035(Some(ast)) => {
+                analysis::alpha035::global::analyze_global_stmnt(file_id, version, &ast, self).await;
             }
             _ => {}
         }
@@ -1037,7 +1041,13 @@ impl LanguageServer for Backend {
         match symbol_info.symbol_type {
             SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {
                 let mut active_parameter = 0 as u32;
-                
+
+                info!(
+                    "Signature help for function {} at offset {}",
+                    symbol_info.name, offset
+                );
+                info!("Arguments: {:?}", arguments);
+
                 arguments.iter().enumerate().for_each(|(idx, (_, span))| {
                     let start = span.start;
                     let end = span.end;

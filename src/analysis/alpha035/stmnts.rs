@@ -5,7 +5,12 @@ use crate::{
         BlockContext, Context, DataType, SymbolLocation, SymbolType,
     },
     files::{FileVersion, Files},
-    grammar::{alpha034::*, Spanned},
+    grammar::{
+        alpha035::{
+            Block, ElseCondition, FailureHandler, IfChainContent, IfCondition,
+            IterLoopVars, Statement, VariableInitType,
+        }, CommandModifier, Spanned
+    },
     paths::FileId,
 };
 
@@ -22,7 +27,7 @@ pub fn analyze_stmnt(
     files: &Files,
     scope_end: usize,
     scoped_generic_types: &GenericsMap,
-    contexts: &Vec<Context>,
+    contexts: &mut Vec<Context>,
 ) -> Option<DataType> {
     let file = (file_id, file_version);
 
@@ -621,6 +626,62 @@ pub fn analyze_stmnt(
                 files.report_error(&file, "Continue statement outside of loop", span.clone());
             }
         }
+        Statement::Cd(_, exp) => {
+            analyze_exp(
+                file_id,
+                file_version,
+                exp,
+                DataType::Text,
+                files,
+                scoped_generic_types,
+                contexts,
+            );
+        }
+        Statement::MoveFiles(modifiers, _, from_exp, to_exp, handler) => {
+            analyze_exp(
+                file_id,
+                file_version,
+                from_exp,
+                DataType::Text,
+                files,
+                scoped_generic_types,
+                contexts,
+            );
+            analyze_exp(
+                file_id,
+                file_version,
+                to_exp,
+                DataType::Text,
+                files,
+                scoped_generic_types,
+                contexts,
+            );
+
+            if let Some(handler) = handler {
+                analyze_failure_handler(
+                    file_id,
+                    file_version,
+                    handler,
+                    files,
+                    scoped_generic_types,
+                    contexts,
+                );
+            } else if !modifiers
+                .iter()
+                .any(|(modifier, _)| *modifier == CommandModifier::Unsafe)
+            {
+                files.report_error(&file, "Command must have a failure handler", *span);
+            }
+        }
+        Statement::DocString(docs) => match contexts.last() {
+            Some(Context::DocString(doc_string)) => {
+                let new_doc_string = format!("{}\n{}", doc_string, docs);
+                *contexts.last_mut().unwrap() = Context::DocString(new_doc_string);
+            }
+            _ => {
+                contexts.push(Context::DocString(docs.clone()));
+            }
+        },
         Statement::Comment(_) | Statement::Shebang(_) | Statement::Error => {}
     };
 
@@ -651,7 +712,7 @@ pub fn analyze_block(
                 files,
                 span.end,
                 scoped_generic_types,
-                &new_contexts,
+                &mut new_contexts,
             ) {
                 types.push(ty);
             }
@@ -673,6 +734,7 @@ pub fn analyze_failure_handler(
     scoped_generic_types: &GenericsMap,
     contexts: &Vec<Context>,
 ) {
+    let mut contexts = contexts.clone();
     match failure {
         FailureHandler::Handle(_, stmnts) => {
             stmnts.iter().for_each(|stmnt| {
@@ -683,10 +745,21 @@ pub fn analyze_failure_handler(
                     files,
                     span.end,
                     scoped_generic_types,
-                    contexts,
+                    &mut contexts,
                 );
             });
         }
-        _ => {}
+        FailureHandler::Propagate => {
+            if !contexts
+                .iter()
+                .any(|c| *c == Context::Main || matches!(c, Context::Function(_)))
+            {
+                files.report_error(
+                    &(file_id, file_version),
+                    "Propagate can only be used inside of main block or function",
+                    span.clone(),
+                );
+            }
+        }
     }
 }
