@@ -6,7 +6,8 @@ use crate::{
     analysis::{
         get_symbol_definition_info, insert_symbol_reference,
         types::{make_union_type, matches_type, DataType, GenericsMap},
-        Context, FunctionArgument, FunctionSymbol, SymbolInfo, SymbolLocation, SymbolType,
+        BlockContext, Context, FunctionArgument, FunctionSymbol, SymbolInfo, SymbolLocation,
+        SymbolType,
     },
     files::{FileVersion, Files},
     grammar::{
@@ -16,7 +17,14 @@ use crate::{
     paths::FileId,
 };
 
-use super::stmnts::analyze_failure_handler;
+use super::stmnts::{analyze_failure_handler, StmntAnalysisResult};
+
+#[derive(Debug, Clone)]
+pub struct ExpAnalysisResult {
+    pub exp_ty: DataType,
+    pub is_propagating_failure: bool,
+    pub return_ty: Option<DataType>,
+}
 
 #[tracing::instrument(skip(file_version, files, scoped_generic_types))]
 pub fn analyze_exp(
@@ -27,14 +35,21 @@ pub fn analyze_exp(
     files: &Files,
     scoped_generic_types: &GenericsMap,
     contexts: &Vec<Context>,
-) -> DataType {
+) -> ExpAnalysisResult {
     let exp_span_inclusive = exp_span.start..=exp_span.end;
 
     if exp_span_inclusive.is_empty() {
-        return DataType::Error;
+        return ExpAnalysisResult {
+            exp_ty: DataType::Null,
+            is_propagating_failure: false,
+            return_ty: None,
+        };
     }
 
     let file = (file_id, file_version);
+
+    let mut return_types = vec![];
+    let mut is_propagating_failure = false;
 
     let ty: DataType = match exp {
         Expression::FunctionInvocation(modifiers, (name, name_span), args, failure) => {
@@ -47,8 +62,8 @@ pub fn analyze_exp(
                 }) => fun_symbol
                     .arguments
                     .iter()
-                    .map(|(arg, _)| arg.data_type.clone())
-                    .collect::<Vec<DataType>>(),
+                    .map(|(arg, _)| (arg.data_type.clone(), arg.is_optional))
+                    .collect::<Vec<(DataType, bool)>>(),
                 Some(_) => {
                     files.report_error(&file, &format!("{} is not a function", name), *name_span);
 
@@ -62,8 +77,12 @@ pub fn analyze_exp(
             };
 
             args.iter().enumerate().for_each(|(idx, arg)| {
-                if let Some(ty) = expected_types.get(idx) {
-                    let exp_ty = analyze_exp(
+                if let Some((ty, _)) = expected_types.get(idx) {
+                    let ExpAnalysisResult {
+                        is_propagating_failure: propagates_failure,
+                        return_ty,
+                        exp_ty,
+                    } = analyze_exp(
                         file_id,
                         file_version,
                         arg,
@@ -72,6 +91,9 @@ pub fn analyze_exp(
                         scoped_generic_types,
                         contexts,
                     );
+
+                    return_types.extend(return_ty);
+                    is_propagating_failure |= propagates_failure;
 
                     match ty {
                         DataType::Generic(id) => {
@@ -88,7 +110,12 @@ pub fn analyze_exp(
                 }
             });
 
-            if expected_types.len() > args.len() {
+            if expected_types
+                .iter()
+                .filter(|(_, is_optional)| !*is_optional)
+                .count()
+                > args.len()
+            {
                 files.report_error(
                     &file,
                     &format!("Function takes {} arguments", expected_types.len()),
@@ -96,8 +123,16 @@ pub fn analyze_exp(
                 );
             };
 
+            let exp_ty = fun_symbol
+                .clone()
+                .and_then(|fun_symbol| Some(fun_symbol.data_type))
+                .unwrap_or(DataType::Null);
+
             if let Some(failure) = failure {
-                analyze_failure_handler(
+                let StmntAnalysisResult {
+                    return_ty: failure_return_ty,
+                    is_propagating_failure: is_prop,
+                } = analyze_failure_handler(
                     file_id,
                     file_version,
                     failure,
@@ -105,6 +140,10 @@ pub fn analyze_exp(
                     scoped_generic_types,
                     contexts,
                 );
+
+                is_propagating_failure |= is_prop;
+
+                return_types.extend(failure_return_ty);
             }
 
             if let Some(SymbolInfo {
@@ -137,6 +176,7 @@ pub fn analyze_exp(
                                             name: arg.name.clone(),
                                             data_type: scoped_generic_types
                                                 .deref_type(&arg.data_type),
+                                            is_optional: arg.is_optional,
                                         },
                                         arg_span,
                                     )
@@ -153,16 +193,19 @@ pub fn analyze_exp(
                 );
             }
 
-            let return_type = fun_symbol
-                .and_then(|fun_symbol| Some(fun_symbol.data_type))
-                .unwrap_or(DataType::Null);
-
             if matches!(
-                scoped_generic_types.deref_type(&return_type),
+                scoped_generic_types.deref_type(&exp_ty),
                 DataType::Failable(_)
             ) && modifiers
                 .iter()
-                .all(|(modifier, _)| *modifier != CommandModifier::Unsafe) && failure.is_none()
+                .all(|(modifier, _)| *modifier != CommandModifier::Unsafe)
+                && contexts.iter().all(|ctx| match ctx {
+                    Context::Block(BlockContext { modifiers }) => modifiers
+                        .iter()
+                        .all(|modifier| *modifier != CommandModifier::Unsafe),
+                    _ => true,
+                })
+                && failure.is_none()
             {
                 files.report_error(
                     &file,
@@ -171,7 +214,7 @@ pub fn analyze_exp(
                 );
             }
 
-            return_type
+            exp_ty
         }
         Expression::Var((name, name_span)) => {
             insert_symbol_reference(
@@ -192,7 +235,11 @@ pub fn analyze_exp(
             }
         }
         Expression::Add(exp1, exp2) => {
-            let ty = analyze_exp(
+            let ExpAnalysisResult {
+                exp_ty: ty,
+                return_ty: return1,
+                is_propagating_failure: is_prop1,
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -208,7 +255,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            let right_hand_ty = analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: is_prop2,
+                exp_ty: right_hand_ty,
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -217,6 +268,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= is_prop1 || is_prop2;
+
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             if let DataType::Generic(id) = ty {
                 scoped_generic_types.constrain_generic_type(id, right_hand_ty.clone());
@@ -237,7 +293,11 @@ pub fn analyze_exp(
             ty
         }
         Expression::And(exp1, _, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -246,7 +306,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -256,13 +320,22 @@ pub fn analyze_exp(
                 contexts,
             );
 
+            is_propagating_failure |= prop1 || prop2;
+
+            return_types.extend(return1);
+            return_types.extend(return2);
+
             DataType::Boolean
         }
         Expression::Array(elements) => {
             let types: Vec<DataType> = elements
                 .iter()
                 .map(|exp| {
-                    analyze_exp(
+                    let ExpAnalysisResult {
+                        exp_ty: ty,
+                        return_ty,
+                        is_propagating_failure: prop,
+                    } = analyze_exp(
                         file_id,
                         file_version,
                         exp,
@@ -270,7 +343,12 @@ pub fn analyze_exp(
                         files,
                         scoped_generic_types,
                         contexts,
-                    )
+                    );
+
+                    is_propagating_failure |= prop;
+                    return_types.extend(return_ty);
+
+                    ty
                 })
                 .collect();
 
@@ -290,7 +368,11 @@ pub fn analyze_exp(
             DataType::Array(Box::new(array_type))
         }
         Expression::Cast(exp, _, (ty, _)) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty,
+                is_propagating_failure: prop,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 &exp,
@@ -300,12 +382,19 @@ pub fn analyze_exp(
                 contexts,
             );
 
+            is_propagating_failure |= prop;
+            return_types.extend(return_ty);
+
             ty.clone()
         }
         Expression::Command(modifiers, inter_cmd, failure) => {
             inter_cmd.iter().for_each(|(inter_cmd, _)| match inter_cmd {
                 InterpolatedCommand::Expression(exp) => {
-                    analyze_exp(
+                    let ExpAnalysisResult {
+                        return_ty,
+                        is_propagating_failure: is_prop,
+                        ..
+                    } = analyze_exp(
                         file_id,
                         file_version,
                         &exp,
@@ -314,12 +403,18 @@ pub fn analyze_exp(
                         scoped_generic_types,
                         contexts,
                     );
+
+                    is_propagating_failure |= is_prop;
+                    return_types.extend(return_ty);
                 }
                 _ => {}
             });
 
             if let Some(failure) = failure {
-                analyze_failure_handler(
+                let StmntAnalysisResult {
+                    return_ty: failure_return_ty,
+                    is_propagating_failure: is_prop,
+                } = analyze_failure_handler(
                     file_id,
                     file_version,
                     failure,
@@ -327,9 +422,18 @@ pub fn analyze_exp(
                     scoped_generic_types,
                     contexts,
                 );
+
+                is_propagating_failure |= is_prop;
+                return_types.extend(failure_return_ty);
             } else if !modifiers
                 .iter()
                 .any(|(modifier, _)| *modifier == CommandModifier::Unsafe)
+                && !contexts.iter().any(|ctx| match ctx {
+                    Context::Block(BlockContext { modifiers }) => modifiers
+                        .iter()
+                        .any(|modifier| *modifier == CommandModifier::Unsafe),
+                    _ => false,
+                })
             {
                 files.report_error(&file, "Command must have a failure handler", *exp_span);
             }
@@ -337,7 +441,11 @@ pub fn analyze_exp(
             DataType::Text
         }
         Expression::Divide(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -346,7 +454,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -355,11 +467,19 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             DataType::Number
         }
         Expression::Eq(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -368,7 +488,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -377,11 +501,19 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             DataType::Boolean
         }
         Expression::Ge(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -390,7 +522,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -399,11 +535,19 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             DataType::Boolean
         }
         Expression::Gt(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -412,7 +556,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -421,11 +569,19 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             DataType::Boolean
         }
         Expression::Is(exp, _, _) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty,
+                is_propagating_failure: prop,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -434,11 +590,18 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop;
+            return_types.extend(return_ty);
 
             DataType::Boolean
         }
         Expression::Le(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -447,7 +610,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -456,11 +623,19 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             DataType::Boolean
         }
         Expression::Lt(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -469,7 +644,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -478,11 +657,19 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             DataType::Boolean
         }
         Expression::Modulo(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -491,7 +678,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -500,11 +691,19 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             DataType::Number
         }
         Expression::Multiply(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -513,7 +712,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -522,11 +725,19 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             DataType::Number
         }
         Expression::Nameof(_, exp) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty,
+                is_propagating_failure: prop,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -535,11 +746,18 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop;
+            return_types.extend(return_ty);
 
             DataType::Text
         }
         Expression::Neg(_, exp) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty,
+                is_propagating_failure: prop,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -548,11 +766,18 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop;
+            return_types.extend(return_ty);
 
             DataType::Number
         }
         Expression::Neq(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -561,7 +786,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -571,10 +800,18 @@ pub fn analyze_exp(
                 contexts,
             );
 
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
+
             DataType::Boolean
         }
         Expression::Not(_, exp) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty,
+                is_propagating_failure: prop,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -584,10 +821,17 @@ pub fn analyze_exp(
                 contexts,
             );
 
+            is_propagating_failure |= prop;
+            return_types.extend(return_ty);
+
             DataType::Boolean
         }
         Expression::Or(exp1, _, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -596,7 +840,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -606,19 +854,38 @@ pub fn analyze_exp(
                 contexts,
             );
 
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
+
             DataType::Boolean
         }
-        Expression::Parentheses(exp) => analyze_exp(
-            file_id,
-            file_version,
-            exp,
-            DataType::Any,
-            files,
-            scoped_generic_types,
-            contexts,
-        ),
+        Expression::Parentheses(exp) => {
+            let ExpAnalysisResult {
+                return_ty,
+                is_propagating_failure: prop,
+                exp_ty,
+            } = analyze_exp(
+                file_id,
+                file_version,
+                exp,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+                contexts,
+            );
+
+            is_propagating_failure |= prop;
+            return_types.extend(return_ty);
+
+            exp_ty
+        }
         Expression::Range(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -627,7 +894,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -636,11 +907,19 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
 
             DataType::Array(Box::new(DataType::Number))
         }
         Expression::Subtract(exp1, exp2) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -649,7 +928,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return2,
+                is_propagating_failure: prop2,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -659,10 +942,18 @@ pub fn analyze_exp(
                 contexts,
             );
 
+            is_propagating_failure |= prop1 || prop2;
+            return_types.extend(return1);
+            return_types.extend(return2);
+
             DataType::Number
         }
         Expression::Ternary(exp1, _, exp2, _, exp3) => {
-            analyze_exp(
+            let ExpAnalysisResult {
+                return_ty: return1,
+                is_propagating_failure: prop1,
+                ..
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp1,
@@ -671,7 +962,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            let if_true = analyze_exp(
+            let ExpAnalysisResult {
+                exp_ty: if_true,
+                return_ty: return2,
+                is_propagating_failure: prop2,
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
@@ -680,7 +975,11 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
-            let if_false = analyze_exp(
+            let ExpAnalysisResult {
+                exp_ty: if_false,
+                return_ty: return3,
+                is_propagating_failure: prop3,
+            } = analyze_exp(
                 file_id,
                 file_version,
                 exp3,
@@ -690,12 +989,21 @@ pub fn analyze_exp(
                 contexts,
             );
 
+            is_propagating_failure |= prop1 || prop2 || prop3;
+            return_types.extend(return1);
+            return_types.extend(return2);
+            return_types.extend(return3);
+
             make_union_type(vec![if_true, if_false])
         }
         Expression::Text(int_text) => {
             int_text.iter().for_each(|(text, _)| match text {
                 InterpolatedText::Expression(exp) => {
-                    analyze_exp(
+                    let ExpAnalysisResult {
+                        return_ty,
+                        is_propagating_failure: prop,
+                        ..
+                    } = analyze_exp(
                         file_id,
                         file_version,
                         exp,
@@ -704,6 +1012,9 @@ pub fn analyze_exp(
                         scoped_generic_types,
                         contexts,
                     );
+
+                    is_propagating_failure |= prop;
+                    return_types.extend(return_ty);
                 }
                 _ => {}
             });
@@ -747,5 +1058,13 @@ pub fn analyze_exp(
         scoped_generic_types.constrain_generic_type(id, expected_type.clone());
     }
 
-    ty
+    ExpAnalysisResult {
+        exp_ty: ty,
+        is_propagating_failure,
+        return_ty: if return_types.is_empty() {
+            None
+        } else {
+            Some(make_union_type(return_types))
+        },
+    }
 }

@@ -137,6 +137,7 @@ pub fn analyze_exp(
                                             name: arg.name.clone(),
                                             data_type: scoped_generic_types
                                                 .deref_type(&arg.data_type),
+                                            is_optional: false,
                                         },
                                         arg_span,
                                     )

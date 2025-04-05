@@ -7,18 +7,26 @@ use crate::{
     files::{FileVersion, Files},
     grammar::{
         alpha035::{
-            Block, ElseCondition, FailureHandler, IfChainContent, IfCondition,
-            IterLoopVars, Statement, VariableInitType,
-        }, CommandModifier, Spanned
+            Block, ElseCondition, FailureHandler, IfChainContent, IfCondition, IterLoopVars,
+            Statement, VariableInitType,
+        },
+        CommandModifier, Spanned,
     },
     paths::FileId,
 };
 
-use super::exp::analyze_exp;
+use super::exp::{analyze_exp, ExpAnalysisResult};
+
+#[derive(Debug, Clone)]
+pub struct StmntAnalysisResult {
+    pub is_propagating_failure: bool,
+    pub return_ty: Option<DataType>,
+}
 
 /// Analyze a statement.
 ///
-/// Returns the data type of the return statement.
+/// Returns the data type of the return statement and a boolean indicating if the
+/// statement is propagating a failure.
 #[tracing::instrument(skip_all)]
 pub fn analyze_stmnt(
     file_id: FileId,
@@ -28,7 +36,7 @@ pub fn analyze_stmnt(
     scope_end: usize,
     scoped_generic_types: &GenericsMap,
     contexts: &mut Vec<Context>,
-) -> Option<DataType> {
+) -> StmntAnalysisResult {
     let file = (file_id, file_version);
 
     match stmnt {
@@ -43,11 +51,14 @@ pub fn analyze_stmnt(
             );
         }
         Statement::IfChain(_, if_chain) => {
+            let mut stmnts = vec![];
+            let mut exps = vec![];
+
             for (if_chain_content, _) in if_chain.iter() {
                 match if_chain_content {
                     IfChainContent::IfCondition((condition, _)) => match condition {
                         IfCondition::IfCondition(exp, block) => {
-                            analyze_exp(
+                            let exp = analyze_exp(
                                 file_id,
                                 file_version,
                                 exp,
@@ -56,7 +67,7 @@ pub fn analyze_stmnt(
                                 scoped_generic_types,
                                 contexts,
                             );
-                            return analyze_block(
+                            let stmnt = analyze_block(
                                 file_id,
                                 file_version,
                                 block,
@@ -64,9 +75,12 @@ pub fn analyze_stmnt(
                                 scoped_generic_types,
                                 contexts,
                             );
+
+                            exps.push(exp);
+                            stmnts.push(stmnt);
                         }
                         IfCondition::InlineIfCondition(exp, boxed_stmnt) => {
-                            analyze_exp(
+                            let exp = analyze_exp(
                                 file_id,
                                 file_version,
                                 exp,
@@ -75,7 +89,7 @@ pub fn analyze_stmnt(
                                 scoped_generic_types,
                                 contexts,
                             );
-                            return analyze_stmnt(
+                            let stmnt = analyze_stmnt(
                                 file_id,
                                 file_version,
                                 boxed_stmnt,
@@ -84,12 +98,15 @@ pub fn analyze_stmnt(
                                 scoped_generic_types,
                                 contexts,
                             );
+
+                            exps.push(exp);
+                            stmnts.push(stmnt);
                         }
-                        _ => {}
+                        IfCondition::Error => {}
                     },
                     IfChainContent::Else((else_cond, _)) => match else_cond {
                         ElseCondition::Else(_, block) => {
-                            return analyze_block(
+                            let stmnt = analyze_block(
                                 file_id,
                                 file_version,
                                 block,
@@ -97,9 +114,11 @@ pub fn analyze_stmnt(
                                 scoped_generic_types,
                                 contexts,
                             );
+
+                            stmnts.push(stmnt);
                         }
                         ElseCondition::InlineElse(_, stmnt) => {
-                            return analyze_stmnt(
+                            let stmnt = analyze_stmnt(
                                 file_id,
                                 file_version,
                                 stmnt,
@@ -108,15 +127,22 @@ pub fn analyze_stmnt(
                                 scoped_generic_types,
                                 contexts,
                             );
+
+                            stmnts.push(stmnt);
                         }
                     },
                 }
             }
+
+            get_stmnt_analysis_result(stmnts, exps)
         }
         Statement::IfCondition(_, if_cond, else_cond) => {
+            let mut stmnts = vec![];
+            let mut exps = vec![];
+
             match &if_cond.0 {
                 IfCondition::IfCondition(exp, block) => {
-                    analyze_exp(
+                    let exp = analyze_exp(
                         file_id,
                         file_version,
                         exp,
@@ -125,7 +151,7 @@ pub fn analyze_stmnt(
                         scoped_generic_types,
                         contexts,
                     );
-                    return analyze_block(
+                    let block = analyze_block(
                         file_id,
                         file_version,
                         block,
@@ -133,9 +159,12 @@ pub fn analyze_stmnt(
                         scoped_generic_types,
                         contexts,
                     );
+
+                    stmnts.push(block);
+                    exps.push(exp);
                 }
                 IfCondition::InlineIfCondition(exp, boxed_stmnt) => {
-                    analyze_exp(
+                    let exp = analyze_exp(
                         file_id,
                         file_version,
                         exp,
@@ -144,7 +173,7 @@ pub fn analyze_stmnt(
                         scoped_generic_types,
                         contexts,
                     );
-                    return analyze_stmnt(
+                    let stmnt = analyze_stmnt(
                         file_id,
                         file_version,
                         boxed_stmnt,
@@ -153,6 +182,9 @@ pub fn analyze_stmnt(
                         scoped_generic_types,
                         contexts,
                     );
+
+                    stmnts.push(stmnt);
+                    exps.push(exp);
                 }
                 _ => {}
             }
@@ -160,7 +192,7 @@ pub fn analyze_stmnt(
             if let Some(else_cond) = else_cond {
                 match &else_cond.0 {
                     ElseCondition::Else(_, block) => {
-                        return analyze_block(
+                        let block = analyze_block(
                             file_id,
                             file_version,
                             block,
@@ -168,9 +200,11 @@ pub fn analyze_stmnt(
                             scoped_generic_types,
                             contexts,
                         );
+
+                        stmnts.push(block);
                     }
                     ElseCondition::InlineElse(_, stmnt) => {
-                        return analyze_stmnt(
+                        let stmnt = analyze_stmnt(
                             file_id,
                             file_version,
                             stmnt,
@@ -179,9 +213,13 @@ pub fn analyze_stmnt(
                             scoped_generic_types,
                             contexts,
                         );
+
+                        stmnts.push(stmnt);
                     }
                 }
             }
+
+            return get_stmnt_analysis_result(stmnts, exps);
         }
         Statement::InfiniteLoop(_, block) => {
             let mut new_contexts = contexts.clone();
@@ -198,7 +236,7 @@ pub fn analyze_stmnt(
         Statement::IterLoop(_, (vars, _), _, exp, block) => {
             let block_span = block.1.clone();
 
-            let iter_type = match analyze_exp(
+            let exp = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -206,8 +244,17 @@ pub fn analyze_stmnt(
                 files,
                 scoped_generic_types,
                 contexts,
-            ) {
+            );
+
+            let iter_type = match exp.exp_ty.clone() {
                 DataType::Array(ty) => *ty,
+                DataType::Failable(ty) => {
+                    if let DataType::Array(inner_ty) = *ty {
+                        *inner_ty
+                    } else {
+                        DataType::Any
+                    }
+                }
                 _ => DataType::Any,
             };
 
@@ -272,7 +319,8 @@ pub fn analyze_stmnt(
 
             let mut new_contexts = contexts.clone();
             new_contexts.push(Context::Loop);
-            return analyze_block(
+
+            let block = analyze_block(
                 file_id,
                 file_version,
                 block,
@@ -280,9 +328,11 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 &new_contexts,
             );
+
+            get_stmnt_analysis_result(vec![block], vec![exp])
         }
         Statement::VariableInit(_, (var_name, var_span), (value, _)) => {
-            let var_type = match value {
+            let exp = match value {
                 VariableInitType::Expression(exp) => analyze_exp(
                     file_id,
                     file_version,
@@ -292,14 +342,28 @@ pub fn analyze_stmnt(
                     scoped_generic_types,
                     contexts,
                 ),
-                VariableInitType::DataType((ty, _)) => ty.clone(),
-                _ => DataType::Error,
+                VariableInitType::DataType((ty, _)) => ExpAnalysisResult {
+                    exp_ty: ty.clone(),
+                    is_propagating_failure: false,
+                    return_ty: None,
+                },
+                _ => ExpAnalysisResult {
+                    exp_ty: DataType::Error,
+                    is_propagating_failure: false,
+                    return_ty: None,
+                },
             };
 
             let mut symbol_table = files
                 .symbol_table
                 .entry(file)
                 .or_insert_with(|| Default::default());
+
+            let var_type = match exp.exp_ty {
+                DataType::Failable(ty) => scoped_generic_types.deref_type(&ty),
+                ty => scoped_generic_types.deref_type(&ty),
+            };
+
             insert_symbol_definition(
                 &mut symbol_table,
                 var_name,
@@ -309,14 +373,19 @@ pub fn analyze_stmnt(
                     start: var_span.start,
                     end: var_span.end,
                 },
-                scoped_generic_types.deref_type(&var_type),
+                var_type,
                 SymbolType::Variable,
                 false,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp.is_propagating_failure,
+                return_ty: exp.return_ty,
+            }
         }
         Statement::Echo(_, exp) => {
-            analyze_exp(
+            let exp = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -325,9 +394,14 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp.is_propagating_failure,
+                return_ty: exp.return_ty,
+            }
         }
         Statement::Expression(exp) => {
-            analyze_exp(
+            let exp = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -336,6 +410,11 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp.is_propagating_failure,
+                return_ty: exp.return_ty,
+            }
         }
         Statement::Fail(_, exp) => {
             if !contexts
@@ -350,7 +429,7 @@ pub fn analyze_stmnt(
             }
 
             if let Some(exp) = exp {
-                analyze_exp(
+                let exp = analyze_exp(
                     file_id,
                     file_version,
                     exp,
@@ -359,6 +438,16 @@ pub fn analyze_stmnt(
                     scoped_generic_types,
                     contexts,
                 );
+
+                return StmntAnalysisResult {
+                    is_propagating_failure: exp.is_propagating_failure,
+                    return_ty: exp.return_ty,
+                };
+            }
+
+            StmntAnalysisResult {
+                is_propagating_failure: true,
+                return_ty: None,
             }
         }
         Statement::Return(_, exp) => {
@@ -367,7 +456,7 @@ pub fn analyze_stmnt(
             }
 
             if let Some(exp) = exp {
-                let ty = analyze_exp(
+                let exp_analysis = analyze_exp(
                     file_id,
                     file_version,
                     exp,
@@ -377,10 +466,23 @@ pub fn analyze_stmnt(
                     contexts,
                 );
 
-                return Some(ty);
+                if let Some(ty) = exp_analysis.return_ty {
+                    return StmntAnalysisResult {
+                        is_propagating_failure: exp_analysis.is_propagating_failure,
+                        return_ty: Some(make_union_type(vec![ty, exp_analysis.exp_ty])),
+                    };
+                }
+
+                return StmntAnalysisResult {
+                    is_propagating_failure: exp_analysis.is_propagating_failure,
+                    return_ty: Some(exp_analysis.exp_ty),
+                };
             }
 
-            return Some(DataType::Null);
+            StmntAnalysisResult {
+                is_propagating_failure: false,
+                return_ty: None,
+            }
         }
         Statement::ShorthandAdd((var, var_span), exp) => {
             let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
@@ -397,7 +499,7 @@ pub fn analyze_stmnt(
                 ]))),
             ]);
 
-            let exp_ty = analyze_exp(
+            let exp_analysis = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -408,7 +510,7 @@ pub fn analyze_stmnt(
             );
 
             if !matches_type(&default_ty, &var_ty, scoped_generic_types)
-                || !matches_type(&exp_ty, &var_ty, scoped_generic_types)
+                || !matches_type(&exp_analysis.exp_ty, &var_ty, scoped_generic_types)
             {
                 files.report_error(
                     &file,
@@ -431,6 +533,11 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp_analysis.is_propagating_failure,
+                return_ty: exp_analysis.return_ty,
+            }
         }
         Statement::ShorthandDiv((var, var_span), exp) => {
             let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
@@ -449,7 +556,7 @@ pub fn analyze_stmnt(
                 );
             }
 
-            analyze_exp(
+            let exp_analysis = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -470,6 +577,11 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp_analysis.is_propagating_failure,
+                return_ty: exp_analysis.return_ty,
+            }
         }
         Statement::ShorthandModulo((var, var_span), exp) => {
             let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
@@ -488,7 +600,7 @@ pub fn analyze_stmnt(
                 );
             }
 
-            analyze_exp(
+            let exp_analysis = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -509,6 +621,11 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp_analysis.is_propagating_failure,
+                return_ty: exp_analysis.return_ty,
+            }
         }
         Statement::ShorthandMul((var, var_span), exp) => {
             let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
@@ -527,7 +644,7 @@ pub fn analyze_stmnt(
                 );
             }
 
-            analyze_exp(
+            let exp_analysis = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -548,6 +665,11 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp_analysis.is_propagating_failure,
+                return_ty: exp_analysis.return_ty,
+            }
         }
         Statement::ShorthandSub((var, var_span), exp) => {
             let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
@@ -566,7 +688,7 @@ pub fn analyze_stmnt(
                 );
             }
 
-            analyze_exp(
+            let exp_analysis = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -587,6 +709,11 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp_analysis.is_propagating_failure,
+                return_ty: exp_analysis.return_ty,
+            }
         }
         Statement::VariableSet((var, var_span), exp) => {
             let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
@@ -594,7 +721,7 @@ pub fn analyze_stmnt(
                 None => DataType::Any,
             };
 
-            analyze_exp(
+            let exp_analysis = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -615,19 +742,34 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp_analysis.is_propagating_failure,
+                return_ty: exp_analysis.return_ty,
+            }
         }
         Statement::Break => {
             if !contexts.iter().any(|c| matches!(c, Context::Loop)) {
                 files.report_error(&file, "Break statement outside of loop", span.clone());
+            }
+
+            StmntAnalysisResult {
+                is_propagating_failure: false,
+                return_ty: None,
             }
         }
         Statement::Continue => {
             if !contexts.iter().any(|c| matches!(c, Context::Loop)) {
                 files.report_error(&file, "Continue statement outside of loop", span.clone());
             }
+
+            StmntAnalysisResult {
+                is_propagating_failure: false,
+                return_ty: None,
+            }
         }
         Statement::Cd(_, exp) => {
-            analyze_exp(
+            let exp = analyze_exp(
                 file_id,
                 file_version,
                 exp,
@@ -636,9 +778,14 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp.is_propagating_failure,
+                return_ty: exp.return_ty,
+            }
         }
         Statement::MoveFiles(modifiers, _, from_exp, to_exp, handler) => {
-            analyze_exp(
+            let exp1 = analyze_exp(
                 file_id,
                 file_version,
                 from_exp,
@@ -647,7 +794,7 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
-            analyze_exp(
+            let exp2 = analyze_exp(
                 file_id,
                 file_version,
                 to_exp,
@@ -658,7 +805,7 @@ pub fn analyze_stmnt(
             );
 
             if let Some(handler) = handler {
-                analyze_failure_handler(
+                let stmnt = analyze_failure_handler(
                     file_id,
                     file_version,
                     handler,
@@ -666,26 +813,41 @@ pub fn analyze_stmnt(
                     scoped_generic_types,
                     contexts,
                 );
+
+                return get_stmnt_analysis_result(vec![stmnt], vec![exp1, exp2]);
             } else if !modifiers
                 .iter()
                 .any(|(modifier, _)| *modifier == CommandModifier::Unsafe)
             {
                 files.report_error(&file, "Command must have a failure handler", *span);
             }
+
+            return get_stmnt_analysis_result(vec![], vec![exp1, exp2]);
         }
         Statement::DocString(docs) => match contexts.last() {
             Some(Context::DocString(doc_string)) => {
                 let new_doc_string = format!("{}\n{}", doc_string, docs);
                 *contexts.last_mut().unwrap() = Context::DocString(new_doc_string);
+
+                StmntAnalysisResult {
+                    is_propagating_failure: false,
+                    return_ty: None,
+                }
             }
             _ => {
                 contexts.push(Context::DocString(docs.clone()));
+
+                StmntAnalysisResult {
+                    is_propagating_failure: false,
+                    return_ty: None,
+                }
             }
         },
-        Statement::Comment(_) | Statement::Shebang(_) | Statement::Error => {}
-    };
-
-    None
+        Statement::Comment(_) | Statement::Shebang(_) | Statement::Error => StmntAnalysisResult {
+            is_propagating_failure: false,
+            return_ty: None,
+        },
+    }
 }
 
 pub fn analyze_block(
@@ -695,8 +857,10 @@ pub fn analyze_block(
     files: &Files,
     scoped_generic_types: &GenericsMap,
     contexts: &Vec<Context>,
-) -> Option<DataType> {
+) -> StmntAnalysisResult {
     let mut types: Vec<DataType> = vec![];
+
+    let mut is_propagating = false;
 
     if let Block::Block(modifiers, stmnt) = block {
         let mut new_contexts = contexts.clone();
@@ -705,7 +869,10 @@ pub fn analyze_block(
         }));
 
         for stmnt in stmnt.iter() {
-            if let Some(ty) = analyze_stmnt(
+            let StmntAnalysisResult {
+                return_ty,
+                is_propagating_failure,
+            } = analyze_stmnt(
                 file_id,
                 file_version,
                 stmnt,
@@ -713,16 +880,26 @@ pub fn analyze_block(
                 span.end,
                 scoped_generic_types,
                 &mut new_contexts,
-            ) {
+            );
+
+            if let Some(ty) = return_ty {
                 types.push(ty);
             }
+
+            is_propagating |= is_propagating_failure;
         }
     }
 
     if types.is_empty() {
-        None
+        StmntAnalysisResult {
+            is_propagating_failure: is_propagating,
+            return_ty: None,
+        }
     } else {
-        Some(make_union_type(types))
+        StmntAnalysisResult {
+            is_propagating_failure: is_propagating,
+            return_ty: Some(make_union_type(types)),
+        }
     }
 }
 
@@ -733,12 +910,18 @@ pub fn analyze_failure_handler(
     files: &Files,
     scoped_generic_types: &GenericsMap,
     contexts: &Vec<Context>,
-) {
+) -> StmntAnalysisResult {
+    let mut types: Vec<DataType> = vec![];
+    let mut is_propagating = false;
     let mut contexts = contexts.clone();
+
     match failure {
         FailureHandler::Handle(_, stmnts) => {
             stmnts.iter().for_each(|stmnt| {
-                analyze_stmnt(
+                let StmntAnalysisResult {
+                    return_ty,
+                    is_propagating_failure,
+                } = analyze_stmnt(
                     file_id,
                     file_version,
                     stmnt,
@@ -747,6 +930,9 @@ pub fn analyze_failure_handler(
                     scoped_generic_types,
                     &mut contexts,
                 );
+
+                types.extend(return_ty);
+                is_propagating |= is_propagating_failure;
             });
         }
         FailureHandler::Propagate => {
@@ -760,6 +946,55 @@ pub fn analyze_failure_handler(
                     span.clone(),
                 );
             }
+
+            is_propagating = true;
         }
+    };
+
+    if types.is_empty() {
+        StmntAnalysisResult {
+            is_propagating_failure: is_propagating,
+            return_ty: None,
+        }
+    } else {
+        StmntAnalysisResult {
+            is_propagating_failure: is_propagating,
+            return_ty: Some(make_union_type(types)),
+        }
+    }
+}
+
+fn get_stmnt_analysis_result(
+    stmnt_analysis: Vec<StmntAnalysisResult>,
+    exp_analysis: Vec<ExpAnalysisResult>,
+) -> StmntAnalysisResult {
+    let mut is_propagating_failure = false;
+    let mut return_ty = vec![];
+
+    for stmnt in stmnt_analysis {
+        if stmnt.is_propagating_failure {
+            is_propagating_failure = true;
+        }
+        if let Some(ty) = stmnt.return_ty {
+            return_ty.push(ty);
+        }
+    }
+
+    for exp in exp_analysis {
+        if exp.is_propagating_failure {
+            is_propagating_failure = true;
+        }
+        if let Some(ty) = exp.return_ty {
+            return_ty.push(ty);
+        }
+    }
+
+    StmntAnalysisResult {
+        is_propagating_failure,
+        return_ty: if return_ty.len() > 0 {
+            Some(make_union_type(return_ty))
+        } else {
+            None
+        },
     }
 }

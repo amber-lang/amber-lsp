@@ -14,7 +14,10 @@ use crate::{
     paths::FileId,
 };
 
-use super::stmnts::analyze_stmnt;
+use super::{
+    exp::analyze_exp,
+    stmnts::{analyze_stmnt, StmntAnalysisResult},
+};
 
 #[tracing::instrument(skip_all)]
 pub async fn analyze_global_stmnt(
@@ -31,13 +34,15 @@ pub async fn analyze_global_stmnt(
                 _,
                 (name, name_span),
                 args,
-                ty,
+                declared_return_ty,
                 body,
             ) => {
                 // We create scoped generics map, to not overwrite other generics, not defined here
                 let scoped_generics_map = backend.files.generic_types.clone();
 
                 let mut new_generic_types = vec![];
+                let mut prev_arg_optional = false;
+
                 args.iter().for_each(|(arg, _)| {
                     let (name, ty, name_span) = match arg {
                         FunctionArgument::Generic((name, span)) => {
@@ -46,25 +51,58 @@ pub async fn analyze_global_stmnt(
                             scoped_generics_map.constrain_generic_type(generic_id, DataType::Any);
                             new_generic_types.push(generic_id);
 
+                            if prev_arg_optional {
+                                backend.files.report_error(
+                                    &(file_id, file_version),
+                                    "Optional argument must be the last one",
+                                    *span,
+                                );
+                            }
+
                             (name, DataType::Generic(generic_id), span)
                         }
-                        FunctionArgument::Typed((name, span), (ty, _)) => (name, ty.clone(), span),
-                        FunctionArgument::Optional((name, span), ty, _) => (
-                            name,
-                            match ty {
-                                Some((ty, _)) => ty.clone(),
-                                None => {
-                                    let generic_id = scoped_generics_map.new_generic_id();
+                        FunctionArgument::Typed((name, span), (ty, _)) => {
+                            if prev_arg_optional {
+                                backend.files.report_error(
+                                    &(file_id, file_version),
+                                    "Optional argument must be the last one",
+                                    *span,
+                                );
+                            }
 
-                                    scoped_generics_map
-                                        .constrain_generic_type(generic_id, DataType::Any);
-                                    new_generic_types.push(generic_id);
+                            (name, ty.clone(), span)
+                        }
+                        FunctionArgument::Optional((name, span), ty, exp) => {
+                            prev_arg_optional = true;
+                            (
+                                name,
+                                match ty {
+                                    Some((ty, _)) => {
+                                        analyze_exp(
+                                            file_id,
+                                            file_version,
+                                            exp,
+                                            ty.clone(),
+                                            &backend.files,
+                                            &backend.files.generic_types.clone(),
+                                            &vec![],
+                                        );
 
-                                    DataType::Generic(generic_id)
-                                }
-                            },
-                            span,
-                        ),
+                                        ty.clone()
+                                    }
+                                    None => {
+                                        let generic_id = scoped_generics_map.new_generic_id();
+
+                                        scoped_generics_map
+                                            .constrain_generic_type(generic_id, DataType::Any);
+                                        new_generic_types.push(generic_id);
+
+                                        DataType::Generic(generic_id)
+                                    }
+                                },
+                                span,
+                            )
+                        }
                         FunctionArgument::Error => return,
                     };
 
@@ -91,13 +129,17 @@ pub async fn analyze_global_stmnt(
                 });
 
                 let mut return_types = vec![];
+                let mut is_propagating = false;
 
                 let mut contexts = vec![Context::Function(FunctionContext {
                     compiler_flags: vec![],
                 })];
 
                 body.iter().for_each(|stmnt| {
-                    if let Some(ty) = analyze_stmnt(
+                    let StmntAnalysisResult {
+                        return_ty,
+                        is_propagating_failure,
+                    } = analyze_stmnt(
                         file_id,
                         file_version,
                         stmnt,
@@ -105,9 +147,10 @@ pub async fn analyze_global_stmnt(
                         span.end,
                         &scoped_generics_map,
                         &mut contexts,
-                    ) {
-                        return_types.push(ty);
-                    }
+                    );
+
+                    is_propagating |= is_propagating_failure;
+                    return_types.extend(return_ty);
                 });
 
                 new_generic_types.iter().for_each(|generic_id| {
@@ -118,27 +161,39 @@ pub async fn analyze_global_stmnt(
                     backend.files.generic_types.mark_as_inferred(*generic_id);
                 });
 
-                let return_type = match return_types.len() {
+                let mut inferred_return_type = match return_types.len() {
                     0 => DataType::Null,
                     _ => make_union_type(return_types),
                 };
 
-                let data_type = match ty {
+                if is_propagating && !matches!(inferred_return_type, DataType::Failable(_)) {
+                    inferred_return_type = DataType::Failable(Box::new(inferred_return_type));
+                }
+
+                let data_type = match declared_return_ty {
                     Some((ty, ty_span)) => {
-                        if !matches_type(ty, &return_type, &backend.files.generic_types) {
+                        if !matches_type(ty, &inferred_return_type, &backend.files.generic_types) {
                             backend.files.report_error(
                                 &(file_id, file_version),
                                 &format!(
                                     "Function returns type {:?}, but expected {:?}",
-                                    return_type, ty
+                                    inferred_return_type, ty
                                 ),
+                                *ty_span,
+                            );
+                        }
+
+                        if is_propagating && !matches!(ty, DataType::Failable(_)) {
+                            backend.files.report_error(
+                                &(file_id, file_version),
+                                "Function is propagating an error, but return type is not failable",
                                 *ty_span,
                             );
                         }
 
                         ty.clone()
                     }
-                    None => return_type,
+                    None => inferred_return_type,
                 };
 
                 let mut symbol_table = backend
@@ -165,6 +220,7 @@ pub async fn analyze_global_stmnt(
                                     analysis::FunctionArgument {
                                         name: name.clone(),
                                         data_type: DataType::Generic(new_generic_types.remove(0)),
+                                        is_optional: false,
                                     },
                                     span.clone(),
                                 )),
@@ -172,6 +228,7 @@ pub async fn analyze_global_stmnt(
                                     analysis::FunctionArgument {
                                         name: name.clone(),
                                         data_type: ty.clone(),
+                                        is_optional: false,
                                     },
                                     span.clone(),
                                 )),
@@ -182,6 +239,7 @@ pub async fn analyze_global_stmnt(
                                             Some((ty, _)) => ty.clone(),
                                             None => DataType::Generic(new_generic_types.remove(0)),
                                         },
+                                        is_optional: true,
                                     },
                                     span.clone(),
                                 )),

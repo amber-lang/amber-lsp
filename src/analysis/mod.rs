@@ -26,6 +26,7 @@ pub struct FunctionSymbol {
 pub struct FunctionArgument {
     pub name: String,
     pub data_type: DataType,
+    pub is_optional: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -98,9 +99,10 @@ impl SymbolInfo {
                     self.name,
                     arguments
                         .iter()
-                        .map(|(FunctionArgument { name, data_type }, _)| format!(
-                            "{}: {}",
+                        .map(|(FunctionArgument { name, data_type, is_optional }, _)| format!(
+                            "{}{}: {}",
                             name,
+                            if *is_optional { "?" } else { "" },
                             data_type.to_string(generics_map)
                         ))
                         .collect::<Vec<String>>()
@@ -315,6 +317,7 @@ pub fn insert_symbol_reference(
                                 FunctionArgument {
                                     name: arg.name.clone(),
                                     data_type: scoped_generics.deref_type(&arg.data_type),
+                                    is_optional: arg.is_optional,
                                 },
                                 span.clone(),
                             )
