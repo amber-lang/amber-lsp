@@ -26,6 +26,8 @@ pub async fn analyze_global_stmnt(
     ast: &Vec<Spanned<GlobalStatement>>,
     backend: &Backend,
 ) {
+    let mut contexts = vec![];
+
     for (global, span) in ast.iter() {
         match global {
             GlobalStatement::FunctionDefinition(
@@ -131,7 +133,7 @@ pub async fn analyze_global_stmnt(
                 let mut return_types = vec![];
                 let mut is_propagating = false;
 
-                let mut contexts = vec![Context::Function(FunctionContext {
+                let mut function_contexts = vec![Context::Function(FunctionContext {
                     compiler_flags: vec![],
                 })];
 
@@ -146,7 +148,7 @@ pub async fn analyze_global_stmnt(
                         &backend.files,
                         span.end,
                         &scoped_generics_map,
-                        &mut contexts,
+                        &mut function_contexts,
                     );
 
                     is_propagating |= is_propagating_failure;
@@ -251,6 +253,13 @@ pub async fn analyze_global_stmnt(
                             .iter()
                             .map(|(flag, _)| flag.clone())
                             .collect(),
+                        docs: match contexts.clone().last() {
+                            Some(Context::DocString(doc)) => {
+                                contexts.pop();
+                                Some(doc.clone())
+                            }
+                            _ => None,
+                        },
                     }),
                     *is_pub,
                     &vec![],
@@ -519,7 +528,7 @@ pub async fn analyze_global_stmnt(
                     &backend.files,
                     usize::MAX,
                     &backend.files.generic_types.clone(),
-                    &mut vec![],
+                    &mut contexts,
                 );
             }
         }

@@ -167,6 +167,7 @@ pub async fn analyze_global_stmnt(
                             .iter()
                             .map(|(flag, _)| flag.clone())
                             .collect(),
+                        docs: None,
                     }),
                     *is_pub,
                     &vec![],

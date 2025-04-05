@@ -20,6 +20,7 @@ pub struct FunctionSymbol {
     pub arguments: Vec<Spanned<FunctionArgument>>,
     pub is_public: bool,
     pub compiler_flags: Vec<CompilerFlag>,
+    pub docs: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -81,6 +82,7 @@ impl SymbolInfo {
                 is_public,
                 arguments,
                 compiler_flags,
+                ..
             }) => {
                 let compiler_flags_str = compiler_flags
                     .iter()
@@ -99,12 +101,21 @@ impl SymbolInfo {
                     self.name,
                     arguments
                         .iter()
-                        .map(|(FunctionArgument { name, data_type, is_optional }, _)| format!(
-                            "{}{}: {}",
-                            name,
-                            if *is_optional { "?" } else { "" },
-                            data_type.to_string(generics_map)
-                        ))
+                        .map(
+                            |(
+                                FunctionArgument {
+                                    name,
+                                    data_type,
+                                    is_optional,
+                                },
+                                _,
+                            )| format!(
+                                "{}{}: {}",
+                                name,
+                                if *is_optional { "?" } else { "" },
+                                data_type.to_string(generics_map)
+                            )
+                        )
                         .collect::<Vec<String>>()
                         .join(", "),
                     self.data_type.to_string(generics_map)
@@ -309,6 +320,7 @@ pub fn insert_symbol_reference(
                     arguments,
                     is_public,
                     compiler_flags,
+                    docs,
                 }) => SymbolType::Function(FunctionSymbol {
                     arguments: arguments
                         .iter()
@@ -325,6 +337,7 @@ pub fn insert_symbol_reference(
                         .collect(),
                     is_public,
                     compiler_flags,
+                    docs: docs.clone(),
                 }),
                 symbol => symbol,
             };

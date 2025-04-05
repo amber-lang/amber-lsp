@@ -11,7 +11,7 @@ use tower_lsp::{Client, LanguageServer};
 use tracing::info;
 
 use crate::analysis::{
-    self, get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType
+    self, get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType,
 };
 use crate::files::{FileVersion, Files, DEFAULT_VERSION};
 use crate::fs::{LocalFs, FS};
@@ -186,10 +186,12 @@ impl Backend {
 
         match ast {
             Grammar::Alpha034(Some(ast)) => {
-                analysis::alpha034::global::analyze_global_stmnt(file_id, version, &ast, self).await;
+                analysis::alpha034::global::analyze_global_stmnt(file_id, version, &ast, self)
+                    .await;
             }
             Grammar::Alpha035(Some(ast)) => {
-                analysis::alpha035::global::analyze_global_stmnt(file_id, version, &ast, self).await;
+                analysis::alpha035::global::analyze_global_stmnt(file_id, version, &ast, self)
+                    .await;
             }
             _ => {}
         }
@@ -783,7 +785,12 @@ impl LanguageServer for Backend {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
                 value: format!(
-                    "```amber\n{}\n```",
+                    "{}```amber\n{}\n```",
+                    match symbol_info.symbol_type {
+                        SymbolType::Function(FunctionSymbol { ref docs, .. }) if docs.is_some() =>
+                            format!("{}\n", docs.clone().unwrap()),
+                        _ => "".to_string(),
+                    },
                     symbol_info.to_string(&self.files.generic_types)
                 ),
             }),
