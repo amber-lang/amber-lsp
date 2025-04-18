@@ -117,7 +117,18 @@ pub fn semantic_tokens_from_ast(
                     ));
 
                     args.iter().for_each(|(arg, _)| match arg {
-                        FunctionArgument::Typed((_, arg_span), (_, ty_span)) => {
+                        FunctionArgument::Typed(
+                            (is_ref, is_ref_span),
+                            (_, arg_span),
+                            (_, ty_span),
+                        ) => {
+                            if *is_ref {
+                                tokens.push((
+                                    hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                                    is_ref_span.clone(),
+                                ));
+                            }
+
                             tokens.push((
                                 hash_semantic_token_type(SemanticTokenType::PARAMETER),
                                 arg_span.clone(),
@@ -127,7 +138,14 @@ pub fn semantic_tokens_from_ast(
                                 ty_span.clone(),
                             ));
                         }
-                        FunctionArgument::Generic((_, arg_span)) => {
+                        FunctionArgument::Generic((is_ref, is_ref_span), (_, arg_span)) => {
+                            if *is_ref {
+                                tokens.push((
+                                    hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                                    is_ref_span.clone(),
+                                ));
+                            }
+
                             tokens.push((
                                 hash_semantic_token_type(SemanticTokenType::PARAMETER),
                                 arg_span.clone(),
@@ -436,6 +454,21 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                 )];
 
                 tokens.extend(semantic_tokens_from_expr(expr));
+
+                tokens
+            }
+            Statement::ConstInit((_, const_span), (_, var_span), exp) => {
+                let mut tokens = vec![(
+                    hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                    const_span.clone(),
+                )];
+
+                tokens.push((
+                    hash_semantic_token_type(SemanticTokenType::VARIABLE),
+                    var_span.clone(),
+                ));
+
+                tokens.extend(semantic_tokens_from_expr(exp));
 
                 tokens
             }

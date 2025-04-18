@@ -140,12 +140,17 @@ fn compiler_flag_parser<'a>() -> impl AmberParser<'a, Spanned<CompilerFlag>> {
 }
 
 pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
-    let generic_arg_parser = ident("argument".to_string())
-        .map_with(|name, e| FunctionArgument::Generic((name, e.span())))
+    let generic_arg_parser = just(T!["ref"])
+        .or_not()
+        .map_with(|is_ref, e| (is_ref.is_some(), e.span()))
+        .then(ident("argument".to_string()))
+        .map_with(|(is_ref, name), e| FunctionArgument::Generic(is_ref, (name, e.span())))
         .boxed();
 
-    let typed_arg_parser = ident("argument".to_string())
-        .map_with(|name, e| (name, e.span()))
+    let typed_arg_parser = just(T!["ref"])
+        .or_not()
+        .map_with(|is_ref, e| (is_ref.is_some(), e.span()))
+        .then(ident("argument".to_string()).map_with(|name, e| (name, e.span())))
         .then(
             just(T![":"]).ignore_then(
                 type_parser().recover_with(via_parser(
@@ -155,7 +160,7 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
                 )),
             ),
         )
-        .map(|(name, ty)| FunctionArgument::Typed(name, ty))
+        .map(|((is_ref, name), ty)| FunctionArgument::Typed(is_ref, name, ty))
         .boxed();
 
     let arg_parser = choice((typed_arg_parser, generic_arg_parser))
@@ -173,11 +178,11 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .map_with(|(arg, default), e| {
             (
                 match (arg.clone(), default) {
-                    (FunctionArgument::Typed(name, ty), Some(expr)) => {
-                        FunctionArgument::Optional(name, Some(ty), expr)
+                    (FunctionArgument::Typed(is_ref, name, ty), Some(expr)) => {
+                        FunctionArgument::Optional(is_ref, name, Some(ty), expr)
                     }
-                    (FunctionArgument::Generic(name), Some(expr)) => {
-                        FunctionArgument::Optional(name, None, expr)
+                    (FunctionArgument::Generic(is_ref, name), Some(expr)) => {
+                        FunctionArgument::Optional(is_ref, name, None, expr)
                     }
                     _ => arg,
                 },

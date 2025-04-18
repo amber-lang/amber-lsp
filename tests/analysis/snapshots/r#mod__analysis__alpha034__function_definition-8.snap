@@ -9,16 +9,27 @@ Some(
             FunctionSymbol {
                 arguments: [
                     (
-                        "a",
-                        Any,
+                        FunctionArgument {
+                            name: "a",
+                            data_type: Any,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        13..14,
                     ),
                     (
-                        "b",
-                        Any,
+                        FunctionArgument {
+                            name: "b",
+                            data_type: Any,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        16..17,
                     ),
                 ],
                 is_public: false,
                 compiler_flags: [],
+                docs: None,
             },
         ),
         data_type: Any,

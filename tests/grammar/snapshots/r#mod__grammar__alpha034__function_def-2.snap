@@ -22,6 +22,10 @@ expression: "parse_unwrap(&tokenize(\"fun func(a) {}\"))"
                 (
                     Generic(
                         (
+                            false,
+                            9..9,
+                        ),
+                        (
                             "a",
                             9..10,
                         ),

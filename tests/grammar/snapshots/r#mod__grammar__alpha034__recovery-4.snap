@@ -24,6 +24,10 @@ expression: "parse(&tokenize(r#\"\n        fun foo(a) {\n\n            return \"
                         (
                             Generic(
                                 (
+                                    false,
+                                    17..17,
+                                ),
+                                (
                                     "a",
                                     17..18,
                                 ),

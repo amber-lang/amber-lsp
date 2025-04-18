@@ -7,6 +7,7 @@ use crate::{
         get_symbol_definition_info, insert_symbol_reference,
         types::{make_union_type, matches_type, DataType, GenericsMap},
         Context, FunctionArgument, FunctionSymbol, SymbolInfo, SymbolLocation, SymbolType,
+        VariableSymbol,
     },
     files::{FileVersion, Files},
     grammar::{
@@ -47,8 +48,8 @@ pub fn analyze_exp(
                 }) => fun_symbol
                     .arguments
                     .iter()
-                    .map(|(arg, _)| arg.data_type.clone())
-                    .collect::<Vec<DataType>>(),
+                    .map(|(arg, _)| (arg.data_type.clone(), arg.is_ref))
+                    .collect::<Vec<(DataType, bool)>>(),
                 Some(_) => {
                     files.report_error(&file, &format!("{} is not a function", name), *name_span);
 
@@ -62,7 +63,7 @@ pub fn analyze_exp(
             };
 
             args.iter().enumerate().for_each(|(idx, arg)| {
-                if let Some(ty) = expected_types.get(idx) {
+                if let Some((ty, is_ref)) = expected_types.get(idx) {
                     let exp_ty = analyze_exp(
                         file_id,
                         file_version,
@@ -72,6 +73,35 @@ pub fn analyze_exp(
                         scoped_generic_types,
                         contexts,
                     );
+
+                    match (is_ref, arg.0.clone()) {
+                        (true, Expression::Var((name, span))) => {
+                            if let Some(var) =
+                                get_symbol_definition_info(files, &name, &file, span.start)
+                            {
+                                match var.symbol_type {
+                                    SymbolType::Variable(ref var_symbol) => {
+                                        if var_symbol.is_const {
+                                            files.report_error(
+                                                &file,
+                                                "Cannot modify a constant variable",
+                                                span.clone(),
+                                            );
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                        (true, _) => {
+                            files.report_error(
+                                &file,
+                                "Cannot pass a non-variable as a reference",
+                                arg.1.clone(),
+                            );
+                        }
+                        _ => {}
+                    }
 
                     match ty {
                         DataType::Generic(id) => {
@@ -138,6 +168,7 @@ pub fn analyze_exp(
                                             data_type: scoped_generic_types
                                                 .deref_type(&arg.data_type),
                                             is_optional: false,
+                                            is_ref: arg.is_ref,
                                         },
                                         arg_span,
                                     )
@@ -152,6 +183,16 @@ pub fn analyze_exp(
                         contexts: contexts.clone(),
                     },
                 );
+
+                symbol_table
+                    .references
+                    .entry(name.clone())
+                    .or_default()
+                    .push(SymbolLocation {
+                        file,
+                        start: name_span.start,
+                        end: name_span.end,
+                    });
             }
 
             fun_symbol
@@ -699,7 +740,7 @@ pub fn analyze_exp(
                 exp_span_inclusive,
                 SymbolInfo {
                     name: "status".to_string(),
-                    symbol_type: SymbolType::Variable,
+                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
                     data_type: DataType::Number,
                     is_definition: false,
                     undefined: false,

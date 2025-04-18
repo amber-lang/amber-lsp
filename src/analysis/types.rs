@@ -135,6 +135,10 @@ impl GenericsMap {
                 DataType::Generic(id) => DataType::Array(Box::new(self.get_recursive(id))),
                 ty => DataType::Array(Box::new(ty.clone())),
             },
+            DataType::Failable(ty) => match *ty {
+                DataType::Generic(id) => DataType::Failable(Box::new(self.get_recursive(id))),
+                ty => DataType::Failable(Box::new(ty)),
+            }
             ty => ty,
         }
     }

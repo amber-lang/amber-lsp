@@ -38,6 +38,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            59..59,
+                        ),
+                        (
                             "list",
                             59..63,
                         ),
@@ -362,6 +366,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Typed(
+                        (
+                            false,
+                            266..266,
+                        ),
                         (
                             "number",
                             266..272,
@@ -744,6 +752,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            532..532,
+                        ),
+                        (
                             "number",
                             532..538,
                         ),
@@ -1069,6 +1081,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            761..761,
+                        ),
+                        (
                             "number",
                             761..767,
                         ),
@@ -1172,6 +1188,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Typed(
+                        (
+                            false,
+                            891..891,
+                        ),
                         (
                             "number",
                             891..897,

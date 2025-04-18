@@ -10,7 +10,7 @@ use crate::{
 
 use super::{failed::failure_parser, modifiers::modifier_parser};
 
-pub fn keywords_parser<'a>(
+pub fn move_files_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,
 ) -> impl AmberParser<'a, Spanned<Statement>> {
     modifier_parser()

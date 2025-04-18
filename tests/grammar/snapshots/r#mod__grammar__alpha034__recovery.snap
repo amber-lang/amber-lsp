@@ -24,6 +24,10 @@ expression: "parse(&tokenize(\"fun foo(abc!) {}\"))"
                         (
                             Generic(
                                 (
+                                    false,
+                                    8..8,
+                                ),
+                                (
                                     "abc",
                                     8..11,
                                 ),
@@ -44,6 +48,6 @@ expression: "parse(&tokenize(\"fun foo(abc!) {}\"))"
     ),
     [
         found "!" at 11..12 expected '":"', or '","',
-        found end of input at 11..12 expected "argument",
+        found "!" at 11..12 expected "argument",
     ],
 )

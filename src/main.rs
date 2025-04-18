@@ -125,7 +125,7 @@ fn detect_amber_version() -> AmberVersion {
     match output.split_whitespace().last() {
         Some("0.3.4-alpha") => AmberVersion::Alpha034,
         Some("0.3.5-alpha") => AmberVersion::Alpha035,
-        // Some("0.4.0-alpha") => AmberVersion::Alpha040,
-        _ => AmberVersion::Alpha035,
+        Some("0.4.0-alpha") => AmberVersion::Alpha040,
+        _ => AmberVersion::Alpha040,
     }
 }

@@ -10,6 +10,7 @@ Some(
                 arguments: [],
                 is_public: true,
                 compiler_flags: [],
+                docs: None,
             },
         ),
         data_type: Null,

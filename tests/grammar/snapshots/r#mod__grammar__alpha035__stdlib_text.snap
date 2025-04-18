@@ -33,6 +33,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Generic(
                         (
+                            false,
+                            127..127,
+                        ),
+                        (
                             "source",
                             127..133,
                         ),
@@ -42,6 +46,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Generic(
                         (
+                            false,
+                            135..134,
+                        ),
+                        (
                             "pattern",
                             135..142,
                         ),
@@ -50,6 +58,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Generic(
+                        (
+                            false,
+                            144..143,
+                        ),
                         (
                             "replacement",
                             144..155,
@@ -194,6 +206,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Generic(
                         (
+                            false,
+                            314..314,
+                        ),
+                        (
                             "source",
                             314..320,
                         ),
@@ -203,6 +219,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Generic(
                         (
+                            false,
+                            322..321,
+                        ),
+                        (
                             "pattern",
                             322..329,
                         ),
@@ -211,6 +231,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Generic(
+                        (
+                            false,
+                            331..330,
+                        ),
                         (
                             "replacement",
                             331..342,
@@ -377,6 +401,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            542..542,
+                        ),
+                        (
                             "source",
                             542..548,
                         ),
@@ -390,6 +418,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            556..555,
+                        ),
+                        (
                             "pattern",
                             556..563,
                         ),
@@ -402,6 +434,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            571..570,
+                        ),
                         (
                             "replacement",
                             571..582,
@@ -612,6 +648,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            794..794,
+                        ),
+                        (
                             "text",
                             794..798,
                         ),
@@ -624,6 +664,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            806..805,
+                        ),
                         (
                             "delimiter",
                             806..815,
@@ -918,6 +962,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            1064..1064,
+                        ),
+                        (
                             "text",
                             1064..1068,
                         ),
@@ -1019,6 +1067,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            1206..1206,
+                        ),
+                        (
                             "text",
                             1206..1210,
                         ),
@@ -1110,6 +1162,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            1317..1317,
+                        ),
+                        (
                             "list",
                             1317..1321,
                         ),
@@ -1122,6 +1178,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            1331..1330,
+                        ),
                         (
                             "delimiter",
                             1331..1340,
@@ -1332,6 +1392,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Typed(
+                        (
+                            false,
+                            1497..1497,
+                        ),
                         (
                             "text",
                             1497..1501,
@@ -1550,6 +1614,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            1653..1653,
+                        ),
+                        (
                             "text",
                             1653..1657,
                         ),
@@ -1767,6 +1835,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            1793..1793,
+                        ),
+                        (
                             "text",
                             1793..1797,
                         ),
@@ -1864,6 +1936,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Typed(
+                        (
+                            false,
+                            1909..1909,
+                        ),
                         (
                             "text",
                             1909..1913,
@@ -2081,6 +2157,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Typed(
+                        (
+                            false,
+                            2049..2049,
+                        ),
                         (
                             "text",
                             2049..2053,
@@ -2303,6 +2383,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Typed(
+                        (
+                            false,
+                            2274..2274,
+                        ),
                         (
                             "text",
                             2274..2278,
@@ -2575,6 +2659,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Typed(
+                        (
+                            false,
+                            2456..2456,
+                        ),
                         (
                             "text",
                             2456..2460,
@@ -2997,6 +3085,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Generic(
                         (
+                            false,
+                            2710..2710,
+                        ),
+                        (
                             "value",
                             2710..2715,
                         ),
@@ -3348,6 +3440,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            2954..2954,
+                        ),
+                        (
                             "text",
                             2954..2958,
                         ),
@@ -3360,6 +3456,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            2966..2965,
+                        ),
                         (
                             "phrase",
                             2966..2972,
@@ -3628,6 +3728,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            3142..3142,
+                        ),
+                        (
                             "text",
                             3142..3146,
                         ),
@@ -3761,6 +3865,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            3263..3263,
+                        ),
+                        (
                             "text",
                             3263..3267,
                         ),
@@ -3773,6 +3881,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            3275..3274,
+                        ),
                         (
                             "prefix",
                             3275..3281,
@@ -4035,6 +4147,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            3457..3457,
+                        ),
+                        (
                             "text",
                             3457..3461,
                         ),
@@ -4047,6 +4163,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            3469..3468,
+                        ),
                         (
                             "suffix",
                             3469..3475,
@@ -4342,6 +4462,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            3978..3978,
+                        ),
+                        (
                             "text",
                             3978..3982,
                         ),
@@ -4355,6 +4479,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            3990..3989,
+                        ),
+                        (
                             "index",
                             3990..3995,
                         ),
@@ -4367,6 +4495,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Optional(
+                        (
+                            false,
+                            4002..4001,
+                        ),
                         (
                             "length",
                             4002..4008,
@@ -4723,6 +4855,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            4370..4370,
+                        ),
+                        (
                             "text",
                             4370..4374,
                         ),
@@ -4735,6 +4871,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            4382..4381,
+                        ),
                         (
                             "index",
                             4382..4387,
@@ -4916,6 +5056,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Typed(
+                        (
+                            false,
+                            4530..4530,
+                        ),
                         (
                             "text",
                             4530..4534,
@@ -5122,6 +5266,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            4721..4721,
+                        ),
+                        (
                             "text",
                             4721..4725,
                         ),
@@ -5135,6 +5283,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            4733..4732,
+                        ),
+                        (
                             "pad",
                             4733..4736,
                         ),
@@ -5147,6 +5299,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            4744..4743,
+                        ),
                         (
                             "length",
                             4744..4750,
@@ -5491,6 +5647,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            5037..5037,
+                        ),
+                        (
                             "text",
                             5037..5041,
                         ),
@@ -5504,6 +5664,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            5049..5048,
+                        ),
+                        (
                             "pad",
                             5049..5052,
                         ),
@@ -5516,6 +5680,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            5060..5059,
+                        ),
                         (
                             "length",
                             5060..5066,
@@ -5860,6 +6028,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            5329..5329,
+                        ),
+                        (
                             "text",
                             5329..5333,
                         ),
@@ -5872,6 +6044,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            5341..5340,
+                        ),
                         (
                             "length",
                             5341..5347,

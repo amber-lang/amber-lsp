@@ -126,12 +126,17 @@ fn compiler_flag_parser<'a>() -> impl AmberParser<'a, Spanned<CompilerFlag>> {
 }
 
 pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
-    let generic_arg_parser = ident("argument".to_string())
-        .map_with(|name, e| (FunctionArgument::Generic((name, e.span())), e.span()))
+    let generic_arg_parser = just(T!["ref"])
+        .or_not()
+        .map_with(|is_ref, e| (is_ref.is_some(), e.span()))
+        .then(ident("argument".to_string()))
+        .map_with(|(is_ref, name), e| FunctionArgument::Generic(is_ref, (name, e.span())))
         .boxed();
 
-    let typed_arg_parser = ident("argument".to_string())
-        .map_with(|name, e| (name, e.span()))
+    let typed_arg_parser = just(T!["ref"])
+        .or_not()
+        .map_with(|is_ref, e| (is_ref.is_some(), e.span()))
+        .then(ident("argument".to_string()).map_with(|name, e| (name, e.span())))
         .then(
             just(T![":"]).ignore_then(
                 type_parser().recover_with(via_parser(
@@ -141,10 +146,11 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
                 )),
             ),
         )
-        .map_with(|(name, ty), e| (FunctionArgument::Typed(name, ty), e.span()))
+        .map(|((is_ref, name), ty)| FunctionArgument::Typed(is_ref, name, ty))
         .boxed();
 
     let arg_parser = choice((typed_arg_parser, generic_arg_parser))
+        .map_with(|arg, e| (arg, e.span()))
         .labelled("argument")
         .boxed();
 

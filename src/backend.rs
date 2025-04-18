@@ -12,6 +12,7 @@ use tracing::info;
 
 use crate::analysis::{
     self, get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType,
+    VariableSymbol,
 };
 use crate::files::{FileVersion, Files, DEFAULT_VERSION};
 use crate::fs::{LocalFs, FS};
@@ -54,12 +55,12 @@ impl Backend {
             lsp_analysis: match amber_version {
                 AmberVersion::Alpha034 => Box::new(grammar::alpha034::AmberCompiler::new()),
                 AmberVersion::Alpha035 => Box::new(grammar::alpha035::AmberCompiler::new()),
-                AmberVersion::Alpha040 => Box::new(grammar::alpha035::AmberCompiler::new()),
+                AmberVersion::Alpha040 => Box::new(grammar::alpha040::AmberCompiler::new()),
             },
             token_types: match amber_version {
                 AmberVersion::Alpha034 => Box::new(grammar::alpha034::semantic_tokens::LEGEND_TYPE),
                 AmberVersion::Alpha035 => Box::new(grammar::alpha035::semantic_tokens::LEGEND_TYPE),
-                AmberVersion::Alpha040 => Box::new(grammar::alpha035::semantic_tokens::LEGEND_TYPE),
+                AmberVersion::Alpha040 => Box::new(grammar::alpha040::semantic_tokens::LEGEND_TYPE),
             },
             amber_version,
         }
@@ -191,6 +192,10 @@ impl Backend {
             }
             Grammar::Alpha035(Some(ast)) => {
                 analysis::alpha035::global::analyze_global_stmnt(file_id, version, &ast, self)
+                    .await;
+            }
+            Grammar::Alpha040(Some(ast)) => {
+                analysis::alpha040::global::analyze_global_stmnt(file_id, version, &ast, self)
                     .await;
             }
             _ => {}
@@ -785,13 +790,13 @@ impl LanguageServer for Backend {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
                 value: format!(
-                    "{}```amber\n{}\n```",
+                    "```amber\n{}\n```{}",
+                    symbol_info.to_string(&self.files.generic_types),
                     match symbol_info.symbol_type {
                         SymbolType::Function(FunctionSymbol { ref docs, .. }) if docs.is_some() =>
-                            format!("{}\n", docs.clone().unwrap()),
+                            format!("\n{}", docs.clone().unwrap()),
                         _ => "".to_string(),
                     },
-                    symbol_info.to_string(&self.files.generic_types)
                 ),
             }),
             range: Some(Range {
@@ -928,7 +933,7 @@ impl LanguageServer for Backend {
 
                 completions
             }
-            SymbolType::Variable | SymbolType::Function(_) => {
+            SymbolType::Variable(_) | SymbolType::Function(_) => {
                 let mut completions = vec![];
 
                 let import_context = symbol_info
@@ -1001,10 +1006,14 @@ impl LanguageServer for Backend {
                                 ..CompletionItem::default()
                             });
                         }
-                        SymbolType::Variable => {
+                        SymbolType::Variable(VariableSymbol { is_const }) => {
                             completions.push(CompletionItem {
                                 label: symbol_info.name.clone(),
-                                kind: Some(CompletionItemKind::VARIABLE),
+                                kind: Some(if is_const {
+                                    CompletionItemKind::CONSTANT
+                                } else {
+                                    CompletionItemKind::VARIABLE
+                                }),
                                 label_details: Some(CompletionItemLabelDetails {
                                     description: Some(
                                         symbol_info.data_type.to_string(&self.files.generic_types),
@@ -1044,6 +1053,14 @@ impl LanguageServer for Backend {
                 return Ok(None);
             }
         };
+
+        if symbol_info
+            .contexts
+            .iter()
+            .any(|ctx| matches!(ctx, Context::Import(_)))
+        {
+            return Ok(None);
+        }
 
         match symbol_info.symbol_type {
             SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {

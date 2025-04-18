@@ -13,6 +13,7 @@ use crate::{
 
 pub mod alpha034;
 pub mod alpha035;
+pub mod alpha040;
 pub mod types;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -28,13 +29,19 @@ pub struct FunctionArgument {
     pub name: String,
     pub data_type: DataType,
     pub is_optional: bool,
+    pub is_ref: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SymbolType {
     Function(FunctionSymbol),
-    Variable,
+    Variable(VariableSymbol),
     ImportPath,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct VariableSymbol {
+    pub is_const: bool,
 }
 
 /// Information about a symbol in the document.
@@ -107,10 +114,12 @@ impl SymbolInfo {
                                     name,
                                     data_type,
                                     is_optional,
+                                    is_ref,
                                 },
                                 _,
                             )| format!(
-                                "{}{}: {}",
+                                "{}{}{}: {}",
+                                if *is_ref { "ref " } else { "" },
                                 name,
                                 if *is_optional { "?" } else { "" },
                                 data_type.to_string(generics_map)
@@ -330,6 +339,7 @@ pub fn insert_symbol_reference(
                                     name: arg.name.clone(),
                                     data_type: scoped_generics.deref_type(&arg.data_type),
                                     is_optional: arg.is_optional,
+                                    is_ref: arg.is_ref,
                                 },
                                 span.clone(),
                             )
@@ -371,7 +381,7 @@ pub fn insert_symbol_reference(
                 span.clone(),
                 SymbolInfo {
                     name: symbol.to_string(),
-                    symbol_type: SymbolType::Variable,
+                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
                     data_type: DataType::Null,
                     is_definition: false,
                     undefined: true,
@@ -444,7 +454,7 @@ pub fn get_symbol_definition_info(
 
 #[tracing::instrument(skip_all)]
 pub async fn map_import_path(uri: &Url, path: &str, backend: &Backend) -> Url {
-    if path.starts_with("std/") || path == "std" {
+    if path.starts_with("std/") || path == "std" || path == "builtin" {
         match backend.amber_version {
             AmberVersion::Alpha034 if path == "std" => {
                 if let Some(url) = resolve(backend, "std/main".to_string()).await {

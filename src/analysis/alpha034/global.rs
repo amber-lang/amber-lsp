@@ -3,7 +3,7 @@ use crate::{
         self, import_symbol, insert_symbol_definition, map_import_path,
         types::{make_union_type, matches_type, DataType},
         Context, FunctionContext, FunctionSymbol, ImportContext, SymbolInfo, SymbolLocation,
-        SymbolType,
+        SymbolType, VariableSymbol,
     },
     backend::Backend,
     files::FileVersion,
@@ -40,7 +40,7 @@ pub async fn analyze_global_stmnt(
                 let mut new_generic_types = vec![];
                 args.iter().for_each(|(arg, _)| {
                     let (name, ty, name_span) = match arg {
-                        FunctionArgument::Generic((name, span)) => {
+                        FunctionArgument::Generic(_, (name, span)) => {
                             let generic_id = scoped_generics_map.new_generic_id();
 
                             scoped_generics_map.constrain_generic_type(generic_id, DataType::Any);
@@ -48,7 +48,9 @@ pub async fn analyze_global_stmnt(
 
                             (name, DataType::Generic(generic_id), span)
                         }
-                        FunctionArgument::Typed((name, span), (ty, _)) => (name, ty.clone(), span),
+                        FunctionArgument::Typed(_, (name, span), (ty, _)) => {
+                            (name, ty.clone(), span)
+                        }
                         _ => return,
                     };
 
@@ -68,7 +70,7 @@ pub async fn analyze_global_stmnt(
                             end: name_span.end,
                         },
                         ty,
-                        SymbolType::Variable,
+                        SymbolType::Variable(VariableSymbol { is_const: false }),
                         false,
                         &vec![],
                     );
@@ -143,19 +145,21 @@ pub async fn analyze_global_stmnt(
                         arguments: args
                             .iter()
                             .filter_map(|(arg, span)| match arg {
-                                FunctionArgument::Generic((name, _)) => Some((
+                                FunctionArgument::Generic((is_ref, _), (name, _)) => Some((
                                     analysis::FunctionArgument {
                                         name: name.clone(),
                                         data_type: DataType::Generic(new_generic_types.remove(0)),
                                         is_optional: false,
+                                        is_ref: *is_ref,
                                     },
                                     span.clone(),
                                 )),
-                                FunctionArgument::Typed((name, _), (ty, _)) => Some((
+                                FunctionArgument::Typed((is_ref, _), (name, _), (ty, _)) => Some((
                                     analysis::FunctionArgument {
                                         name: name.clone(),
                                         data_type: ty.clone(),
                                         is_optional: false,
+                                        is_ref: *is_ref,
                                     },
                                     span.clone(),
                                 )),
@@ -271,7 +275,9 @@ pub async fn analyze_global_stmnt(
                                     span.start..=span.end,
                                     SymbolInfo {
                                         name: ident.to_string(),
-                                        symbol_type: SymbolType::Variable,
+                                        symbol_type: SymbolType::Variable(VariableSymbol {
+                                            is_const: false,
+                                        }),
                                         data_type: DataType::Null,
                                         is_definition: false,
                                         undefined: true,
@@ -340,7 +346,7 @@ pub async fn analyze_global_stmnt(
                                         span.start..=span.end,
                                         SymbolInfo {
                                             name: ident.to_string(),
-                                            symbol_type: SymbolType::Variable,
+                                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
                                             data_type: DataType::Null,
                                             is_definition: false,
                                             undefined: true,
@@ -410,7 +416,7 @@ pub async fn analyze_global_stmnt(
                             end: args_span.end,
                         },
                         DataType::Array(Box::new(DataType::Text)),
-                        SymbolType::Variable,
+                        SymbolType::Variable(VariableSymbol { is_const: false }),
                         false,
                         &vec![],
                     );

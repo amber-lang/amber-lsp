@@ -4,17 +4,18 @@ use super::{expressions::parse_expr, AmberParser, Spanned, Statement};
 
 pub mod block;
 pub mod comment;
+pub mod const_init;
+pub mod doc_string;
 pub mod failed;
 pub mod if_cond;
 pub mod keywords;
 pub mod loops;
 pub mod modifiers;
+pub mod move_files;
+pub mod shebang;
 pub mod shorthands;
 pub mod var_init;
 pub mod var_set;
-pub mod shebang;
-pub mod move_files;
-pub mod doc_string;
 
 pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
     recursive(|stmnt| {
@@ -31,6 +32,8 @@ pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
             loops::inf_loop_parser(stmnt.clone()),
             loops::iter_loop_parser(stmnt.clone()),
             keywords::keywords_parser(stmnt.clone()),
+            move_files::move_files_parser(stmnt.clone()),
+            const_init::const_init_parser(stmnt.clone()),
             parse_expr(stmnt).map_with(|expr, e| (Statement::Expression(Box::new(expr)), e.span())),
         ))
         .boxed()

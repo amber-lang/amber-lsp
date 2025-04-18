@@ -114,13 +114,14 @@ pub enum ImportContent {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum FunctionArgument {
-    Generic(Spanned<String>),
+    Generic(Spanned<bool>, Spanned<String>),
     Optional(
+        Spanned<bool>,
         Spanned<String>,
         Option<Spanned<DataType>>,
         Spanned<Expression>,
     ),
-    Typed(Spanned<String>, Spanned<DataType>),
+    Typed(Spanned<bool>, Spanned<String>, Spanned<DataType>),
     Error,
 }
 
@@ -161,6 +162,7 @@ pub enum VariableInitType {
 pub enum Statement {
     Expression(Box<Spanned<Expression>>),
     VariableInit(Spanned<String>, Spanned<String>, Spanned<VariableInitType>),
+    ConstInit(Spanned<String>, Spanned<String>, Box<Spanned<Expression>>),
     VariableSet(Spanned<String>, Box<Spanned<Expression>>),
     IfCondition(
         Spanned<String>,

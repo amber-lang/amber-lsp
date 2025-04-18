@@ -1,19 +1,30 @@
 use std::{env::temp_dir, future::Future, path::PathBuf, pin::Pin};
 
+use clap::builder::OsStr;
 use include_dir::{include_dir, Dir, DirEntry};
 use tower_lsp::lsp_types::Url;
+use tracing::info;
 
 use crate::backend::{AmberVersion, Backend};
 
 pub const STDLIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/");
 
-async fn save_stdlib(backend: &Backend) -> PathBuf {
+pub fn is_builtin_file(url: &Url) -> bool {
+    let cache_dir = temp_dir().join("amber-lsp");
+
+    let file_path = url.to_file_path().unwrap();
+
+    file_path.starts_with(cache_dir) && file_path.ends_with("builtin.ab")
+}
+
+#[tracing::instrument(skip(backend))]
+async fn save_resources(backend: &Backend) -> PathBuf {
     let cache_dir = temp_dir().join("amber-lsp");
 
     let path = match backend.amber_version {
-        AmberVersion::Alpha034 => "alpha034/std/".to_string(),
-        AmberVersion::Alpha035 => "alpha035/std/".to_string(),
-        AmberVersion::Alpha040 => "alpha040/std/".to_string(),
+        AmberVersion::Alpha034 => "alpha034/".to_string(),
+        AmberVersion::Alpha035 => "alpha035/".to_string(),
+        AmberVersion::Alpha040 => "alpha040/".to_string(),
     };
 
     let _ = backend
@@ -47,11 +58,16 @@ fn save_entry<'a>(
                     .create_dir_all(&path.to_str().unwrap())
                     .await;
                 for entry in dir.entries() {
-                    save_entry(backend, &path, entry).await;
+                    save_entry(backend, current_path, entry).await;
                 }
             }
             DirEntry::File(file) => {
                 let path = current_path.join(file.path());
+
+                if path.exists() {
+                    return;
+                }
+
                 let contents = file.contents_utf8().unwrap().to_string();
 
                 backend
@@ -76,13 +92,19 @@ pub async fn resolve(backend: &Backend, path: String) -> Option<Url> {
     }
     .join(file_path.clone());
 
-    if !STDLIB.contains(memory_path) {
+    if !STDLIB.contains(memory_path.clone()) {
+        info!(
+            "File not found in stdlib: {}",
+            memory_path.clone().to_str().unwrap()
+        );
         return None;
     }
 
-    let base_path = save_stdlib(backend).await;
+    let base_path = save_resources(backend).await;
 
-    let file_path = base_path.join(file_path.strip_prefix("std/").unwrap());
+    let file_path = base_path.join(file_path);
+
+    info!("File found in resources: {}", file_path.to_str().unwrap());
 
     Url::from_file_path(file_path).ok()
 }
@@ -103,9 +125,9 @@ pub async fn find_in_stdlib(backend: &Backend, path: &str) -> Vec<String> {
                 return vec![];
             }
 
-            let stdlib_dir = save_stdlib(backend).await;
+            let stdlib_dir = save_resources(backend).await;
 
-            let path_in_std = stdlib_dir.clone().join(parts[1..].join("/"));
+            let path_in_std = stdlib_dir.clone().join(parts.join("/"));
 
             backend
                 .files
@@ -113,15 +135,20 @@ pub async fn find_in_stdlib(backend: &Backend, path: &str) -> Vec<String> {
                 .read_dir(path_in_std.to_str().unwrap())
                 .await
                 .iter()
-                .map(|p| {
-                    p.strip_prefix(stdlib_dir.clone())
+                .filter(|path| path.is_dir() || (path.extension() == Some(&OsStr::from("ab"))))
+                .map(|path| {
+                    let base_path = path
+                        .strip_prefix(stdlib_dir.clone().join("std"))
                         .unwrap()
                         .to_str()
                         .unwrap()
-                        .to_string()
-                        .strip_suffix(".ab")
-                        .unwrap()
-                        .to_string()
+                        .to_string();
+
+                    if path.is_file() {
+                        return base_path.strip_suffix(".ab").unwrap().to_string();
+                    }
+
+                    base_path
                 })
                 .collect()
         }

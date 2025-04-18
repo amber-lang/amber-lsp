@@ -24,6 +24,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    14..14,
+                                ),
+                                (
                                     "prompt",
                                     14..20,
                                 ),
@@ -216,6 +220,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    138..138,
+                                ),
+                                (
                                     "source",
                                     138..144,
                                 ),
@@ -225,6 +233,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    146..145,
+                                ),
+                                (
                                     "pattern",
                                     146..153,
                                 ),
@@ -233,6 +245,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Generic(
+                                (
+                                    false,
+                                    155..154,
+                                ),
                                 (
                                     "replacement",
                                     155..166,
@@ -385,6 +401,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    252..252,
+                                ),
+                                (
                                     "source",
                                     252..258,
                                 ),
@@ -394,6 +414,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    260..259,
+                                ),
+                                (
                                     "pattern",
                                     260..267,
                                 ),
@@ -402,6 +426,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Generic(
+                                (
+                                    false,
+                                    269..268,
+                                ),
                                 (
                                     "replacement",
                                     269..280,
@@ -554,6 +582,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    373..373,
+                                ),
+                                (
                                     "source",
                                     373..379,
                                 ),
@@ -567,6 +599,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    387..386,
+                                ),
+                                (
                                     "pattern",
                                     387..394,
                                 ),
@@ -579,6 +615,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Typed(
+                                (
+                                    false,
+                                    402..401,
+                                ),
                                 (
                                     "replacement",
                                     402..413,
@@ -778,6 +818,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    525..525,
+                                ),
+                                (
                                     "path",
                                     525..529,
                                 ),
@@ -931,6 +975,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Generic(
+                                (
+                                    false,
+                                    629..629,
+                                ),
                                 (
                                     "path",
                                     629..633,
@@ -1086,6 +1134,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    732..732,
+                                ),
+                                (
                                     "path",
                                     732..736,
                                 ),
@@ -1187,6 +1239,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    787..787,
+                                ),
+                                (
                                     "path",
                                     787..791,
                                 ),
@@ -1195,6 +1251,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Generic(
+                                (
+                                    false,
+                                    793..792,
+                                ),
                                 (
                                     "content",
                                     793..800,
@@ -1329,6 +1389,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    869..869,
+                                ),
+                                (
                                     "path",
                                     869..873,
                                 ),
@@ -1337,6 +1401,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Generic(
+                                (
+                                    false,
+                                    875..874,
+                                ),
                                 (
                                     "content",
                                     875..882,
@@ -1477,6 +1545,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    946..946,
+                                ),
+                                (
                                     "text",
                                     946..950,
                                 ),
@@ -1489,6 +1561,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Typed(
+                                (
+                                    false,
+                                    958..957,
+                                ),
                                 (
                                     "delimiter",
                                     958..967,
@@ -1772,6 +1848,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    1139..1139,
+                                ),
+                                (
                                     "text",
                                     1139..1143,
                                 ),
@@ -2022,6 +2102,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    1296..1296,
+                                ),
+                                (
                                     "text",
                                     1296..1300,
                                 ),
@@ -2102,6 +2186,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    1360..1360,
+                                ),
+                                (
                                     "list",
                                     1360..1364,
                                 ),
@@ -2114,6 +2202,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Typed(
+                                (
+                                    false,
+                                    1374..1373,
+                                ),
                                 (
                                     "delimiter",
                                     1374..1383,
@@ -2313,6 +2405,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Typed(
+                                (
+                                    false,
+                                    1489..1489,
+                                ),
                                 (
                                     "text",
                                     1489..1493,
@@ -2520,6 +2616,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    1594..1594,
+                                ),
+                                (
                                     "text",
                                     1594..1598,
                                 ),
@@ -2726,6 +2826,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    1694..1694,
+                                ),
+                                (
                                     "text",
                                     1694..1698,
                                 ),
@@ -2812,6 +2916,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Typed(
+                                (
+                                    false,
+                                    1770..1770,
+                                ),
                                 (
                                     "text",
                                     1770..1774,
@@ -3018,6 +3126,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Typed(
+                                (
+                                    false,
+                                    1870..1870,
+                                ),
                                 (
                                     "text",
                                     1870..1874,
@@ -3229,6 +3341,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Generic(
+                                (
+                                    false,
+                                    1989..1989,
+                                ),
                                 (
                                     "value",
                                     1989..1994,
@@ -3575,6 +3691,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    2215..2215,
+                                ),
+                                (
                                     "text",
                                     2215..2219,
                                 ),
@@ -3835,6 +3955,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Typed(
+                                (
+                                    false,
+                                    2338..2338,
+                                ),
                                 (
                                     "text",
                                     2338..2342,
@@ -4246,6 +4370,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    2559..2559,
+                                ),
+                                (
                                     "list",
                                     2559..2563,
                                 ),
@@ -4555,6 +4683,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    2703..2703,
+                                ),
+                                (
                                     "array",
                                     2703..2708,
                                 ),
@@ -4563,6 +4695,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Generic(
+                                (
+                                    false,
+                                    2710..2709,
+                                ),
                                 (
                                     "value",
                                     2710..2715,
@@ -4770,6 +4906,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    2885..2885,
+                                ),
+                                (
                                     "array",
                                     2885..2890,
                                 ),
@@ -4778,6 +4918,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Generic(
+                                (
+                                    false,
+                                    2892..2891,
+                                ),
                                 (
                                     "value",
                                     2892..2897,
@@ -5003,6 +5147,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    3097..3097,
+                                ),
+                                (
                                     "array",
                                     3097..3102,
                                 ),
@@ -5011,6 +5159,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Generic(
+                                (
+                                    false,
+                                    3104..3103,
+                                ),
                                 (
                                     "value",
                                     3104..3109,
@@ -5131,6 +5283,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Typed(
+                                (
+                                    false,
+                                    3213..3213,
+                                ),
                                 (
                                     "command",
                                     3213..3220,
@@ -5257,6 +5413,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    3310..3310,
+                                ),
+                                (
                                     "code",
                                     3310..3314,
                                 ),
@@ -5361,6 +5521,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Generic(
                                 (
+                                    false,
+                                    3376..3376,
+                                ),
+                                (
                                     "arr",
                                     3376..3379,
                                 ),
@@ -5369,6 +5533,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Generic(
+                                (
+                                    false,
+                                    3381..3380,
+                                ),
                                 (
                                     "value",
                                     3381..3386,
@@ -5526,6 +5694,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Typed(
+                                (
+                                    false,
+                                    3513..3513,
+                                ),
                                 (
                                     "command",
                                     3513..3520,
@@ -5720,6 +5892,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    3660..3660,
+                                ),
+                                (
                                     "origin",
                                     3660..3666,
                                 ),
@@ -5732,6 +5908,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Typed(
+                                (
+                                    false,
+                                    3674..3673,
+                                ),
                                 (
                                     "destination",
                                     3674..3685,
@@ -6029,6 +6209,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    3889..3889,
+                                ),
+                                (
                                     "path",
                                     3889..3893,
                                 ),
@@ -6192,6 +6376,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Typed(
+                                (
+                                    false,
+                                    4006..4006,
+                                ),
                                 (
                                     "path",
                                     4006..4010,
@@ -6469,6 +6657,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    4197..4197,
+                                ),
+                                (
                                     "user",
                                     4197..4201,
                                 ),
@@ -6481,6 +6673,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Typed(
+                                (
+                                    false,
+                                    4209..4208,
+                                ),
                                 (
                                     "path",
                                     4209..4213,
@@ -6734,6 +6930,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    4382..4382,
+                                ),
+                                (
                                     "url",
                                     4382..4385,
                                 ),
@@ -6746,6 +6946,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Typed(
+                                (
+                                    false,
+                                    4393..4392,
+                                ),
                                 (
                                     "path",
                                     4393..4397,
@@ -7447,6 +7651,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    4886..4886,
+                                ),
+                                (
                                     "var",
                                     4886..4889,
                                 ),
@@ -8015,6 +8223,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    5223..5223,
+                                ),
+                                (
                                     "name",
                                     5223..5227,
                                 ),
@@ -8229,6 +8441,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    5364..5364,
+                                ),
+                                (
                                     "name",
                                     5364..5368,
                                 ),
@@ -8241,6 +8457,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Typed(
+                                (
+                                    false,
+                                    5376..5375,
+                                ),
                                 (
                                     "val",
                                     5376..5379,
@@ -8432,6 +8652,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    5487..5487,
+                                ),
+                                (
                                     "name",
                                     5487..5491,
                                 ),
@@ -8563,6 +8787,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    5571..5571,
+                                ),
+                                (
                                     "name",
                                     5571..5575,
                                 ),
@@ -8575,6 +8803,10 @@ expression: parse(&tokenize(&stdlib))
                         ),
                         (
                             Typed(
+                                (
+                                    false,
+                                    5583..5582,
+                                ),
                                 (
                                     "val",
                                     5583..5586,
@@ -8766,6 +8998,10 @@ expression: parse(&tokenize(&stdlib))
                         (
                             Typed(
                                 (
+                                    false,
+                                    5687..5687,
+                                ),
+                                (
                                     "name",
                                     5687..5691,
                                 ),
@@ -8896,6 +9132,10 @@ expression: parse(&tokenize(&stdlib))
                     [
                         (
                             Typed(
+                                (
+                                    false,
+                                    5769..5769,
+                                ),
                                 (
                                     "name",
                                     5769..5773,

@@ -213,6 +213,10 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                         (
                             Generic(
                                 (
+                                    false,
+                                    199..199,
+                                ),
+                                (
                                     "a",
                                     199..200,
                                 ),

@@ -22,6 +22,10 @@ expression: "parse_unwrap(&tokenize(\"\n        fun func(a: Num, b: Text, c: Boo
                 (
                     Typed(
                         (
+                            false,
+                            18..18,
+                        ),
+                        (
                             "a",
                             18..19,
                         ),
@@ -35,6 +39,10 @@ expression: "parse_unwrap(&tokenize(\"\n        fun func(a: Num, b: Text, c: Boo
                 (
                     Typed(
                         (
+                            false,
+                            26..25,
+                        ),
+                        (
                             "b",
                             26..27,
                         ),
@@ -47,6 +55,10 @@ expression: "parse_unwrap(&tokenize(\"\n        fun func(a: Num, b: Text, c: Boo
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            35..34,
+                        ),
                         (
                             "c",
                             35..36,

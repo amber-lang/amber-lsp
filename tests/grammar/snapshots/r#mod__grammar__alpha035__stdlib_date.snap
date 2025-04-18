@@ -693,6 +693,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Optional(
                         (
+                            false,
+                            2844..2844,
+                        ),
+                        (
                             "format",
                             2844..2850,
                         ),
@@ -714,6 +718,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Optional(
                         (
+                            false,
+                            2863..2862,
+                        ),
+                        (
                             "date",
                             2863..2867,
                         ),
@@ -734,6 +742,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Optional(
+                        (
+                            false,
+                            2880..2879,
+                        ),
                         (
                             "utc",
                             2880..2883,
@@ -1546,6 +1558,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            3532..3532,
+                        ),
+                        (
                             "add",
                             3532..3535,
                         ),
@@ -1558,6 +1574,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Optional(
+                        (
+                            false,
+                            3542..3541,
+                        ),
                         (
                             "date",
                             3542..3546,
@@ -1579,6 +1599,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Optional(
+                        (
+                            false,
+                            3558..3557,
+                        ),
                         (
                             "utc",
                             3558..3561,
@@ -2030,6 +2054,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            4003..4003,
+                        ),
+                        (
                             "date_a",
                             4003..4009,
                         ),
@@ -2042,6 +2070,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Optional(
+                        (
+                            false,
+                            4017..4016,
+                        ),
                         (
                             "date_b",
                             4017..4023,
@@ -2063,6 +2095,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Optional(
+                        (
+                            false,
+                            4036..4035,
+                        ),
                         (
                             "utc",
                             4036..4039,

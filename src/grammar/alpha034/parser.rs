@@ -7,7 +7,7 @@ use super::{lexer::Token, AmberParser};
 const KEYWORDS: &[&str] = &[
     "if", "else", "loop", "in", "return", "break", "continue", "true", "false", "null", "fun",
     "as", "is", "or", "and", "not", "nameof", "status", "fail", "echo", "let", "unsafe", "silent",
-    "main", "import", "from", "pub", "then", "Text", "Num", "Bool", "Null",
+    "main", "import", "from", "pub", "then", "Text", "Num", "Bool", "Null", "ref",
 ];
 
 #[inline]
@@ -18,6 +18,13 @@ pub fn ident<'a>(ident_name: String) -> impl AmberParser<'a, String> {
             let mut chars = word.chars();
 
             let first_char = chars.next().unwrap();
+
+            if word.starts_with("__") {
+                return Err(Rich::custom(
+                    span,
+                    "identifier cannot start with a double underscore",
+                ));
+            }
 
             if !first_char.is_ascii_alphabetic() && first_char != '_' {
                 return Err(Rich::custom(

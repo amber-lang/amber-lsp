@@ -33,6 +33,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Generic(
                         (
+                            false,
+                            48..48,
+                        ),
+                        (
                             "path",
                             48..52,
                         ),
@@ -197,6 +201,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Generic(
+                        (
+                            false,
+                            177..177,
+                        ),
                         (
                             "path",
                             177..181,
@@ -363,6 +371,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Generic(
                         (
+                            false,
+                            305..305,
+                        ),
+                        (
                             "path",
                             305..309,
                         ),
@@ -486,6 +498,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Generic(
                         (
+                            false,
+                            430..430,
+                        ),
+                        (
                             "path",
                             430..434,
                         ),
@@ -494,6 +510,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Generic(
+                        (
+                            false,
+                            436..435,
+                        ),
                         (
                             "content",
                             436..443,
@@ -650,6 +670,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Generic(
                         (
+                            false,
+                            583..583,
+                        ),
+                        (
                             "path",
                             583..587,
                         ),
@@ -658,6 +682,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Generic(
+                        (
+                            false,
+                            589..588,
+                        ),
                         (
                             "content",
                             589..596,
@@ -820,6 +848,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            769..769,
+                        ),
+                        (
                             "origin",
                             769..775,
                         ),
@@ -832,6 +864,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            783..782,
+                        ),
                         (
                             "destination",
                             783..794,
@@ -1140,6 +1176,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            1067..1067,
+                        ),
+                        (
                             "path",
                             1067..1071,
                         ),
@@ -1325,6 +1365,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
             [
                 (
                     Typed(
+                        (
+                            false,
+                            1282..1282,
+                        ),
                         (
                             "path",
                             1282..1286,
@@ -1624,6 +1668,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 (
                     Typed(
                         (
+                            false,
+                            1549..1549,
+                        ),
+                        (
                             "user",
                             1549..1553,
                         ),
@@ -1636,6 +1684,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                 ),
                 (
                     Typed(
+                        (
+                            false,
+                            1561..1560,
+                        ),
                         (
                             "path",
                             1561..1565,

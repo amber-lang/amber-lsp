@@ -2,7 +2,7 @@ use crate::{
     analysis::{
         get_symbol_definition_info, insert_symbol_definition, insert_symbol_reference,
         types::{make_union_type, matches_type, GenericsMap},
-        BlockContext, Context, DataType, SymbolLocation, SymbolType,
+        BlockContext, Context, DataType, SymbolLocation, SymbolType, VariableSymbol,
     },
     files::{FileVersion, Files},
     grammar::{
@@ -274,7 +274,7 @@ pub fn analyze_stmnt(
                             end: var1_span.end,
                         },
                         DataType::Number,
-                        SymbolType::Variable,
+                        SymbolType::Variable(VariableSymbol { is_const: false }),
                         false,
                         contexts,
                     );
@@ -289,7 +289,7 @@ pub fn analyze_stmnt(
                             end: var2_span.end,
                         },
                         iter_type,
-                        SymbolType::Variable,
+                        SymbolType::Variable(VariableSymbol { is_const: false }),
                         false,
                         contexts,
                     );
@@ -309,7 +309,7 @@ pub fn analyze_stmnt(
                             end: var_span.end,
                         },
                         iter_type,
-                        SymbolType::Variable,
+                        SymbolType::Variable(VariableSymbol { is_const: false }),
                         false,
                         contexts,
                     );
@@ -374,7 +374,48 @@ pub fn analyze_stmnt(
                     end: var_span.end,
                 },
                 var_type,
-                SymbolType::Variable,
+                SymbolType::Variable(VariableSymbol { is_const: false }),
+                false,
+                contexts,
+            );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp.is_propagating_failure,
+                return_ty: exp.return_ty,
+            }
+        }
+        Statement::ConstInit(_, (const_name, const_name_span), exp) => {
+            let exp = analyze_exp(
+                file_id,
+                file_version,
+                exp,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+                contexts,
+            );
+
+            let mut symbol_table = files
+                .symbol_table
+                .entry(file)
+                .or_insert_with(|| Default::default());
+
+            let var_type = match exp.exp_ty {
+                DataType::Failable(ty) => scoped_generic_types.deref_type(&ty),
+                ty => scoped_generic_types.deref_type(&ty),
+            };
+
+            insert_symbol_definition(
+                &mut symbol_table,
+                const_name,
+                span.end..=scope_end,
+                &SymbolLocation {
+                    file,
+                    start: const_name_span.start,
+                    end: const_name_span.end,
+                },
+                var_type,
+                SymbolType::Variable(VariableSymbol { is_const: true }),
                 false,
                 contexts,
             );
