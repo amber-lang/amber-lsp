@@ -583,6 +583,10 @@ pub fn analyze_stmnt(
                 );
             }
 
+            if let DataType::Generic(id) = var_ty {
+                scoped_generic_types.constrain_generic_type(id, exp_analysis.exp_ty);
+            }
+
             insert_symbol_reference(
                 &var,
                 files,
@@ -635,6 +639,10 @@ pub fn analyze_stmnt(
                     ),
                     var_span.clone(),
                 );
+            }
+
+            if let DataType::Generic(id) = var_ty {
+                scoped_generic_types.constrain_generic_type(id, DataType::Number);
             }
 
             let exp_analysis = analyze_exp(
@@ -701,6 +709,10 @@ pub fn analyze_stmnt(
                 );
             }
 
+            if let DataType::Generic(id) = var_ty {
+                scoped_generic_types.constrain_generic_type(id, DataType::Number);
+            }
+
             let exp_analysis = analyze_exp(
                 file_id,
                 file_version,
@@ -765,6 +777,10 @@ pub fn analyze_stmnt(
                 );
             }
 
+            if let DataType::Generic(id) = var_ty {
+                scoped_generic_types.constrain_generic_type(id, DataType::Number);
+            }
+
             let exp_analysis = analyze_exp(
                 file_id,
                 file_version,
@@ -827,6 +843,10 @@ pub fn analyze_stmnt(
                     ),
                     var_span.clone(),
                 );
+            }
+
+            if let DataType::Generic(id) = var_ty {
+                scoped_generic_types.constrain_generic_type(id, DataType::Number);
             }
 
             let exp_analysis = analyze_exp(
