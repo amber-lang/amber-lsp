@@ -174,46 +174,39 @@ impl Default for SymbolTable {
 #[tracing::instrument(skip_all)]
 pub fn insert_symbol_definition(
     symbol_table: &mut SymbolTable,
-    symbol: &str,
+    symbol_info: &SymbolInfo,
+    file: (FileId, FileVersion),
     definition_scope: RangeInclusive<usize>,
-    definition_location: &SymbolLocation,
-    data_type: DataType,
-    symbol_type: SymbolType,
     is_public: bool,
-    contexts: &Vec<Context>,
 ) {
     if definition_scope.is_empty() {
         return;
     }
 
-    let definition_location_span = definition_location.start..=definition_location.end;
-
-    if definition_location_span.is_empty() {
+    if symbol_info.span.into_iter().is_empty() {
         return;
     }
 
     symbol_table.symbols.insert(
-        definition_location_span,
-        SymbolInfo {
-            name: symbol.to_string(),
-            symbol_type: symbol_type.clone(),
-            data_type,
-            is_definition: true,
-            undefined: false,
-            span: (definition_location.start..definition_location.end).into(),
-            contexts: contexts.clone(),
-        },
+        symbol_info.span.start..=symbol_info.span.end,
+        symbol_info.clone(),
     );
 
-    let symbol_definitions = match symbol_table.definitions.get_mut(symbol) {
+    let symbol_definitions = match symbol_table.definitions.get_mut(&symbol_info.name) {
         Some(symbol_definitions) => symbol_definitions,
         None => {
             symbol_table
                 .definitions
-                .insert(symbol.to_string(), RangeInclusiveMap::new());
+                .insert(symbol_info.name.to_string(), RangeInclusiveMap::new());
 
-            symbol_table.definitions.get_mut(symbol).unwrap()
+            symbol_table.definitions.get_mut(&symbol_info.name).unwrap()
         }
+    };
+
+    let definition_location = SymbolLocation {
+        file,
+        start: symbol_info.span.start,
+        end: symbol_info.span.end,
     };
 
     symbol_definitions.insert(definition_scope, definition_location.clone());
@@ -221,20 +214,17 @@ pub fn insert_symbol_definition(
     if is_public {
         symbol_table
             .public_definitions
-            .insert(symbol.to_string(), definition_location.clone());
+            .insert(symbol_info.name.to_string(), definition_location.clone());
     }
 }
 
 #[tracing::instrument(skip_all)]
 pub fn import_symbol(
     symbol_table: &mut SymbolTable,
-    symbol: &str,
+    symbol_info: &SymbolInfo,
     symbol_span: Option<RangeInclusive<usize>>,
     definition_location: &SymbolLocation,
-    data_type: DataType,
-    symbol_type: SymbolType,
     is_public: bool,
-    import_context: &ImportContext,
 ) {
     let definition_location_span = definition_location.start..=definition_location.end;
 
@@ -242,23 +232,16 @@ pub fn import_symbol(
         return;
     }
 
+    let symbol = &symbol_info.name;
+
     if let Some(symbol_span) = symbol_span {
         if symbol_span.is_empty() {
             return;
         }
 
-        symbol_table.symbols.insert(
-            symbol_span.clone(),
-            SymbolInfo {
-                name: symbol.to_string(),
-                symbol_type: symbol_type.clone(),
-                data_type,
-                is_definition: false,
-                undefined: false,
-                span: Span::new(*symbol_span.start(), *symbol_span.end()),
-                contexts: vec![Context::Import(import_context.clone())],
-            },
-        );
+        symbol_table
+            .symbols
+            .insert(symbol_span.clone(), symbol_info.clone());
     }
 
     let symbol_definitions = match symbol_table.definitions.get_mut(symbol) {
@@ -287,7 +270,7 @@ pub fn insert_symbol_reference(
     files: &Files,
     reference_location: &SymbolLocation,
     scoped_generics: &GenericsMap,
-    contexts: &Vec<Context>,
+    contexts: &[Context],
 ) {
     let span = reference_location.start..=reference_location.end;
 
@@ -341,7 +324,7 @@ pub fn insert_symbol_reference(
                                     is_optional: arg.is_optional,
                                     is_ref: arg.is_ref,
                                 },
-                                span.clone(),
+                                *span,
                             )
                         })
                         .collect(),
@@ -361,7 +344,7 @@ pub fn insert_symbol_reference(
                     is_definition: false,
                     undefined: false,
                     span: Span::new(*span.start(), *span.end()),
-                    contexts: contexts.clone(),
+                    contexts: contexts.to_vec(),
                 },
             );
         }
@@ -386,7 +369,7 @@ pub fn insert_symbol_reference(
                     is_definition: false,
                     undefined: true,
                     span: Span::new(*span.start(), *span.end()),
-                    contexts: contexts.clone(),
+                    contexts: contexts.to_vec(),
                 },
             );
         }
@@ -421,7 +404,7 @@ pub fn get_symbol_definition_info(
     file: &(FileId, FileVersion),
     position: usize,
 ) -> Option<SymbolInfo> {
-    let current_file_symbol_table = match files.symbol_table.get(&file) {
+    let current_file_symbol_table = match files.symbol_table.get(file) {
         Some(symbol_table) => symbol_table.clone(),
         None => return None,
     };

@@ -13,13 +13,13 @@ mod array;
 mod bool;
 mod call;
 mod command;
+mod exit;
 mod null;
 mod number;
 mod parentheses;
 mod status;
 mod text;
 mod var;
-mod exit;
 
 pub fn atom_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,

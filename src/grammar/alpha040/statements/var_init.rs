@@ -28,8 +28,8 @@ pub fn var_init_parser<'a>(
         )
         .then(
             choice((
-                type_parser().map(|ty| VariableInitType::DataType(ty)),
-                parse_expr(stmnts).map(|expr| VariableInitType::Expression(expr)),
+                type_parser().map(VariableInitType::DataType),
+                parse_expr(stmnts).map(VariableInitType::Expression),
             ))
             .recover_with(via_parser(
                 default_recovery().or_not().map(|_| VariableInitType::Error),

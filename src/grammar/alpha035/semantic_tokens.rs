@@ -47,27 +47,27 @@ pub fn semantic_tokens_from_ast(
                     if *is_pub {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::MODIFIER),
-                            is_pub_span.clone(),
+                            *is_pub_span,
                         ));
                     }
 
                     tokens.push((
                         hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                        import_keyword_span.clone(),
+                        *import_keyword_span,
                     ));
 
                     match import_content {
                         (ImportContent::ImportAll, span) => {
                             tokens.push((
                                 hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                                span.clone(),
+                                *span,
                             ));
                         }
                         (ImportContent::ImportSpecific(vars), _) => {
                             vars.iter().for_each(|(_, span)| {
                                 tokens.push((
                                     hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                                    span.clone(),
+                                    *span,
                                 ));
                             })
                         }
@@ -75,7 +75,7 @@ pub fn semantic_tokens_from_ast(
 
                     tokens.push((
                         hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                        from_keyword_span.clone(),
+                        *from_keyword_span,
                     ));
 
                     tokens.push((
@@ -95,25 +95,22 @@ pub fn semantic_tokens_from_ast(
                     compiler_flags.iter().for_each(|(_, span)| {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::DECORATOR),
-                            span.clone(),
+                            *span,
                         ));
                     });
 
                     if is_pub.0 {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::MODIFIER),
-                            is_pub.1.clone(),
+                            is_pub.1,
                         ));
                     }
 
-                    tokens.push((
-                        hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                        fun.1.clone(),
-                    ));
+                    tokens.push((hash_semantic_token_type(SemanticTokenType::KEYWORD), fun.1));
 
                     tokens.push((
                         hash_semantic_token_type(SemanticTokenType::FUNCTION),
-                        name_span.clone(),
+                        *name_span,
                     ));
 
                     args.iter().for_each(|(arg, _)| match arg {
@@ -125,30 +122,30 @@ pub fn semantic_tokens_from_ast(
                             if *is_ref {
                                 tokens.push((
                                     hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                                    is_ref_span.clone(),
+                                    *is_ref_span,
                                 ));
                             }
 
                             tokens.push((
                                 hash_semantic_token_type(SemanticTokenType::PARAMETER),
-                                arg_span.clone(),
+                                *arg_span,
                             ));
                             tokens.push((
                                 hash_semantic_token_type(SemanticTokenType::TYPE),
-                                ty_span.clone(),
+                                *ty_span,
                             ));
                         }
                         FunctionArgument::Generic((is_ref, is_ref_span), (_, arg_span)) => {
                             if *is_ref {
                                 tokens.push((
                                     hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                                    is_ref_span.clone(),
+                                    *is_ref_span,
                                 ));
                             }
 
                             tokens.push((
                                 hash_semantic_token_type(SemanticTokenType::PARAMETER),
-                                arg_span.clone(),
+                                *arg_span,
                             ));
                         }
                         FunctionArgument::Optional(
@@ -160,19 +157,19 @@ pub fn semantic_tokens_from_ast(
                             if *is_ref {
                                 tokens.push((
                                     hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                                    is_ref_span.clone(),
+                                    *is_ref_span,
                                 ));
                             }
 
                             tokens.push((
                                 hash_semantic_token_type(SemanticTokenType::PARAMETER),
-                                arg_span.clone(),
+                                *arg_span,
                             ));
 
                             if let Some((_, ty_span)) = ty {
                                 tokens.push((
                                     hash_semantic_token_type(SemanticTokenType::TYPE),
-                                    ty_span.clone(),
+                                    *ty_span,
                                 ));
                             }
 
@@ -182,10 +179,7 @@ pub fn semantic_tokens_from_ast(
                     });
 
                     if let Some((_, ty_span)) = ty {
-                        tokens.push((
-                            hash_semantic_token_type(SemanticTokenType::TYPE),
-                            ty_span.clone(),
-                        ));
+                        tokens.push((hash_semantic_token_type(SemanticTokenType::TYPE), *ty_span));
                     }
 
                     tokens.extend(semantic_tokens_from_stmnts(body));
@@ -199,14 +193,14 @@ pub fn semantic_tokens_from_ast(
                     if let Some((_, args_span)) = args {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                            args_span.clone(),
+                            *args_span,
                         ));
                     }
 
                     tokens.extend(semantic_tokens_from_stmnts(stmnts));
                 }
                 GlobalStatement::Statement(stmnt) => {
-                    tokens.extend(semantic_tokens_from_stmnts(&vec![stmnt.clone()]));
+                    tokens.extend(semantic_tokens_from_stmnts(&vec![*stmnt.clone()]));
                 }
             }
         }
@@ -215,7 +209,7 @@ pub fn semantic_tokens_from_ast(
     })
 }
 
-fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedSemanticToken> {
+fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSemanticToken> {
     stmnts
         .iter()
         .flat_map(|(stmnt, span)| match stmnt {
@@ -224,10 +218,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                     let mut tokens = vec![];
 
                     modifiers.iter().for_each(|(_, span)| {
-                        tokens.push((
-                            hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                            span.clone(),
-                        ));
+                        tokens.push((hash_semantic_token_type(SemanticTokenType::KEYWORD), *span));
                     });
 
                     tokens.extend(semantic_tokens_from_stmnts(stmnts));
@@ -236,26 +227,19 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                 }
                 Block::Error => vec![],
             },
-            Statement::Break => vec![(
-                hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                span.clone(),
-            )],
-            Statement::Comment(_) => vec![(
-                hash_semantic_token_type(SemanticTokenType::COMMENT),
-                span.clone(),
-            )],
-            Statement::DocString(_) => vec![(
-                hash_semantic_token_type(SemanticTokenType::COMMENT),
-                span.clone(),
-            )],
-            Statement::Shebang(_) => vec![(
-                hash_semantic_token_type(SemanticTokenType::COMMENT),
-                span.clone(),
-            )],
-            Statement::Continue => vec![(
-                hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                span.clone(),
-            )],
+            Statement::Break => vec![(hash_semantic_token_type(SemanticTokenType::KEYWORD), *span)],
+            Statement::Comment(_) => {
+                vec![(hash_semantic_token_type(SemanticTokenType::COMMENT), *span)]
+            }
+            Statement::DocString(_) => {
+                vec![(hash_semantic_token_type(SemanticTokenType::COMMENT), *span)]
+            }
+            Statement::Shebang(_) => {
+                vec![(hash_semantic_token_type(SemanticTokenType::COMMENT), *span)]
+            }
+            Statement::Continue => {
+                vec![(hash_semantic_token_type(SemanticTokenType::KEYWORD), *span)]
+            }
             Statement::Echo((_, echo_span), expr) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::KEYWORD),
@@ -280,15 +264,12 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                 let mut tokens = vec![];
 
                 command_modifiers.iter().for_each(|(_, span)| {
-                    tokens.push((
-                        hash_semantic_token_type(SemanticTokenType::MODIFIER),
-                        span.clone(),
-                    ));
+                    tokens.push((hash_semantic_token_type(SemanticTokenType::MODIFIER), *span));
                 });
 
                 tokens.push((
                     hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                    mv_span.clone(),
+                    *mv_span,
                 ));
 
                 tokens.extend(semantic_tokens_from_expr(src));
@@ -299,7 +280,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                         FailureHandler::Handle((_, failed_span), stmnts) => {
                             tokens.push((
                                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                                failed_span.clone(),
+                                *failed_span,
                             ));
 
                             tokens.extend(semantic_tokens_from_stmnts(stmnts));
@@ -307,7 +288,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                         FailureHandler::Propagate => {
                             tokens.push((
                                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                                failure_span.clone(),
+                                *failure_span,
                             ));
                         }
                     }
@@ -342,7 +323,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                                 tokens.extend(semantic_tokens_from_expr(expr));
                                 tokens.extend(semantic_tokens_from_stmnts(&vec![(
                                     Statement::Block(block.clone()),
-                                    block.1.clone(),
+                                    block.1,
                                 )]));
                             }
                             IfCondition::InlineIfCondition(expr, stmnt) => {
@@ -360,7 +341,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
 
                                 tokens.extend(semantic_tokens_from_stmnts(&vec![(
                                     Statement::Block(block.clone()),
-                                    block.1.clone(),
+                                    block.1,
                                 )]));
                             }
                             ElseCondition::InlineElse((_, else_span), stmnt) => {
@@ -387,7 +368,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                         tokens.extend(semantic_tokens_from_expr(expr));
                         tokens.extend(semantic_tokens_from_stmnts(&vec![(
                             Statement::Block(block.clone()),
-                            block.1.clone(),
+                            block.1,
                         )]));
                     }
                     IfCondition::InlineIfCondition(expr, stmnt) => {
@@ -407,7 +388,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
 
                             tokens.extend(semantic_tokens_from_stmnts(&vec![(
                                 Statement::Block(block.clone()),
-                                block.1.clone(),
+                                block.1,
                             )]));
                         }
                         ElseCondition::InlineElse((_, else_span), stmnt) => {
@@ -431,7 +412,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
 
                 tokens.extend(semantic_tokens_from_stmnts(&vec![(
                     Statement::Block(block.clone()),
-                    block.1.clone(),
+                    block.1,
                 )]));
 
                 tokens
@@ -444,19 +425,16 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
 
                 match vars {
                     IterLoopVars::Single((_, span)) => {
-                        tokens.push((
-                            hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                            span.clone(),
-                        ));
+                        tokens.push((hash_semantic_token_type(SemanticTokenType::VARIABLE), *span));
                     }
                     IterLoopVars::WithIndex((_, span1), (_, span2)) => {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                            span1.clone(),
+                            *span1,
                         ));
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                            span2.clone(),
+                            *span2,
                         ));
                     }
                     IterLoopVars::Error => {}
@@ -470,7 +448,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                 tokens.extend(semantic_tokens_from_expr(expr));
                 tokens.extend(semantic_tokens_from_stmnts(&vec![(
                     Statement::Block(block.clone()),
-                    block.1.clone(),
+                    block.1,
                 )]));
 
                 tokens
@@ -490,7 +468,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
             Statement::ShorthandAdd((_, var_span), expr) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                    var_span.clone(),
+                    *var_span,
                 )];
 
                 tokens.extend(semantic_tokens_from_expr(expr));
@@ -500,7 +478,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
             Statement::ShorthandDiv((_, var_span), expr) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                    var_span.clone(),
+                    *var_span,
                 )];
 
                 tokens.extend(semantic_tokens_from_expr(expr));
@@ -510,7 +488,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
             Statement::ShorthandMul((_, var_span), expr) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                    var_span.clone(),
+                    *var_span,
                 )];
 
                 tokens.extend(semantic_tokens_from_expr(expr));
@@ -520,7 +498,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
             Statement::ShorthandModulo((_, var_span), expr) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                    var_span.clone(),
+                    *var_span,
                 )];
 
                 tokens.extend(semantic_tokens_from_expr(expr));
@@ -530,7 +508,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
             Statement::ShorthandSub((_, var_span), expr) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                    var_span.clone(),
+                    *var_span,
                 )];
 
                 tokens.extend(semantic_tokens_from_expr(expr));
@@ -540,12 +518,12 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
             Statement::ConstInit((_, const_span), (_, var_span), exp) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                    const_span.clone(),
+                    *const_span,
                 )];
 
                 tokens.push((
                     hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                    var_span.clone(),
+                    *var_span,
                 ));
 
                 tokens.extend(semantic_tokens_from_expr(exp));
@@ -555,12 +533,12 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
             Statement::VariableInit((_, let_span), (_, var_span), (val, _)) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                    let_span.clone(),
+                    *let_span,
                 )];
 
                 tokens.push((
                     hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                    var_span.clone(),
+                    *var_span,
                 ));
 
                 match val {
@@ -568,10 +546,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
                         tokens.extend(semantic_tokens_from_expr(expr));
                     }
                     VariableInitType::DataType((_, ty_span)) => {
-                        tokens.push((
-                            hash_semantic_token_type(SemanticTokenType::TYPE),
-                            ty_span.clone(),
-                        ));
+                        tokens.push((hash_semantic_token_type(SemanticTokenType::TYPE), *ty_span));
                     }
                     &VariableInitType::Error => {}
                 }
@@ -581,7 +556,7 @@ fn semantic_tokens_from_stmnts(stmnts: &Vec<Spanned<Statement>>) -> Vec<SpannedS
             Statement::VariableSet((_, var_span), expr) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::VARIABLE),
-                    var_span.clone(),
+                    *var_span,
                 )];
 
                 tokens.extend(semantic_tokens_from_expr(expr));
@@ -609,7 +584,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
             tokens.extend(semantic_tokens_from_expr(lhs));
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                and_span.clone(),
+                *and_span,
             ));
             tokens.extend(semantic_tokens_from_expr(rhs));
 
@@ -617,21 +592,18 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
         }
         Expression::Array(elements) => elements
             .iter()
-            .flat_map(|expr| semantic_tokens_from_expr(expr))
+            .flat_map(semantic_tokens_from_expr)
             .collect(),
-        Expression::Boolean(_) => vec![(hash_semantic_token_type(CONSTANT), span.clone())],
+        Expression::Boolean(_) => vec![(hash_semantic_token_type(CONSTANT), *span)],
         Expression::Cast(expr, (_, as_span), (_, ty_span)) => {
             let mut tokens = vec![];
 
             tokens.extend(semantic_tokens_from_expr(expr));
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                as_span.clone(),
+                *as_span,
             ));
-            tokens.push((
-                hash_semantic_token_type(SemanticTokenType::TYPE),
-                ty_span.clone(),
-            ));
+            tokens.push((hash_semantic_token_type(SemanticTokenType::TYPE), *ty_span));
 
             tokens
         }
@@ -639,27 +611,21 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
             let mut tokens = vec![];
 
             modifiers.iter().for_each(|(_, span)| {
-                tokens.push((
-                    hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                    span.clone(),
-                ));
+                tokens.push((hash_semantic_token_type(SemanticTokenType::KEYWORD), *span));
             });
 
             cmd.iter().for_each(|(inter_cmd, span)| match inter_cmd {
                 InterpolatedCommand::Text(_) => {
-                    tokens.push((
-                        hash_semantic_token_type(SemanticTokenType::STRING),
-                        span.clone(),
-                    ));
+                    tokens.push((hash_semantic_token_type(SemanticTokenType::STRING), *span));
                 }
                 InterpolatedCommand::Expression(expr) => {
                     tokens.extend(semantic_tokens_from_expr(expr));
                 }
                 InterpolatedCommand::CommandOption(_) => {
-                    tokens.push((hash_semantic_token_type(CONSTANT), span.clone()));
+                    tokens.push((hash_semantic_token_type(CONSTANT), *span));
                 }
                 InterpolatedCommand::Escape(_) => {
-                    tokens.push((hash_semantic_token_type(ESCAPE_SEQUENCE), span.clone()));
+                    tokens.push((hash_semantic_token_type(ESCAPE_SEQUENCE), *span));
                 }
             });
 
@@ -668,7 +634,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
                     FailureHandler::Handle((_, failed_span), stmnts) => {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                            failed_span.clone(),
+                            *failed_span,
                         ));
 
                         tokens.extend(semantic_tokens_from_stmnts(stmnts));
@@ -676,7 +642,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
                     FailureHandler::Propagate => {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                            failure_span.clone(),
+                            *failure_span,
                         ));
                     }
                 }
@@ -704,15 +670,12 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
             let mut tokens = vec![];
 
             modifiers.iter().for_each(|(_, span)| {
-                tokens.push((
-                    hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                    span.clone(),
-                ));
+                tokens.push((hash_semantic_token_type(SemanticTokenType::KEYWORD), *span));
             });
 
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::FUNCTION),
-                name_span.clone(),
+                *name_span,
             ));
 
             args.iter().for_each(|expr| {
@@ -724,7 +687,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
                     FailureHandler::Handle((_, failed_span), stmnts) => {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                            failed_span.clone(),
+                            *failed_span,
                         ));
 
                         tokens.extend(semantic_tokens_from_stmnts(stmnts));
@@ -732,7 +695,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
                     FailureHandler::Propagate => {
                         tokens.push((
                             hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                            failure_span.clone(),
+                            *failure_span,
                         ));
                     }
                 }
@@ -762,12 +725,9 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
             tokens.extend(semantic_tokens_from_expr(lhs));
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                is_span.clone(),
+                *is_span,
             ));
-            tokens.push((
-                hash_semantic_token_type(SemanticTokenType::TYPE),
-                ty_span.clone(),
-            ));
+            tokens.push((hash_semantic_token_type(SemanticTokenType::TYPE), *ty_span));
 
             tokens
         }
@@ -806,7 +766,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
         Expression::Nameof((_, nameof_span), expr) => {
             let mut tokens = vec![(
                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                nameof_span.clone(),
+                *nameof_span,
             )];
 
             tokens.extend(semantic_tokens_from_expr(expr));
@@ -816,7 +776,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
         Expression::Neg((_, op_span), expr) => {
             let mut tokens = vec![(
                 hash_semantic_token_type(SemanticTokenType::OPERATOR),
-                op_span.clone(),
+                *op_span,
             )];
 
             tokens.extend(semantic_tokens_from_expr(expr));
@@ -834,18 +794,15 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
         Expression::Not((_, not_span), expr) => {
             let mut tokens = vec![(
                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                not_span.clone(),
+                *not_span,
             )];
 
             tokens.extend(semantic_tokens_from_expr(expr));
 
             tokens
         }
-        Expression::Null => vec![(hash_semantic_token_type(CONSTANT), span.clone())],
-        Expression::Number(_) => vec![(
-            hash_semantic_token_type(SemanticTokenType::NUMBER),
-            span.clone(),
-        )],
+        Expression::Null => vec![(hash_semantic_token_type(CONSTANT), *span)],
+        Expression::Number(_) => vec![(hash_semantic_token_type(SemanticTokenType::NUMBER), *span)],
         Expression::Or(lhs, (_, or_span), rhs) => {
             let mut tokens = vec![];
 
@@ -853,7 +810,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
 
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                or_span.clone(),
+                *or_span,
             ));
 
             tokens.extend(semantic_tokens_from_expr(rhs));
@@ -869,10 +826,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
 
             tokens
         }
-        Expression::Status => vec![(
-            hash_semantic_token_type(SemanticTokenType::KEYWORD),
-            span.clone(),
-        )],
+        Expression::Status => vec![(hash_semantic_token_type(SemanticTokenType::KEYWORD), *span)],
         Expression::Subtract(lhs, rhs) => {
             let mut tokens = vec![];
 
@@ -887,12 +841,12 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
             tokens.extend(semantic_tokens_from_expr(cond));
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                then_span.clone(),
+                *then_span,
             ));
             tokens.extend(semantic_tokens_from_expr(if_true));
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                else_span.clone(),
+                *else_span,
             ));
             tokens.extend(semantic_tokens_from_expr(if_false));
 
@@ -909,15 +863,13 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
                 inter_text
                     .iter()
                     .flat_map(|(text, span)| match text {
-                        &InterpolatedText::Text(_) => vec![(
-                            hash_semantic_token_type(SemanticTokenType::STRING),
-                            span.clone(),
-                        )],
+                        &InterpolatedText::Text(_) => {
+                            vec![(hash_semantic_token_type(SemanticTokenType::STRING), *span)]
+                        }
                         InterpolatedText::Expression(expr) => semantic_tokens_from_expr(expr),
-                        InterpolatedText::Escape(_) => vec![(
-                            hash_semantic_token_type(SemanticTokenType::STRING),
-                            span.clone(),
-                        )],
+                        InterpolatedText::Escape(_) => {
+                            vec![(hash_semantic_token_type(SemanticTokenType::STRING), *span)]
+                        }
                     })
                     .collect::<Vec<Spanned<usize>>>(),
             );
@@ -929,10 +881,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
 
             tokens
         }
-        Expression::Var(_) => vec![(
-            hash_semantic_token_type(SemanticTokenType::VARIABLE),
-            span.clone(),
-        )],
+        Expression::Var(_) => vec![(hash_semantic_token_type(SemanticTokenType::VARIABLE), *span)],
         Expression::Error => vec![],
     }
 }

@@ -397,7 +397,10 @@ async fn test_generic_type_inference() {
         SymbolType::Function(FunctionSymbol { arguments, .. }) => {
             assert_debug_snapshot!(arguments
                 .iter()
-                .map(|(arg, _)| (arg.name.clone(), arg.data_type.to_string(&backend.files.generic_types)))
+                .map(|(arg, _)| (
+                    arg.name.clone(),
+                    arg.data_type.to_string(&backend.files.generic_types)
+                ))
                 .collect::<Vec<_>>());
         }
         _ => panic!("Expected function symbol"),
@@ -447,7 +450,10 @@ async fn test_generics_reference() {
         SymbolType::Function(FunctionSymbol { arguments, .. }) => {
             assert_debug_snapshot!(arguments
                 .iter()
-                .map(|(arg, _)| (arg.name.clone(), arg.data_type.to_string(&backend.files.generic_types)))
+                .map(|(arg, _)| (
+                    arg.name.clone(),
+                    arg.data_type.to_string(&backend.files.generic_types)
+                ))
                 .collect::<Vec<_>>());
         }
         _ => panic!("Expected function symbol"),

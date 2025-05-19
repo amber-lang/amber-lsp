@@ -30,7 +30,7 @@ async fn save_resources(backend: &Backend) -> PathBuf {
     let _ = backend
         .files
         .fs
-        .create_dir_all(&cache_dir.join(path.clone()).to_str().unwrap())
+        .create_dir_all(cache_dir.join(path.clone()).to_str().unwrap())
         .await;
 
     if let Some(dir) = STDLIB.get_dir(path.clone()) {
@@ -55,7 +55,7 @@ fn save_entry<'a>(
                 let _ = backend
                     .files
                     .fs
-                    .create_dir_all(&path.to_str().unwrap())
+                    .create_dir_all(path.to_str().unwrap())
                     .await;
                 for entry in dir.entries() {
                     save_entry(backend, current_path, entry).await;
@@ -73,7 +73,7 @@ fn save_entry<'a>(
                 backend
                     .files
                     .fs
-                    .write(&path.to_str().unwrap(), &contents)
+                    .write(path.to_str().unwrap(), &contents)
                     .await
                     .unwrap();
             }

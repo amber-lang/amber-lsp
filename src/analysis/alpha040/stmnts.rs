@@ -2,7 +2,7 @@ use crate::{
     analysis::{
         get_symbol_definition_info, insert_symbol_definition, insert_symbol_reference,
         types::{make_union_type, matches_type, GenericsMap},
-        BlockContext, Context, DataType, SymbolLocation, SymbolType, VariableSymbol,
+        BlockContext, Context, DataType, SymbolInfo, SymbolLocation, SymbolType, VariableSymbol,
     },
     files::{FileVersion, Files},
     grammar::{
@@ -234,7 +234,7 @@ pub fn analyze_stmnt(
             );
         }
         Statement::IterLoop(_, (vars, _), _, exp, block) => {
-            let block_span = block.1.clone();
+            let block_span = block.1;
 
             let exp = analyze_exp(
                 file_id,
@@ -246,6 +246,7 @@ pub fn analyze_stmnt(
                 contexts,
             );
 
+            // TODO: Check if DataType is generic
             let iter_type = match exp.exp_ty.clone() {
                 DataType::Array(ty) => *ty,
                 DataType::Failable(ty) => {
@@ -263,55 +264,58 @@ pub fn analyze_stmnt(
                     let mut symbol_table = files
                         .symbol_table
                         .entry(file)
-                        .or_insert_with(|| Default::default());
+                        .or_insert_with(Default::default);
                     insert_symbol_definition(
                         &mut symbol_table,
-                        var1,
-                        block_span.start..=block_span.end,
-                        &SymbolLocation {
-                            file,
-                            start: var1_span.start,
-                            end: var1_span.end,
+                        &SymbolInfo {
+                            name: var1.to_string(),
+                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            data_type: DataType::Number,
+                            is_definition: true,
+                            undefined: false,
+                            span: *var1_span,
+                            contexts: contexts.clone(),
                         },
-                        DataType::Number,
-                        SymbolType::Variable(VariableSymbol { is_const: true }),
+                        file,
+                        block_span.start..=block_span.end,
                         false,
-                        contexts,
                     );
 
                     insert_symbol_definition(
                         &mut symbol_table,
-                        var2,
-                        block_span.start..=block_span.end,
-                        &SymbolLocation {
-                            file,
-                            start: var2_span.start,
-                            end: var2_span.end,
+                        &SymbolInfo {
+                            name: var2.to_string(),
+                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            data_type: iter_type,
+                            is_definition: true,
+                            undefined: false,
+                            span: *var2_span,
+                            contexts: contexts.clone(),
                         },
-                        iter_type,
-                        SymbolType::Variable(VariableSymbol { is_const: true }),
+                        file,
+                        block_span.start..=block_span.end,
                         false,
-                        contexts,
                     );
                 }
                 IterLoopVars::Single((var, var_span)) => {
                     let mut symbol_table = files
                         .symbol_table
                         .entry(file)
-                        .or_insert_with(|| Default::default());
+                        .or_insert_with(Default::default);
                     insert_symbol_definition(
                         &mut symbol_table,
-                        var,
-                        block_span.start..=block_span.end,
-                        &SymbolLocation {
-                            file,
-                            start: var_span.start,
-                            end: var_span.end,
+                        &SymbolInfo {
+                            name: var.to_string(),
+                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            data_type: iter_type,
+                            is_definition: true,
+                            undefined: false,
+                            span: *var_span,
+                            contexts: contexts.clone(),
                         },
-                        iter_type,
-                        SymbolType::Variable(VariableSymbol { is_const: true }),
+                        file,
+                        block_span.start..=block_span.end,
                         false,
-                        contexts,
                     );
                 }
                 _ => {}
@@ -357,7 +361,7 @@ pub fn analyze_stmnt(
             let mut symbol_table = files
                 .symbol_table
                 .entry(file)
-                .or_insert_with(|| Default::default());
+                .or_insert_with(Default::default);
 
             let var_type = match exp.exp_ty {
                 DataType::Failable(ty) => scoped_generic_types.deref_type(&ty),
@@ -366,17 +370,18 @@ pub fn analyze_stmnt(
 
             insert_symbol_definition(
                 &mut symbol_table,
-                var_name,
-                span.end..=scope_end,
-                &SymbolLocation {
-                    file,
-                    start: var_span.start,
-                    end: var_span.end,
+                &SymbolInfo {
+                    name: var_name.to_string(),
+                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                    data_type: var_type,
+                    is_definition: true,
+                    undefined: false,
+                    span: *var_span,
+                    contexts: contexts.clone(),
                 },
-                var_type,
-                SymbolType::Variable(VariableSymbol { is_const: false }),
+                file,
+                span.end..=scope_end,
                 false,
-                contexts,
             );
 
             StmntAnalysisResult {
@@ -398,7 +403,7 @@ pub fn analyze_stmnt(
             let mut symbol_table = files
                 .symbol_table
                 .entry(file)
-                .or_insert_with(|| Default::default());
+                .or_insert_with(Default::default);
 
             let var_type = match exp.exp_ty {
                 DataType::Failable(ty) => scoped_generic_types.deref_type(&ty),
@@ -407,17 +412,18 @@ pub fn analyze_stmnt(
 
             insert_symbol_definition(
                 &mut symbol_table,
-                var_name,
-                span.end..=scope_end,
-                &SymbolLocation {
-                    file,
-                    start: var_span.start,
-                    end: var_span.end,
+                &SymbolInfo {
+                    name: var_name.to_string(),
+                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: true }),
+                    data_type: var_type,
+                    is_definition: true,
+                    undefined: false,
+                    span: *var_span,
+                    contexts: contexts.clone(),
                 },
-                var_type,
-                SymbolType::Variable(VariableSymbol { is_const: true }),
+                file,
+                span.end..=scope_end,
                 false,
-                contexts,
             );
 
             StmntAnalysisResult {
@@ -465,7 +471,7 @@ pub fn analyze_stmnt(
                 files.report_error(
                     &file,
                     "Fail statements can only be used inside of functions or the main block",
-                    span.clone(),
+                    *span,
                 );
             }
 
@@ -493,7 +499,7 @@ pub fn analyze_stmnt(
         }
         Statement::Return(_, exp) => {
             if !contexts.iter().any(|c| matches!(c, Context::Function(_))) {
-                files.report_error(&file, "Return statement outside of function", span.clone());
+                files.report_error(&file, "Return statement outside of function", *span);
             }
 
             if let Some(exp) = exp {
@@ -526,22 +532,14 @@ pub fn analyze_stmnt(
             }
         }
         Statement::ShorthandAdd((var, var_span), exp) => {
-            let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
+            let var_ty = match get_symbol_definition_info(files, var, &file, var_span.start) {
                 Some(info) => {
                     match info.symbol_type {
                         SymbolType::Function(_) => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a function",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a function", *var_span);
                         }
                         SymbolType::Variable(var) if var.is_const => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a constant",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a constant", *var_span);
                         }
                         _ => {}
                     }
@@ -579,7 +577,7 @@ pub fn analyze_stmnt(
                         "Cannot add to variable of type {}",
                         var_ty.to_string(scoped_generic_types)
                     ),
-                    var_span.clone(),
+                    *var_span,
                 );
             }
 
@@ -588,7 +586,7 @@ pub fn analyze_stmnt(
             }
 
             insert_symbol_reference(
-                &var,
+                var,
                 files,
                 &SymbolLocation {
                     file,
@@ -605,22 +603,14 @@ pub fn analyze_stmnt(
             }
         }
         Statement::ShorthandDiv((var, var_span), exp) => {
-            let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
+            let var_ty = match get_symbol_definition_info(files, var, &file, var_span.start) {
                 Some(info) => {
                     match info.symbol_type {
                         SymbolType::Function(_) => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a function",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a function", *var_span);
                         }
                         SymbolType::Variable(var) if var.is_const => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a constant",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a constant", *var_span);
                         }
                         _ => {}
                     }
@@ -637,7 +627,7 @@ pub fn analyze_stmnt(
                         "Cannot divide variable of type {}",
                         var_ty.to_string(scoped_generic_types)
                     ),
-                    var_span.clone(),
+                    *var_span,
                 );
             }
 
@@ -656,7 +646,7 @@ pub fn analyze_stmnt(
             );
 
             insert_symbol_reference(
-                &var,
+                var,
                 files,
                 &SymbolLocation {
                     file,
@@ -673,22 +663,14 @@ pub fn analyze_stmnt(
             }
         }
         Statement::ShorthandModulo((var, var_span), exp) => {
-            let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
+            let var_ty = match get_symbol_definition_info(files, var, &file, var_span.start) {
                 Some(info) => {
                     match info.symbol_type {
                         SymbolType::Function(_) => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a function",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a function", *var_span);
                         }
                         SymbolType::Variable(var) if var.is_const => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a constant",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a constant", *var_span);
                         }
                         _ => {}
                     }
@@ -705,7 +687,7 @@ pub fn analyze_stmnt(
                         "Cannot use modulo with variable of type {}",
                         var_ty.to_string(scoped_generic_types)
                     ),
-                    var_span.clone(),
+                    *var_span,
                 );
             }
 
@@ -724,7 +706,7 @@ pub fn analyze_stmnt(
             );
 
             insert_symbol_reference(
-                &var,
+                var,
                 files,
                 &SymbolLocation {
                     file,
@@ -741,22 +723,14 @@ pub fn analyze_stmnt(
             }
         }
         Statement::ShorthandMul((var, var_span), exp) => {
-            let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
+            let var_ty = match get_symbol_definition_info(files, var, &file, var_span.start) {
                 Some(info) => {
                     match info.symbol_type {
                         SymbolType::Function(_) => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a function",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a function", *var_span);
                         }
                         SymbolType::Variable(var) if var.is_const => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a constant",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a constant", *var_span);
                         }
                         _ => {}
                     }
@@ -773,7 +747,7 @@ pub fn analyze_stmnt(
                         "Cannot use multiply with variable of type {}",
                         var_ty.to_string(scoped_generic_types)
                     ),
-                    var_span.clone(),
+                    *var_span,
                 );
             }
 
@@ -792,7 +766,7 @@ pub fn analyze_stmnt(
             );
 
             insert_symbol_reference(
-                &var,
+                var,
                 files,
                 &SymbolLocation {
                     file,
@@ -809,22 +783,14 @@ pub fn analyze_stmnt(
             }
         }
         Statement::ShorthandSub((var, var_span), exp) => {
-            let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
+            let var_ty = match get_symbol_definition_info(files, var, &file, var_span.start) {
                 Some(info) => {
                     match info.symbol_type {
                         SymbolType::Function(_) => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a function",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a function", *var_span);
                         }
                         SymbolType::Variable(var) if var.is_const => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a constant",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a constant", *var_span);
                         }
                         _ => {}
                     }
@@ -841,7 +807,7 @@ pub fn analyze_stmnt(
                         "Cannot use subtract with variable of type {}",
                         var_ty.to_string(scoped_generic_types)
                     ),
-                    var_span.clone(),
+                    *var_span,
                 );
             }
 
@@ -860,7 +826,7 @@ pub fn analyze_stmnt(
             );
 
             insert_symbol_reference(
-                &var,
+                var,
                 files,
                 &SymbolLocation {
                     file,
@@ -877,22 +843,14 @@ pub fn analyze_stmnt(
             }
         }
         Statement::VariableSet((var, var_span), exp) => {
-            let var_ty = match get_symbol_definition_info(files, &var, &file, var_span.start) {
+            let var_ty = match get_symbol_definition_info(files, var, &file, var_span.start) {
                 Some(info) => {
                     match info.symbol_type {
                         SymbolType::Function(_) => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a function",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a function", *var_span);
                         }
                         SymbolType::Variable(var) if var.is_const => {
-                            files.report_error(
-                                &file,
-                                "Cannot assign to a constant",
-                                var_span.clone(),
-                            );
+                            files.report_error(&file, "Cannot assign to a constant", *var_span);
                         }
                         _ => {}
                     }
@@ -913,7 +871,7 @@ pub fn analyze_stmnt(
             );
 
             insert_symbol_reference(
-                &var,
+                var,
                 files,
                 &SymbolLocation {
                     file,
@@ -931,7 +889,7 @@ pub fn analyze_stmnt(
         }
         Statement::Break => {
             if !contexts.iter().any(|c| matches!(c, Context::Loop)) {
-                files.report_error(&file, "Break statement outside of loop", span.clone());
+                files.report_error(&file, "Break statement outside of loop", *span);
             }
 
             StmntAnalysisResult {
@@ -941,7 +899,7 @@ pub fn analyze_stmnt(
         }
         Statement::Continue => {
             if !contexts.iter().any(|c| matches!(c, Context::Loop)) {
-                files.report_error(&file, "Continue statement outside of loop", span.clone());
+                files.report_error(&file, "Continue statement outside of loop", *span);
             }
 
             StmntAnalysisResult {
@@ -1036,14 +994,14 @@ pub fn analyze_block(
     (block, span): &Spanned<Block>,
     files: &Files,
     scoped_generic_types: &GenericsMap,
-    contexts: &Vec<Context>,
+    contexts: &[Context],
 ) -> StmntAnalysisResult {
     let mut types: Vec<DataType> = vec![];
 
     let mut is_propagating = false;
 
     if let Block::Block(modifiers, stmnt) = block {
-        let mut new_contexts = contexts.clone();
+        let mut new_contexts = contexts.to_owned();
         new_contexts.push(Context::Block(BlockContext {
             modifiers: modifiers.iter().map(|(m, _)| m.clone()).collect(),
         }));
@@ -1089,11 +1047,11 @@ pub fn analyze_failure_handler(
     (failure, span): &Spanned<FailureHandler>,
     files: &Files,
     scoped_generic_types: &GenericsMap,
-    contexts: &Vec<Context>,
+    contexts: &[Context],
 ) -> StmntAnalysisResult {
     let mut types: Vec<DataType> = vec![];
     let mut is_propagating = false;
-    let mut contexts = contexts.clone();
+    let mut contexts = contexts.to_owned();
 
     match failure {
         FailureHandler::Handle(_, stmnts) => {
@@ -1123,7 +1081,7 @@ pub fn analyze_failure_handler(
                 files.report_error(
                     &(file_id, file_version),
                     "Propagate can only be used inside of main block or function",
-                    span.clone(),
+                    *span,
                 );
             }
 
@@ -1171,7 +1129,7 @@ fn get_stmnt_analysis_result(
 
     StmntAnalysisResult {
         is_propagating_failure,
-        return_ty: if return_ty.len() > 0 {
+        return_ty: if !return_ty.is_empty() {
             Some(make_union_type(return_ty))
         } else {
             None

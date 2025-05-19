@@ -22,7 +22,8 @@ pub fn block_parser<'a>(
         .delimited_by(
             just(T!['{']),
             just(T!['}']).recover_with(via_parser(default_recovery().or_not().map(|_| T!['}']))),
-        ).boxed();
+        )
+        .boxed();
 
     if !with_modifiers {
         return body_parser

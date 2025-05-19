@@ -16,9 +16,9 @@ use crate::{
 #[derive(Copy, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FileVersion(pub i32);
 
-impl Into<i32> for FileVersion {
-    fn into(self) -> i32 {
-        self.0
+impl From<FileVersion> for i32 {
+    fn from(val: FileVersion) -> Self {
+        val.0
     }
 }
 
@@ -83,11 +83,8 @@ impl Files {
 
     #[tracing::instrument(skip_all)]
     pub fn add_new_file_version(&self, file_id: FileId, version: FileVersion) {
-        match self.file_versions.insert(file_id, version) {
-            Some(old_version) => {
-                self.remove_file_version(file_id, old_version);
-            }
-            None => {}
+        if let Some(old_version) = self.file_versions.insert(file_id, version) {
+            self.remove_file_version(file_id, old_version);
         }
     }
 
@@ -155,16 +152,15 @@ impl Files {
     }
 
     pub fn get_latest_version(&self, file_id: FileId) -> FileVersion {
-        self.file_versions.get(&file_id).unwrap().clone()
+        *self.file_versions.get(&file_id).unwrap()
     }
 
     pub fn get_document_latest_version(&self, file_id: FileId) -> Option<(Rope, FileVersion)> {
         let file_version = self.get_latest_version(file_id);
 
-        match self.document_map.get(&(file_id, file_version)) {
-            Some(document) => Some((document.clone(), file_version)),
-            None => None,
-        }
+        self.document_map
+            .get(&(file_id, file_version))
+            .map(|document| (document.clone(), file_version))
     }
 
     pub fn report_error(&self, file: &(FileId, FileVersion), msg: &str, span: SimpleSpan) {
@@ -196,7 +192,7 @@ impl Files {
                 let file_deps = file_ref.value();
 
                 if file_deps.contains(&file_id) {
-                    Some(file.clone())
+                    Some(*file)
                 } else {
                     None
                 }

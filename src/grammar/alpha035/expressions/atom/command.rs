@@ -25,11 +25,7 @@ pub fn command_parser<'a>(
         .map(|((_, second_dash), option)| {
             let dashes = if second_dash.is_some() { "--" } else { "-" };
 
-            InterpolatedCommand::CommandOption(format!(
-                "{}{}",
-                dashes,
-                option.unwrap_or(T![""]).to_string()
-            ))
+            InterpolatedCommand::CommandOption(format!("{}{}", dashes, option.unwrap_or(T![""])))
         })
         .boxed();
 

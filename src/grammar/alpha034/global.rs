@@ -205,7 +205,7 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .then(just(T!["fun"]).map_with(|_, e| ("fun".to_string(), e.span())))
         .then(
             ident("function".to_string())
-                .map_err(|err| Rich::custom(err.span().clone(), "Expected function name"))
+                .map_err(|err| Rich::custom(*err.span(), "Expected function name"))
                 .recover_with(via_parser(
                     default_recovery().or_not().map(|_| "".to_string()),
                 ))

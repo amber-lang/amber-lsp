@@ -36,7 +36,10 @@ pub fn const_init_parser<'a>(
             )),
         )
         .map_with(|((const_keyword, name), value), e| {
-            (Statement::ConstInit(const_keyword, name, Box::new(value)), e.span())
+            (
+                Statement::ConstInit(const_keyword, name, Box::new(value)),
+                e.span(),
+            )
         })
         .boxed()
 }

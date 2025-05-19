@@ -12,11 +12,11 @@ fn tokenize(input: &str) -> Vec<Spanned<Token>> {
     AmberCompiler::new().tokenize(input)
 }
 
-fn parse<'a>(
-    tokens: &'a Vec<Spanned<Token>>,
+fn parse(
+    tokens: &[Spanned<Token>],
 ) -> (
     Option<Vec<Spanned<amber_lsp::grammar::alpha034::GlobalStatement>>>,
-    Vec<Rich<'a, String>>,
+    Vec<Rich<'_, String>>,
 ) {
     let ParserResponse {
         ast,
@@ -32,8 +32,8 @@ fn parse<'a>(
     (ast, errors)
 }
 
-fn parse_unwrap<'a>(
-    tokens: &'a Vec<Spanned<Token>>,
+fn parse_unwrap(
+    tokens: &[Spanned<Token>],
 ) -> Vec<Spanned<amber_lsp::grammar::alpha034::GlobalStatement>> {
     parse(tokens).0.unwrap()
 }
@@ -410,23 +410,31 @@ fn test_function_def() {
     }"
     )));
     assert_debug_snapshot!(parse_unwrap(&tokenize("pub fun func() {}")));
-    assert_debug_snapshot!(parse_unwrap(&tokenize(r#"
+    assert_debug_snapshot!(parse_unwrap(&tokenize(
+        r#"
     #[allow_absurd_cast]
     pub fun func() {}
-    "#)));
-    assert_debug_snapshot!(parse_unwrap(&tokenize(r#"
+    "#
+    )));
+    assert_debug_snapshot!(parse_unwrap(&tokenize(
+        r#"
     #[allow_absurd_cast]
     #[allow_generic_return]
     pub fun func() {}
-    "#)));
-    assert_debug_snapshot!(parse(&tokenize(r#"
+    "#
+    )));
+    assert_debug_snapshot!(parse(&tokenize(
+        r#"
     #[
     pub fun func() {}
-    "#)));
-    assert_debug_snapshot!(parse(&tokenize(r#"
+    "#
+    )));
+    assert_debug_snapshot!(parse(&tokenize(
+        r#"
     #[invalid]
     pub fun func() {}
-    "#)));
+    "#
+    )));
 }
 
 #[test]

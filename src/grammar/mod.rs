@@ -1,5 +1,5 @@
 use chumsky::{error::Rich, span::SimpleSpan};
-use std::fmt::{self, Debug};
+use std::fmt::{self, Debug, Display};
 
 pub mod alpha034;
 pub mod alpha035;
@@ -19,9 +19,9 @@ pub type SpannedSemanticToken = Spanned<usize>;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Token(pub String);
 
-impl ToString for Token {
-    fn to_string(&self) -> String {
-        self.0.clone()
+impl Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -46,7 +46,7 @@ pub struct ParserResponse<'a> {
 
 pub trait LSPAnalysis: Sync + Send + Debug {
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>>;
-    fn parse<'a>(&self, input: &'a Vec<Spanned<Token>>) -> ParserResponse<'a>;
+    fn parse<'a>(&self, input: &'a [Spanned<Token>]) -> ParserResponse<'a>;
 }
 
 #[derive(PartialEq)]

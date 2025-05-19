@@ -225,6 +225,12 @@ pub struct AmberCompiler {
     lexer: Lexer,
 }
 
+impl Default for AmberCompiler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AmberCompiler {
     pub fn new() -> Self {
         let lexer = Lexer::new(get_rules());
@@ -250,16 +256,16 @@ impl LSPAnalysis for AmberCompiler {
                     return None;
                 }
 
-                return Some((
+                Some((
                     Token(t.word.clone()),
                     SimpleSpan::new(t.start, t.start + t.word.chars().count()),
-                ));
+                ))
             })
             .collect()
     }
 
     #[tracing::instrument(skip_all)]
-    fn parse<'a>(&self, tokens: &'a Vec<Spanned<Token>>) -> ParserResponse<'a> {
+    fn parse<'a>(&self, tokens: &'a [Spanned<Token>]) -> ParserResponse<'a> {
         let len = tokens.last().map(|t| t.1.end).unwrap_or(0);
         let parser_input = tokens.spanned(Span::new(len, len));
 
@@ -269,7 +275,6 @@ impl LSPAnalysis for AmberCompiler {
 
         let string_errors = result
             .errors()
-            .into_iter()
             .map(|e| e.clone().map_token(|t| t.0))
             .collect();
 

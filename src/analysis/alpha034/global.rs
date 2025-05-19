@@ -2,8 +2,8 @@ use crate::{
     analysis::{
         self, import_symbol, insert_symbol_definition, map_import_path,
         types::{make_union_type, matches_type, DataType},
-        Context, FunctionContext, FunctionSymbol, ImportContext, SymbolInfo, SymbolLocation,
-        SymbolType, VariableSymbol,
+        Context, FunctionContext, FunctionSymbol, ImportContext, SymbolInfo, SymbolType,
+        VariableSymbol,
     },
     backend::Backend,
     files::FileVersion,
@@ -20,7 +20,7 @@ use super::stmnts::analyze_stmnt;
 pub async fn analyze_global_stmnt(
     file_id: FileId,
     file_version: FileVersion,
-    ast: &Vec<Spanned<GlobalStatement>>,
+    ast: &[Spanned<GlobalStatement>],
     backend: &Backend,
 ) {
     for (global, span) in ast.iter() {
@@ -62,17 +62,18 @@ pub async fn analyze_global_stmnt(
 
                     insert_symbol_definition(
                         &mut symbol_table,
-                        name,
-                        name_span.end..=span.end,
-                        &SymbolLocation {
-                            file: (file_id, file_version),
-                            start: name_span.start,
-                            end: name_span.end,
+                        &SymbolInfo {
+                            name: name.to_string(),
+                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            data_type: ty.clone(),
+                            is_definition: true,
+                            undefined: false,
+                            span: *name_span,
+                            contexts: vec![],
                         },
-                        ty,
-                        SymbolType::Variable(VariableSymbol { is_const: false }),
+                        (file_id, file_version),
+                        name_span.end..=span.end,
                         false,
-                        &vec![],
                     );
                 });
 
@@ -129,52 +130,57 @@ pub async fn analyze_global_stmnt(
                     .files
                     .symbol_table
                     .entry((file_id, file_version))
-                    .or_insert_with(|| Default::default());
+                    .or_insert_with(Default::default);
 
                 insert_symbol_definition(
                     &mut symbol_table,
-                    name,
-                    span.end..=usize::MAX,
-                    &SymbolLocation {
-                        file: (file_id, file_version),
-                        start: name_span.start,
-                        end: name_span.end,
+                    &SymbolInfo {
+                        name: name.to_string(),
+                        symbol_type: SymbolType::Function(FunctionSymbol {
+                            arguments: args
+                                .iter()
+                                .filter_map(|(arg, span)| match arg {
+                                    FunctionArgument::Generic((is_ref, _), (name, _)) => Some((
+                                        analysis::FunctionArgument {
+                                            name: name.clone(),
+                                            data_type: DataType::Generic(
+                                                new_generic_types.remove(0),
+                                            ),
+                                            is_optional: false,
+                                            is_ref: *is_ref,
+                                        },
+                                        *span,
+                                    )),
+                                    FunctionArgument::Typed((is_ref, _), (name, _), (ty, _)) => {
+                                        Some((
+                                            analysis::FunctionArgument {
+                                                name: name.clone(),
+                                                data_type: ty.clone(),
+                                                is_optional: false,
+                                                is_ref: *is_ref,
+                                            },
+                                            *span,
+                                        ))
+                                    }
+                                    _ => None,
+                                })
+                                .collect::<Vec<_>>(),
+                            is_public: *is_pub,
+                            compiler_flags: compiler_flags
+                                .iter()
+                                .map(|(flag, _)| flag.clone())
+                                .collect(),
+                            docs: None,
+                        }),
+                        data_type: data_type.clone(),
+                        is_definition: true,
+                        undefined: false,
+                        span: *name_span,
+                        contexts: vec![],
                     },
-                    data_type,
-                    SymbolType::Function(FunctionSymbol {
-                        arguments: args
-                            .iter()
-                            .filter_map(|(arg, span)| match arg {
-                                FunctionArgument::Generic((is_ref, _), (name, _)) => Some((
-                                    analysis::FunctionArgument {
-                                        name: name.clone(),
-                                        data_type: DataType::Generic(new_generic_types.remove(0)),
-                                        is_optional: false,
-                                        is_ref: *is_ref,
-                                    },
-                                    span.clone(),
-                                )),
-                                FunctionArgument::Typed((is_ref, _), (name, _), (ty, _)) => Some((
-                                    analysis::FunctionArgument {
-                                        name: name.clone(),
-                                        data_type: ty.clone(),
-                                        is_optional: false,
-                                        is_ref: *is_ref,
-                                    },
-                                    span.clone(),
-                                )),
-                                _ => None,
-                            })
-                            .collect::<Vec<_>>(),
-                        is_public: *is_pub,
-                        compiler_flags: compiler_flags
-                            .iter()
-                            .map(|(flag, _)| flag.clone())
-                            .collect(),
-                        docs: None,
-                    }),
+                    (file_id, file_version),
+                    span.end..=usize::MAX,
                     *is_pub,
-                    &vec![],
                 );
             }
             GlobalStatement::Import(
@@ -187,7 +193,7 @@ pub async fn analyze_global_stmnt(
                 let uri = &backend.files.lookup(&file_id);
 
                 let result = backend
-                    .open_document(&map_import_path(uri, path, &backend).await)
+                    .open_document(&map_import_path(uri, path, backend).await)
                     .await;
 
                 {
@@ -195,21 +201,22 @@ pub async fn analyze_global_stmnt(
                         .files
                         .symbol_table
                         .entry((file_id, file_version))
-                        .or_insert_with(|| Default::default());
+                        .or_insert_with(Default::default);
 
                     insert_symbol_definition(
                         &mut symbol_table,
-                        &path,
-                        path_span.start..=path_span.end,
-                        &SymbolLocation {
-                            file: result.clone().unwrap_or((file_id, file_version)),
-                            start: path_span.start,
-                            end: path_span.end,
+                        &SymbolInfo {
+                            name: path.to_string(),
+                            symbol_type: SymbolType::ImportPath,
+                            data_type: DataType::Text,
+                            is_definition: false,
+                            undefined: false,
+                            span: *path_span,
+                            contexts: vec![],
                         },
-                        DataType::Text,
-                        SymbolType::ImportPath,
+                        (file_id, file_version),
+                        path_span.start..=path_span.end,
                         false,
-                        &vec![],
                     );
                 }
 
@@ -241,10 +248,7 @@ pub async fn analyze_global_stmnt(
 
                 let imported_file_symbol_table =
                     match backend.files.symbol_table.get(&imported_file) {
-                        Some(symbol_table_ref) => {
-                            let symbol_table = symbol_table_ref.clone();
-                            symbol_table
-                        }
+                        Some(symbol_table_ref) => symbol_table_ref.clone(),
                         None => continue,
                     };
 
@@ -269,7 +273,7 @@ pub async fn analyze_global_stmnt(
                                     .files
                                     .symbol_table
                                     .entry((file_id, file_version))
-                                    .or_insert_with(|| Default::default());
+                                    .or_insert_with(Default::default);
 
                                 symbol_table.symbols.insert(
                                     span.start..=span.end,
@@ -314,17 +318,18 @@ pub async fn analyze_global_stmnt(
                                         .files
                                         .symbol_table
                                         .entry((file_id, file_version))
-                                        .or_insert_with(|| Default::default());
+                                        .or_insert_with(Default::default);
 
                                     import_symbol(
                                         &mut symbol_table,
-                                        ident,
+                                        &SymbolInfo {
+                                            is_definition: false,
+                                            contexts: vec![Context::Import(import_context.clone())],
+                                            ..symbol_info.clone()
+                                        },
                                         Some(span.start..=span.end),
                                         definition_location,
-                                        symbol_info.data_type.clone(),
-                                        symbol_info.symbol_type.clone(),
                                         *is_public_import,
-                                        &import_context,
                                     );
 
                                     import_context.imported_symbols.push(ident.to_string());
@@ -340,13 +345,15 @@ pub async fn analyze_global_stmnt(
                                         .files
                                         .symbol_table
                                         .entry((file_id, file_version))
-                                        .or_insert_with(|| Default::default());
+                                        .or_insert_with(Default::default);
 
                                     symbol_table.symbols.insert(
                                         span.start..=span.end,
                                         SymbolInfo {
                                             name: ident.to_string(),
-                                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                                is_const: false,
+                                            }),
                                             data_type: DataType::Null,
                                             is_definition: false,
                                             undefined: true,
@@ -378,22 +385,23 @@ pub async fn analyze_global_stmnt(
                                 .files
                                 .symbol_table
                                 .entry((file_id, file_version))
-                                .or_insert_with(|| Default::default());
+                                .or_insert_with(Default::default);
 
                             import_symbol(
                                 &mut symbol_table,
-                                &symbol_info.name,
+                                &SymbolInfo {
+                                    is_definition: false,
+                                    contexts: vec![Context::Import(ImportContext {
+                                        public_definitions: imported_file_symbol_table
+                                            .public_definitions
+                                            .clone(),
+                                        imported_symbols: vec![],
+                                    })],
+                                    ..symbol_info.clone()
+                                },
                                 None,
                                 location,
-                                symbol_info.data_type.clone(),
-                                symbol_info.symbol_type.clone(),
                                 *is_public_import,
-                                &ImportContext {
-                                    public_definitions: imported_file_symbol_table
-                                        .public_definitions
-                                        .clone(),
-                                    imported_symbols: vec![],
-                                },
                             );
                         }),
                 }
@@ -404,21 +412,22 @@ pub async fn analyze_global_stmnt(
                         .files
                         .symbol_table
                         .entry((file_id, file_version))
-                        .or_insert_with(|| Default::default());
+                        .or_insert_with(Default::default);
 
                     insert_symbol_definition(
                         &mut symbol_table,
-                        args,
-                        args_span.end..=span.end,
-                        &SymbolLocation {
-                            file: (file_id, file_version),
-                            start: args_span.start,
-                            end: args_span.end,
+                        &SymbolInfo {
+                            name: args.to_string(),
+                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            data_type: DataType::Array(Box::new(DataType::Text)),
+                            is_definition: true,
+                            undefined: false,
+                            span: *args_span,
+                            contexts: vec![],
                         },
-                        DataType::Array(Box::new(DataType::Text)),
-                        SymbolType::Variable(VariableSymbol { is_const: false }),
+                        (file_id, file_version),
+                        args_span.end..=span.end,
                         false,
-                        &vec![],
                     );
                 }
 

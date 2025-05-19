@@ -243,7 +243,7 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .then(just(T!["fun"]).map_with(|_, e| ("fun".to_string(), e.span())))
         .then(
             ident("function".to_string())
-                .map_err(|err| Rich::custom(err.span().clone(), "Expected function name"))
+                .map_err(|err| Rich::custom(*err.span(), "Expected function name"))
                 .recover_with(via_parser(
                     default_recovery().or_not().map(|_| "".to_string()),
                 ))
@@ -317,7 +317,7 @@ pub fn main_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
 
 pub fn global_statement_parser<'a>() -> impl AmberParser<'a, Vec<Spanned<GlobalStatement>>> {
     let statement = statement_parser()
-        .map(|stmnt| (GlobalStatement::Statement(stmnt.clone()), stmnt.1))
+        .map(|stmnt| (GlobalStatement::Statement(Box::new(stmnt.clone())), stmnt.1))
         .boxed();
 
     choice((import_parser(), function_parser(), main_parser(), statement))

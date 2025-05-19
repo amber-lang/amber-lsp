@@ -17,7 +17,7 @@ impl PathInterner {
     /// If `path` does not exists in `self`, returns [`None`].
     pub fn get(&self, path: &Url) -> Option<FileId> {
         let map = self.map.lock().unwrap();
-        map.get_index_of(path).map(|i| FileId(i))
+        map.get_index_of(path).map(FileId)
     }
 
     /// Insert `path` in `self`.

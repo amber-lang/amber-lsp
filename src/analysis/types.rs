@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self, Display};
 use std::sync::atomic::Ordering::SeqCst;
 use std::{collections::HashSet, sync::atomic::AtomicUsize};
 
@@ -56,7 +56,7 @@ impl fmt::Debug for DataType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GenericsMap {
     map: FastDashMap<usize, DataType>,
     inferred: FastDashSet<usize>,
@@ -64,6 +64,12 @@ pub struct GenericsMap {
 }
 
 static ATOMIC_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+impl Default for GenericsMap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl GenericsMap {
     pub fn new() -> Self {
@@ -76,7 +82,7 @@ impl GenericsMap {
 
     #[inline]
     pub fn new_generic_id(&self) -> usize {
-        return ATOMIC_COUNTER.fetch_add(1, SeqCst);
+        ATOMIC_COUNTER.fetch_add(1, SeqCst)
     }
 
     pub fn reset_counter(&self) {
@@ -138,7 +144,7 @@ impl GenericsMap {
             DataType::Failable(ty) => match *ty {
                 DataType::Generic(id) => DataType::Failable(Box::new(self.get_recursive(id))),
                 ty => DataType::Failable(Box::new(ty)),
-            }
+            },
             ty => ty,
         }
     }
@@ -158,7 +164,8 @@ impl GenericsMap {
     pub fn clean(&self, file_id: FileId, file_version: FileVersion) {
         self.generics_per_file
             .get(&(file_id, file_version))
-            .map(|generics| {
+            .iter()
+            .for_each(|generics| {
                 let ids = generics.value();
                 for id in ids {
                     self.map.remove(id);
@@ -178,17 +185,6 @@ impl GenericsMap {
             .get(&(file_id, file_version))
             .map(|generics| generics.value().clone())
             .unwrap_or_default()
-    }
-
-    pub fn clone(&self) -> Self {
-        let map = self.map.clone();
-        let inferred = self.inferred.clone();
-        let generics_per_file = self.generics_per_file.clone();
-        Self {
-            map,
-            inferred,
-            generics_per_file,
-        }
     }
 
     fn is_more_or_equally_specific(&self, current: &DataType, new: &DataType) -> bool {
@@ -230,8 +226,10 @@ impl GenericsMap {
             _ => false,
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
+impl Display for GenericsMap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut collection = self
             .map
             .iter()
@@ -240,11 +238,11 @@ impl GenericsMap {
 
         collection.sort_unstable_by_key(|(id, _)| *id);
 
-        collection
-            .into_iter()
-            .map(|(_, s)| s)
-            .collect::<Vec<String>>()
-            .join("\n")
+        for (_, s) in collection {
+            writeln!(f, "{}", s)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -289,12 +287,8 @@ pub fn matches_type(expected: &DataType, given: &DataType, generics_map: &Generi
         }
         (DataType::Any, _) | (_, DataType::Any) => true,
         (DataType::Error, _) | (_, DataType::Error) => false,
-        (expected, DataType::Failable(given)) => {
-            matches_type(expected, given, generics_map)
-        }
-        (DataType::Failable(expected), given) => {
-            matches_type(expected, given, generics_map)
-        }
+        (expected, DataType::Failable(given)) => matches_type(expected, given, generics_map),
+        (DataType::Failable(expected), given) => matches_type(expected, given, generics_map),
         (t1, t2) => *t1 == *t2,
     }
 }

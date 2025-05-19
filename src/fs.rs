@@ -36,6 +36,12 @@ pub struct MemoryFS {
     files: Arc<Mutex<HashMap<String, String>>>,
 }
 
+impl Default for MemoryFS {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryFS {
     pub fn new() -> Self {
         MemoryFS {
@@ -89,7 +95,7 @@ impl FS for MemoryFS {
                 }
             }
 
-            return entries;
+            entries
         })
     }
 
@@ -103,6 +109,12 @@ impl FS for MemoryFS {
 
 #[derive(Debug)]
 pub struct LocalFs {}
+
+impl Default for LocalFs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl LocalFs {
     pub fn new() -> Self {

@@ -53,7 +53,7 @@ pub fn analyze_exp(
 
     let ty: DataType = match exp {
         Expression::FunctionInvocation(modifiers, (name, name_span), args, failure) => {
-            let fun_symbol = get_symbol_definition_info(&files, name, &file, name_span.start);
+            let fun_symbol = get_symbol_definition_info(files, name, &file, name_span.start);
 
             let expected_types = match fun_symbol {
                 Some(SymbolInfo {
@@ -97,17 +97,14 @@ pub fn analyze_exp(
                             if let Some(var) =
                                 get_symbol_definition_info(files, &name, &file, span.start)
                             {
-                                match var.symbol_type {
-                                    SymbolType::Variable(ref var_symbol) => {
-                                        if var_symbol.is_const {
-                                            files.report_error(
-                                                &file,
-                                                "Cannot modify a constant variable",
-                                                span.clone(),
-                                            );
-                                        }
+                                if let SymbolType::Variable(ref var_symbol) = var.symbol_type {
+                                    if var_symbol.is_const {
+                                        files.report_error(
+                                            &file,
+                                            "Cannot modify a constant variable",
+                                            span,
+                                        );
                                     }
-                                    _ => {}
                                 }
                             }
                         }
@@ -115,7 +112,7 @@ pub fn analyze_exp(
                             files.report_error(
                                 &file,
                                 "Cannot pass a non-variable as a reference",
-                                arg.1.clone(),
+                                arg.1,
                             );
                         }
                         _ => {}
@@ -124,11 +121,8 @@ pub fn analyze_exp(
                     return_types.extend(return_ty);
                     is_propagating_failure |= propagates_failure;
 
-                    match ty {
-                        DataType::Generic(id) => {
-                            scoped_generic_types.constrain_generic_type(*id, exp_ty.clone());
-                        }
-                        _ => {}
+                    if let DataType::Generic(id) = ty {
+                        scoped_generic_types.constrain_generic_type(*id, exp_ty.clone());
                     }
                 } else {
                     files.report_error(
@@ -154,7 +148,7 @@ pub fn analyze_exp(
 
             let exp_ty = fun_symbol
                 .clone()
-                .and_then(|fun_symbol| Some(fun_symbol.data_type))
+                .map(|fun_symbol| fun_symbol.data_type)
                 .unwrap_or(DataType::Null);
 
             if let Some(failure) = failure {
@@ -196,7 +190,7 @@ pub fn analyze_exp(
                                 .map(|(idx, (arg, _))| {
                                     let arg_span = args
                                         .get(idx)
-                                        .map(|(_, span)| span.clone())
+                                        .map(|(_, span)| *span)
                                         .unwrap_or(SimpleSpan::new(last_span.end, exp_span.end));
 
                                     last_span = arg_span;
@@ -214,7 +208,7 @@ pub fn analyze_exp(
                                 .collect(),
                             ..fun_symbol.clone()
                         }),
-                        data_type: scoped_generic_types.deref_type(&data_type),
+                        data_type: scoped_generic_types.deref_type(data_type),
                         is_definition: false,
                         undefined: false,
                         span: *exp_span,
@@ -248,7 +242,7 @@ pub fn analyze_exp(
         }
         Expression::Var((name, name_span)) => {
             insert_symbol_reference(
-                &name,
+                name,
                 files,
                 &SymbolLocation {
                     file,
@@ -259,7 +253,7 @@ pub fn analyze_exp(
                 contexts,
             );
 
-            match get_symbol_definition_info(files, &name, &file, name_span.start) {
+            match get_symbol_definition_info(files, name, &file, name_span.start) {
                 Some(info) => info.data_type,
                 None => DataType::Null,
             }
@@ -384,15 +378,12 @@ pub fn analyze_exp(
 
             let array_type = make_union_type(types);
 
-            match array_type {
-                DataType::Union(_) => {
-                    files.report_error(
-                        &file,
-                        "Array must have elements of the same type",
-                        *exp_span,
-                    );
-                }
-                _ => {}
+            if let DataType::Union(_) = array_type {
+                files.report_error(
+                    &file,
+                    "Array must have elements of the same type",
+                    *exp_span,
+                );
             }
 
             DataType::Array(Box::new(array_type))
@@ -405,7 +396,7 @@ pub fn analyze_exp(
             } = analyze_exp(
                 file_id,
                 file_version,
-                &exp,
+                exp,
                 DataType::Any,
                 files,
                 scoped_generic_types,
@@ -418,8 +409,8 @@ pub fn analyze_exp(
             ty.clone()
         }
         Expression::Command(modifiers, inter_cmd, failure) => {
-            inter_cmd.iter().for_each(|(inter_cmd, _)| match inter_cmd {
-                InterpolatedCommand::Expression(exp) => {
+            inter_cmd.iter().for_each(|(inter_cmd, _)| {
+                if let InterpolatedCommand::Expression(exp) = inter_cmd {
                     let ExpAnalysisResult {
                         return_ty,
                         is_propagating_failure: is_prop,
@@ -427,7 +418,7 @@ pub fn analyze_exp(
                     } = analyze_exp(
                         file_id,
                         file_version,
-                        &exp,
+                        exp,
                         DataType::Any,
                         files,
                         scoped_generic_types,
@@ -437,7 +428,6 @@ pub fn analyze_exp(
                     is_propagating_failure |= is_prop;
                     return_types.extend(return_ty);
                 }
-                _ => {}
             });
 
             if let Some(failure) = failure {
@@ -459,9 +449,9 @@ pub fn analyze_exp(
                 .iter()
                 .any(|(modifier, _)| *modifier == CommandModifier::Unsafe)
                 && !contexts.iter().any(|ctx| match ctx {
-                    Context::Block(BlockContext { modifiers }) => modifiers
-                        .iter()
-                        .any(|modifier| *modifier == CommandModifier::Unsafe),
+                    Context::Block(BlockContext { modifiers }) => {
+                        modifiers.contains(&CommandModifier::Unsafe)
+                    }
                     _ => false,
                 })
             {
@@ -1027,8 +1017,8 @@ pub fn analyze_exp(
             make_union_type(vec![if_true, if_false])
         }
         Expression::Text(int_text) => {
-            int_text.iter().for_each(|(text, _)| match text {
-                InterpolatedText::Expression(exp) => {
+            int_text.iter().for_each(|(text, _)| {
+                if let InterpolatedText::Expression(exp) = text {
                     let ExpAnalysisResult {
                         return_ty,
                         is_propagating_failure: prop,
@@ -1046,7 +1036,6 @@ pub fn analyze_exp(
                     is_propagating_failure |= prop;
                     return_types.extend(return_ty);
                 }
-                _ => {}
             });
 
             DataType::Text

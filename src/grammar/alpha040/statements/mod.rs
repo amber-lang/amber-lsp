@@ -4,18 +4,18 @@ use super::{expressions::parse_expr, AmberParser, Spanned, Statement};
 
 pub mod block;
 pub mod comment;
+pub mod const_init;
+pub mod doc_string;
 pub mod failed;
 pub mod if_cond;
 pub mod keywords;
 pub mod loops;
 pub mod modifiers;
+pub mod move_files;
+pub mod shebang;
 pub mod shorthands;
 pub mod var_init;
 pub mod var_set;
-pub mod shebang;
-pub mod move_files;
-pub mod doc_string;
-pub mod const_init;
 
 pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
     recursive(|stmnt| {

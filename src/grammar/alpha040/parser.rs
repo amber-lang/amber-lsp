@@ -8,7 +8,7 @@ const KEYWORDS: &[&str] = &[
     "if", "else", "loop", "in", "return", "break", "continue", "true", "false", "null", "fun",
     "as", "is", "or", "and", "not", "nameof", "status", "fail", "echo", "let", "unsafe", "silent",
     "main", "import", "from", "pub", "then", "Text", "Num", "Bool", "Null", "ref", "const", "exit",
-    "trust", "for"
+    "trust", "for",
 ];
 
 #[inline]
@@ -83,5 +83,5 @@ pub fn default_recovery<'a>() -> impl AmberParser<'a, Token> {
         T![">="],
     ]);
 
-    return none_of(keyword_tokens).boxed();
+    none_of(keyword_tokens).boxed()
 }

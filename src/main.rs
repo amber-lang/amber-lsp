@@ -17,9 +17,9 @@ enum CliAmberVersion {
     Alpha040,
 }
 
-impl Into<AmberVersion> for CliAmberVersion {
-    fn into(self) -> AmberVersion {
-        match self {
+impl From<CliAmberVersion> for AmberVersion {
+    fn from(val: CliAmberVersion) -> Self {
+        match val {
             CliAmberVersion::Auto => AmberVersion::Alpha034,
             CliAmberVersion::Alpha034 => AmberVersion::Alpha034,
             CliAmberVersion::Alpha035 => AmberVersion::Alpha035,
