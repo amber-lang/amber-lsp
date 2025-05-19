@@ -6,7 +6,7 @@ on:
     branches: [master]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -20,14 +20,19 @@ jobs:
           override-with-toolchain: true
 
       - name: Cache cargo
+        id: cache
         uses: actions/cache@v4
         with:
-          path: ~/.cargo/bin
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
           key: rust-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-${{ runner.os }}-cargo-
 
-      - name: Install dependencies
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Install dependencies
         run: cargo install --path .
 
       - name: Run clippy
