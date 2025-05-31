@@ -30,7 +30,7 @@ async fn save_resources(backend: &Backend) -> PathBuf {
     let _ = backend
         .files
         .fs
-        .create_dir_all(cache_dir.join(path.clone()).to_str().unwrap())
+        .create_dir_all(&cache_dir.join(path.clone()))
         .await;
 
     if let Some(dir) = STDLIB.get_dir(path.clone()) {
@@ -52,11 +52,7 @@ fn save_entry<'a>(
             DirEntry::Dir(dir) => {
                 let path = current_path.join(dir.path());
 
-                let _ = backend
-                    .files
-                    .fs
-                    .create_dir_all(path.to_str().unwrap())
-                    .await;
+                let _ = backend.files.fs.create_dir_all(&path).await;
                 for entry in dir.entries() {
                     save_entry(backend, current_path, entry).await;
                 }
@@ -70,12 +66,7 @@ fn save_entry<'a>(
 
                 let contents = file.contents_utf8().unwrap().to_string();
 
-                backend
-                    .files
-                    .fs
-                    .write(path.to_str().unwrap(), &contents)
-                    .await
-                    .unwrap();
+                backend.files.fs.write(&path, &contents).await.unwrap();
             }
         }
     })
@@ -132,7 +123,7 @@ pub async fn find_in_stdlib(backend: &Backend, path: &str) -> Vec<String> {
             backend
                 .files
                 .fs
-                .read_dir(path_in_std.to_str().unwrap())
+                .read_dir(&path_in_std)
                 .await
                 .iter()
                 .filter(|path| path.is_dir() || (path.extension() == Some(&OsStr::from("ab"))))

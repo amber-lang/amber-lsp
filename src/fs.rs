@@ -3,7 +3,7 @@ use std::{
     fmt::Debug,
     future::Future,
     io::Result,
-    path::PathBuf,
+    path::{Path, PathBuf},
     pin::Pin,
     sync::{Arc, Mutex},
 };
@@ -13,21 +13,21 @@ use tokio::fs::{create_dir_all, metadata, read_dir, read_to_string, write};
 pub trait FS: Sync + Send + Debug {
     fn read<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Result<String>> + Send + 'a>>;
     fn write<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
         content: &'a str,
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
-    fn exists<'a>(&'a self, path: &'a str) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>>;
+    fn exists<'a>(&'a self, path: &'a Path) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>>;
     fn read_dir<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Vec<PathBuf>> + Send + 'a>>;
     fn create_dir_all<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
 }
 
@@ -53,44 +53,44 @@ impl MemoryFS {
 impl FS for MemoryFS {
     fn read<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
     ) -> Pin<Box<(dyn Future<Output = Result<String>> + Send + 'a)>> {
         Box::pin(async move {
             let files = self.files.lock().unwrap();
-            Ok(files.get(path).unwrap().clone())
+            Ok(files.get(path.to_str().unwrap()).unwrap().clone())
         })
     }
 
     fn write<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
         content: &'a str,
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
         Box::pin(async move {
             let mut files = self.files.lock().unwrap();
-            files.insert(path.to_string(), content.to_string());
+            files.insert(path.to_string_lossy().to_string(), content.to_string());
 
             Ok(())
         })
     }
 
-    fn exists<'a>(&'a self, path: &'a str) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>> {
+    fn exists<'a>(&'a self, path: &'a Path) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>> {
         Box::pin(async move {
             let files = self.files.lock().unwrap();
-            files.contains_key(path)
+            files.contains_key(path.to_str().unwrap())
         })
     }
 
     fn read_dir<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Vec<PathBuf>> + Send + 'a>> {
         Box::pin(async move {
             let files = self.files.lock().unwrap();
 
             let mut entries = Vec::new();
             for (file, _) in files.iter() {
-                if file.starts_with(path) {
+                if file.starts_with(path.to_str().unwrap()) {
                     entries.push(PathBuf::from(file));
                 }
             }
@@ -101,7 +101,7 @@ impl FS for MemoryFS {
 
     fn create_dir_all<'a>(
         &'a self,
-        _: &'a str,
+        _: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
         Box::pin(async move { Ok(()) })
     }
@@ -125,26 +125,26 @@ impl LocalFs {
 impl FS for LocalFs {
     fn read<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Result<String>> + Send + 'a>> {
         Box::pin(async move { read_to_string(path).await })
     }
 
     fn write<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
         content: &'a str,
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
         Box::pin(async move { write(path, content).await })
     }
 
-    fn exists<'a>(&'a self, path: &'a str) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>> {
+    fn exists<'a>(&'a self, path: &'a Path) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>> {
         Box::pin(async move { metadata(path).await.is_ok() })
     }
 
     fn read_dir<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Vec<PathBuf>> + Send + 'a>> {
         Box::pin(async move {
             let mut dir = match read_dir(path).await {
@@ -163,7 +163,7 @@ impl FS for LocalFs {
 
     fn create_dir_all<'a>(
         &'a self,
-        path: &'a str,
+        path: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
         Box::pin(async move { create_dir_all(path).await })
     }

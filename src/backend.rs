@@ -76,12 +76,7 @@ impl Backend {
                 return Ok((file_id, version));
             }
 
-            let text = match self
-                .files
-                .fs
-                .read(&uri.to_file_path().unwrap().to_string_lossy())
-                .await
-            {
+            let text = match self.files.fs.read(&uri.to_file_path().unwrap()).await {
                 Ok(text) => Rope::from_str(&text),
                 Err(_) => {
                     return Err(Error::internal_error());
@@ -873,12 +868,7 @@ impl LanguageServer for Backend {
                     searched_path.parent().unwrap()
                 };
 
-                for entry_path in self
-                    .files
-                    .fs
-                    .read_dir(dir_to_search.to_str().unwrap())
-                    .await
-                {
+                for entry_path in self.files.fs.read_dir(dir_to_search).await {
                     let entry_name = entry_path
                         .file_name()
                         .unwrap()
