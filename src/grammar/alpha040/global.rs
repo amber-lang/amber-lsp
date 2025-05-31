@@ -216,22 +216,6 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
                     .map_with(|_, e| (DataType::Error, e.span())),
             )),
         )
-        .or_not()
-        .then(
-            just(T!["{"])
-                .ignore_then(
-                    statement_parser()
-                        .recover_with(via_parser(
-                            default_recovery().map_with(|_, e| (Statement::Error, e.span())),
-                        ))
-                        .repeated()
-                        .collect(),
-                )
-                .then_ignore(
-                    just(T!["}"])
-                        .recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
-                ),
-        )
         .boxed();
 
     compiler_flag_parser()
@@ -252,11 +236,31 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
                 .map_with(|name, e| (name, e.span())),
         )
         .then(args_parser.recover_with(via_parser(default_recovery().or_not().map(|_| vec![]))))
-        .then(ret_parser.recover_with(via_parser(
-            default_recovery().or_not().map(|_| (None, vec![])),
-        )))
+        .then(ret_parser.or_not())
+        .then(
+            just(T!["{"])
+                .ignore_then(
+                    statement_parser()
+                        .recover_with(via_parser(
+                            default_recovery().map_with(|_, e| (Statement::Error, e.span())),
+                        ))
+                        .repeated()
+                        .collect(),
+                )
+                .then_ignore(
+                    just(T!["}"])
+                        .recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
+                )
+                .recover_with(via_parser(
+                    default_recovery()
+                        .repeated()
+                        .then(just(T!["}"]))
+                        .or_not()
+                        .map(|_| vec![]),
+                )),
+        )
         .map_with(
-            |(((((compiler_flags, is_pub), fun), name), args), (ty, body)), e| {
+            |((((((compiler_flags, is_pub), fun), name), args), ty), body), e| {
                 (
                     GlobalStatement::FunctionDefinition(
                         compiler_flags,

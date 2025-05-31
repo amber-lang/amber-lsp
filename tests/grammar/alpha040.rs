@@ -83,5 +83,9 @@ fn test_stdlib_math() {
 fn test_stdlib_text() {
     let stdlib = read_to_string("resources/alpha040/std/text.ab").unwrap();
 
-    assert_debug_snapshot!(parse_unwrap(&tokenize(&stdlib)));
+    let tokens = tokenize(&stdlib);
+
+    assert_debug_snapshot!(tokens);
+
+    assert_debug_snapshot!(parse_unwrap(&tokens));
 }
