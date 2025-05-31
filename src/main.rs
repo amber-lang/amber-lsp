@@ -1,7 +1,4 @@
-use std::{
-    os::unix::process::ExitStatusExt,
-    process::{Command, Stdio},
-};
+use std::process::{Command, Stdio};
 
 use amber_lsp::backend::{AmberVersion, Backend};
 use clap::{builder::PossibleValue, Parser, ValueEnum};
@@ -107,22 +104,20 @@ async fn main() {
 
 #[tracing::instrument(skip_all)]
 fn detect_amber_version() -> AmberVersion {
-    let output = String::from_utf8_lossy(
-        Command::new("amber")
-            .arg("-V")
-            .stdout(Stdio::piped())
-            .output()
-            .unwrap_or(std::process::Output {
-                stdout: Vec::new(),
-                stderr: Vec::new(),
-                status: std::process::ExitStatus::from_raw(0),
-            })
-            .stdout
-            .as_slice(),
-    )
-    .to_string();
+    let output = Command::new("amber")
+        .arg("-V")
+        .stdout(Stdio::piped())
+        .output();
 
-    match output.split_whitespace().last() {
+    let version = match output {
+        Ok(output) => String::from_utf8_lossy(&output.stdout).to_string(),
+        Err(e) => {
+            tracing::error!("Failed to execute amber command: {}", e);
+            return AmberVersion::Alpha040; // Default to the latest version if detection fails
+        }
+    };
+
+    match version.split_whitespace().last() {
         Some("0.3.4-alpha") => AmberVersion::Alpha034,
         Some("0.3.5-alpha") => AmberVersion::Alpha035,
         Some("0.4.0-alpha") => AmberVersion::Alpha040,

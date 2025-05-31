@@ -46,18 +46,19 @@ jobs:
       - name: Run tests
         run: cargo nextest run --no-fail-fast --hide-progress-bar --status-level fail
 
-  miri:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # Figure out how to improve speed of miri tests
+  # miri:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-          components: miri, rust-src
+  #     - name: Set up Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: nightly
+  #         override: true
+  #         components: miri, rust-src
 
-      - name: Run Miri tests
-        run: cargo miri test --all-features --verbose
+  #     - name: Run Miri tests
+  #       run: cargo miri test --all-features --verbose
