@@ -3,10 +3,10 @@ on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
 
 jobs:
-  test:
+  quality-check:
+    name: Quality Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -17,29 +17,45 @@ jobs:
         with:
           toolchain: stable
           override: true
-          override-with-toolchain: true
+          components: rustfmt, clippy
 
-      - name: Cache cargo
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: rust-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            rust-${{ runner.os }}-cargo-
-
-      - if: steps.cache.outputs.cache-hit != 'true'
-        name: Install dependencies
-        run: cargo install --path .
-
-      - name: Run clippy
+      - name: Cargo check
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-      - name: Run rustfmt
+      - name: Format check
         run: cargo fmt --all -- --check
 
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: nextest
+
       - name: Run tests
-        run: cargo test --all-features --verbose
+        run: cargo nextest run --no-fail-fast --hide-progress-bar --status-level fail
+
+  miri:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: miri
+
+      - name: Run Miri tests
+        run: cargo miri test --all-features --verbose
