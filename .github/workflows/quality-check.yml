@@ -39,7 +39,9 @@ jobs:
         with:
           toolchain: stable
           override: true
-          components: nextest
+
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
 
       - name: Run tests
         run: cargo nextest run --no-fail-fast --hide-progress-bar --status-level fail
@@ -55,7 +57,7 @@ jobs:
         with:
           toolchain: nightly
           override: true
-          components: miri
+          components: miri, rust-src
 
       - name: Run Miri tests
         run: cargo miri test --all-features --verbose
