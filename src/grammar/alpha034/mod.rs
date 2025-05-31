@@ -248,7 +248,7 @@ impl LSPAnalysis for AmberCompiler {
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>> {
         // It should never fail
         self.lexer
-            .tokenize(input)
+            .tokenize(&input.replace("\r\n", "\n").replace("\r", "\n"))
             .expect("Failed to tokenize input")
             .iter()
             .filter_map(|t| {
