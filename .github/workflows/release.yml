@@ -71,7 +71,7 @@ jobs:
       - id: plan
         run: |
           cargo dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', 'v0.1.0')) || 'plan' }} --output-format=json > plan-dist-manifest.json
-          sed -i 's/ubuntu-20.04/ubuntu-22.04/g' dist-manifest.json
+          sed -i 's/ubuntu-20.04/ubuntu-22.04/g' plan-dist-manifest.json
           echo "cargo dist ran successfully"
           cat plan-dist-manifest.json
           echo "manifest=$(jq -c "." plan-dist-manifest.json)" >> "$GITHUB_OUTPUT"
