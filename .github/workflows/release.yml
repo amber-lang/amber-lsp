@@ -49,8 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       val: ${{ steps.plan.outputs.manifest }}
-      tag: 0.0.1 #${{ !github.event.pull_request && github.ref_name || '' }}
-      tag-flag: '--tag=0.0.1' #${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }}
+      tag: 'v0.1.0' #${{ !github.event.pull_request && github.ref_name || '' }}
+      tag-flag: '--tag=v0.1.0' #${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }}
       publishing: ${{ !github.event.pull_request }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,7 +70,7 @@ jobs:
       # but also really annoying to build CI around when it needs secrets to work right.)
       - id: plan
         run: |
-          cargo dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', '0.0.1')) || 'plan' }} --output-format=json > plan-dist-manifest.json
+          cargo dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', 'v0.1.0')) || 'plan' }} --output-format=json > plan-dist-manifest.json
           echo "cargo dist ran successfully"
           cat plan-dist-manifest.json
           echo "manifest=$(jq -c "." plan-dist-manifest.json)" >> "$GITHUB_OUTPUT"
