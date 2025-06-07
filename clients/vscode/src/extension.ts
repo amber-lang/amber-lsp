@@ -3,9 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { workspace, ExtensionContext, window, languages, TextDocument, Position, commands, CompletionList } from 'vscode';
-
+import { workspace, ExtensionContext, window, commands, CompletionList } from 'vscode';
 import {
+	CloseAction,
+	ErrorAction,
 	Executable,
 	LanguageClient,
 	LanguageClientOptions,
@@ -17,7 +18,9 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
 	const version = workspace.getConfiguration('amber-lsp').get<string>('version', 'auto');
-	const command = process.env.SERVER_PATH || "amber-lsp";
+
+	const command = process.env.SERVER_PATH || context.extensionPath + "/out/amber-lsp"
+
 	const run: Executable = {
 	  command,
 	  options: {
@@ -40,9 +43,56 @@ export function activate(context: ExtensionContext) {
 	  // Register the server for plain text documents
 	  documentSelector: [{ scheme: "file", language: "amber" }],
 	  synchronize: {
-		// Notify the server about file changes to '.clientrc files contained in the workspace
-		fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
+			// Notify the server about file changes to '.clientrc files contained in the workspace
+			fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
 	  },
+		errorHandler: {
+			error: (error) => {
+				return {
+					action: ErrorAction.Continue,
+					message: `Amber language server error: ${error.message}. Please report the issue to github.com/amber-lang/amber-lsp/issues`,
+					handled: false,
+				};
+			},
+			closed: async () => {
+				const errorHandling = await window.showErrorMessage("Amber language server stopped.", "Restart", "Report Issue");
+
+				console.log("Amber language server stopped. Error handling:", errorHandling);
+
+				if (errorHandling === "Restart") {
+					return { action: CloseAction.Restart, handled: true };
+				}
+
+
+				// FIXME: Uncomment when endpoint is available
+				// const logsDir = join(tmpdir(), 'amber-lsp')
+				// const lastLogFileName = await readdir(logsDir, { withFileTypes: true })
+				// 	.then((files) =>
+				// 			files
+				// 				.filter((file) => file.isFile() && file.name.startsWith('amber-lsp.log'))
+				// 				.sort()
+				// 				.at(-1)
+				// 				.name
+				// 			);
+
+				// if (!lastLogFileName) {
+				// 	window.showErrorMessage("No log file found. Please report the issue to github.com/amber-lang/amber-lsp/issues");
+				// 	return { action: CloseAction.DoNotRestart, handled: true };
+				// }
+
+				// const lastHundredLogLines = await readFile(join(logsDir, lastLogFileName)).then((data) => {
+				// 	const logs = data.toString().split('\n');
+				// 	return logs.slice(-100).join('\n');
+				// });
+
+				// const res = await axios.post('https://amber-lang.com/api/amber-lsp/crash-report', {
+				// 	logs: lastHundredLogLines,
+				// })
+				
+				window.showInformationMessage("Crash report sent successfully. Thank you for helping us improve Amber!");
+				return { action: CloseAction.DoNotRestart, handled: true };
+			}
+		}
 	};
 
 	// Create the language client and start the client.

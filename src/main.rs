@@ -1,4 +1,7 @@
-use std::process::{Command, Stdio};
+use std::{
+    env::temp_dir,
+    process::{Command, Stdio},
+};
 
 use amber_lsp::backend::{AmberVersion, Backend};
 use clap::{builder::PossibleValue, Parser, ValueEnum};
@@ -53,8 +56,12 @@ struct Args {
     amber_version: CliAmberVersion,
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
+#[tokio::main]
 async fn main() {
+    let cache_dir = temp_dir().join("amber-lsp");
+    let file_appender = tracing_appender::rolling::hourly(cache_dir, "amber-lsp.log");
+    let (non_blocking_writer, _guard) = tracing_appender::non_blocking(file_appender);
+
     // construct a subscriber that prints formatted traces to stdout
     let subscriber = tracing_subscriber::fmt()
         // Use a more compact, abbreviated log format
@@ -69,16 +76,8 @@ async fn main() {
         .with_target(false)
         // Log when entering and exiting spans
         .with_span_events(FmtSpan::ENTER | FmtSpan::CLOSE)
-        // Log to stderr
-        // .with_writer(std::io::stderr)
         // log to a file
-        .with_writer(
-            std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open("amber-lsp.log")
-                .unwrap(),
-        )
+        .with_writer(non_blocking_writer)
         // Disabled ANSI color codes for better compatibility with some terminals
         .with_ansi(false)
         // Build the subscriber

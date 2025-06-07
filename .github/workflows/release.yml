@@ -39,8 +39,9 @@ permissions:
 # will be marked as a prerelease.
 on:
   push:
-    tags:
-      - '**[0-9]+.[0-9]+.[0-9]+*'
+    # FIXME: For testing
+    # tags:
+    #   - '**[0-9]+.[0-9]+.[0-9]+*'
 
 jobs:
   # Run 'cargo dist plan' (or host) to determine what tasks we need to do
@@ -268,3 +269,44 @@ jobs:
           body: ${{ fromJson(needs.host.outputs.val).announcement_github_body }}
           prerelease: ${{ fromJson(needs.host.outputs.val).announcement_is_prerelease }}
           artifacts: "artifacts/*"
+
+  package-vscode-extension:
+    needs:
+      - plan
+      - build-local-artifacts
+      - build-global-artifacts
+    
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix }}
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: clients/vscode
+
+      - name: Fetch local artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-build-local-${{ join(matrix.targets, '_') }}
+          path: clients/vscode/out/
+          merge-multiple: true
+
+      - name: Package extension
+        run:  vsce package
+
+      - name: Upload .vsix as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: '*.vsix'

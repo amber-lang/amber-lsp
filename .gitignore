@@ -22,7 +22,10 @@ Cargo.lock
 /target
 
 # Local VSCode settings
-.vscode/settings.json
+.vscode/settings.json*.vsix
 
 # Testing
 test.*
+
+# VsCode extension
+*.vsix

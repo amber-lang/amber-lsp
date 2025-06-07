@@ -10,7 +10,9 @@
 	},
 	"categories": [],
 	"keywords": [
-		"amber", "lsp", "language server"
+		"amber",
+		"lsp",
+		"language server"
 	],
 	"engines": {
 		"vscode": "^1.75.0"
@@ -18,18 +20,26 @@
 	"activationEvents": [
 		"onLanguage:amber"
 	],
-	"main": "./client/out/extension",
+	"main": "./out/extension",
 	"contributes": {
-		"languages": [{
-			"id": "amber",
-			"extensions": [".ab", ".amber"],
-			"aliases": ["Amber", "amber"],
-			"configuration": "language-configuration.json",
-			"icon": {
-				"dark": "icon.png",
-				"light": "icon.png"
+		"languages": [
+			{
+				"id": "amber",
+				"extensions": [
+					".ab",
+					".amber"
+				],
+				"aliases": [
+					"Amber",
+					"amber"
+				],
+				"configuration": "language-configuration.json",
+				"icon": {
+					"dark": "icon.png",
+					"light": "icon.png"
+				}
 			}
-		}],
+		],
 		"grammars": [
 			{
 				"language": "amber",
@@ -61,7 +71,10 @@
 				"amber-lsp.version": {
 					"type": "string",
 					"default": "auto",
-					"enum": ["auto", "0.3.4-alpha"],
+					"enum": [
+						"auto",
+						"0.3.4-alpha"
+					],
 					"enumDescriptions": [
 						"Automatically detect Amber version.",
 						"Use version compatible with Amber 0.3.4-alpha."
@@ -75,17 +88,21 @@
 		"vscode:prepublish": "npm run build",
 		"build": "tsc -b",
 		"watch": "tsc -b -w",
-		"lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
-		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+		"lint": "eslint ./src ./server/src --ext .ts,.tsx",
 		"test": "sh ./scripts/e2e.sh"
 	},
 	"devDependencies": {
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^18.14.6",
+		"@types/vscode": "^1.75.1",
 		"@typescript-eslint/eslint-plugin": "^7.1.0",
 		"@typescript-eslint/parser": "^7.1.0",
 		"eslint": "^8.57.0",
 		"mocha": "^10.3.0",
 		"typescript": "^5.3.3"
+	},
+	"dependencies": {
+		"axios": "^1.9.0",
+		"vscode-languageclient": "^9.0.1"
 	}
 }
