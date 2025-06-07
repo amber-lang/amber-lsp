@@ -39,7 +39,7 @@ lto = "thin"
 # Config for 'cargo dist'
 [workspace.metadata.dist]
 # The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.14.1"
+cargo-dist-version = "0.20.0"
 # CI backends to support
 ci = "github"
 # The installers to generate for each app
@@ -48,5 +48,5 @@ installers = []
 targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
 # Publish jobs to run in CI
 pr-run-mode = "plan"
-# Changed default ci
-allow-dirty = ["ci"]
+# Skip checking whether the specified configuration files are up to date
+# allow-dirty = ["ci"]
