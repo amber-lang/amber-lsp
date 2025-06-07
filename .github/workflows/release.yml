@@ -50,7 +50,7 @@ jobs:
     outputs:
       val: ${{ steps.plan.outputs.manifest }}
       tag: 0.0.1 #${{ !github.event.pull_request && github.ref_name || '' }}
-      tag-flag: '' #${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }}
+      tag-flag: '--tag=0.0.1' #${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }}
       publishing: ${{ !github.event.pull_request }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
