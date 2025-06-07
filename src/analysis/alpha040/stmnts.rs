@@ -40,16 +40,14 @@ pub fn analyze_stmnt(
     let file = (file_id, file_version);
 
     match stmnt {
-        Statement::Block(block) => {
-            return analyze_block(
-                file_id,
-                file_version,
-                block,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-        }
+        Statement::Block(block) => analyze_block(
+            file_id,
+            file_version,
+            block,
+            files,
+            scoped_generic_types,
+            contexts,
+        ),
         Statement::IfChain(_, if_chain) => {
             let mut stmnts = vec![];
             let mut exps = vec![];
@@ -219,19 +217,20 @@ pub fn analyze_stmnt(
                 }
             }
 
-            return get_stmnt_analysis_result(stmnts, exps);
+            get_stmnt_analysis_result(stmnts, exps)
         }
         Statement::InfiniteLoop(_, block) => {
             let mut new_contexts = contexts.clone();
             new_contexts.push(Context::Loop);
-            return analyze_block(
+
+            analyze_block(
                 file_id,
                 file_version,
                 block,
                 files,
                 scoped_generic_types,
                 &new_contexts,
-            );
+            )
         }
         Statement::IterLoop(_, (vars, _), _, exp, block) => {
             let block_span = block.1;
@@ -960,7 +959,7 @@ pub fn analyze_stmnt(
                 files.report_error(&file, "Command must have a failure handler", *span);
             }
 
-            return get_stmnt_analysis_result(vec![], vec![exp1, exp2]);
+            get_stmnt_analysis_result(vec![], vec![exp1, exp2])
         }
         Statement::DocString(docs) => match contexts.last() {
             Some(Context::DocString(doc_string)) => {

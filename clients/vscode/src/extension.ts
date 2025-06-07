@@ -13,13 +13,15 @@ import {
 	ServerOptions,
 	Trace,
 } from 'vscode-languageclient/node';
+import { platform } from 'os'
 
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
 	const version = workspace.getConfiguration('amber-lsp').get<string>('version', 'auto');
 
-	const command = process.env.SERVER_PATH || context.extensionPath + "/out/amber-lsp"
+	let ext = platform() === 'win32' ? '.exe' : '';
+	const command = process.env.SERVER_PATH || `${context.extensionPath}/out/amber-lsp${ext}`
 
 	const run: Executable = {
 	  command,
