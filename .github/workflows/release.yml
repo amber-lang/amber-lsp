@@ -39,9 +39,8 @@ permissions:
 # will be marked as a prerelease.
 on:
   push:
-    # FIXME: For testing
-    # tags:
-    #   - '**[0-9]+.[0-9]+.[0-9]+*'
+    tags:
+      - '**[0-9]+.[0-9]+.[0-9]+*'
 
 jobs:
   # Run 'cargo dist plan' (or host) to determine what tasks we need to do
@@ -49,8 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       val: ${{ steps.plan.outputs.manifest }}
-      tag: 'v0.1.0' #${{ !github.event.pull_request && github.ref_name || '' }}
-      tag-flag: '--tag=v0.1.0' #${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }}
+      tag: ${{ !github.event.pull_request && github.ref_name || '' }}
+      tag-flag: ${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }}
       publishing: ${{ !github.event.pull_request }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,7 +69,7 @@ jobs:
       # but also really annoying to build CI around when it needs secrets to work right.)
       - id: plan
         run: |
-          cargo dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', 'v0.1.0')) || 'plan' }} --output-format=json > plan-dist-manifest.json
+          cargo dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', github.ref_name)) || 'plan' }} --output-format=json > plan-dist-manifest.json
           sed -i 's/ubuntu-20.04/ubuntu-22.04/g' plan-dist-manifest.json
           echo "cargo dist ran successfully"
           cat plan-dist-manifest.json
@@ -236,41 +235,7 @@ jobs:
           name: artifacts-dist-manifest
           path: dist-manifest.json
 
-  # Create a GitHub Release while uploading all files to it
-  announce:
-    needs:
-      - plan
-      - host
-    # use "always() && ..." to allow us to wait for all publish jobs while
-    # still allowing individual publish jobs to skip themselves (for prereleases).
-    # "host" however must run to completion, no skipping allowed!
-    if: ${{ always() && needs.host.result == 'success' }}
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: "Download GitHub Artifacts"
-        uses: actions/download-artifact@v4
-        with:
-          pattern: artifacts-*
-          path: artifacts
-          merge-multiple: true
-      - name: Cleanup
-        run: |
-          # Remove the granular manifests
-          rm -f artifacts/*-dist-manifest.json
-      - name: Create GitHub Release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ needs.plan.outputs.tag }}
-          name: ${{ fromJson(needs.host.outputs.val).announcement_title }}
-          body: ${{ fromJson(needs.host.outputs.val).announcement_github_body }}
-          prerelease: ${{ fromJson(needs.host.outputs.val).announcement_is_prerelease }}
-          artifacts: "artifacts/*"
-
+  # Package the VSCode extension
   package-vscode-extension:
     needs:
       - plan
@@ -309,5 +274,40 @@ jobs:
       - name: Upload .vsix as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vscode-extension
+          name: artifacts-vscode-extension
           path: '*.vsix'
+
+  # Create a GitHub Release while uploading all files to it
+  announce:
+    needs:
+      - plan
+      - host
+    # use "always() && ..." to allow us to wait for all publish jobs while
+    # still allowing individual publish jobs to skip themselves (for prereleases).
+    # "host" however must run to completion, no skipping allowed!
+    if: ${{ always() && needs.host.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: "Download GitHub Artifacts"
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: artifacts
+          merge-multiple: true
+      - name: Cleanup
+        run: |
+          # Remove the granular manifests
+          rm -f artifacts/*-dist-manifest.json
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.plan.outputs.tag }}
+          name: ${{ fromJson(needs.host.outputs.val).announcement_title }}
+          body: ${{ fromJson(needs.host.outputs.val).announcement_github_body }}
+          prerelease: ${{ fromJson(needs.host.outputs.val).announcement_is_prerelease }}
+          artifacts: "artifacts/*"
