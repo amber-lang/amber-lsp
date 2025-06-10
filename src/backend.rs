@@ -357,14 +357,6 @@ impl LanguageServer for Backend {
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let version = FileVersion(params.text_document.version);
 
-        if let Some(file_id) = self.files.get(&params.text_document.uri) {
-            self.files.change_latest_file_version(file_id, version);
-            self.publish_syntax_errors(file_id, version).await;
-            return;
-        }
-
-        let version = FileVersion(params.text_document.version);
-
         let file_id = self.files.insert(params.text_document.uri, version);
 
         self.files.document_map.insert(

@@ -1127,7 +1127,16 @@ pub fn analyze_exp(
         Expression::Boolean(_) => DataType::Boolean,
         Expression::Null => DataType::Null,
         Expression::Status => {
-            let mut symbol_table = files.symbol_table.get_mut(&file).unwrap();
+            let mut symbol_table = match files.symbol_table.get_mut(&file) {
+                Some(symbol_table) => symbol_table,
+                None => {
+                    return ExpAnalysisResult {
+                        exp_ty: DataType::Null,
+                        is_propagating_failure: false,
+                        return_ty: None,
+                    };
+                }
+            };
             symbol_table.symbols.insert(
                 exp_span_inclusive,
                 SymbolInfo {

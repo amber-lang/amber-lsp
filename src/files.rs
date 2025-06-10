@@ -104,51 +104,6 @@ impl Files {
         self.analyze_lock.remove(&(file_id, version));
     }
 
-    pub fn change_latest_file_version(&self, file_id: FileId, new_version: FileVersion) {
-        let current_versions = self.get_latest_version(file_id);
-
-        if current_versions == new_version {
-            return;
-        }
-
-        self.ast_map.insert(
-            (file_id, new_version),
-            self.ast_map.remove(&(file_id, current_versions)).unwrap().1,
-        );
-        self.errors.insert(
-            (file_id, new_version),
-            self.errors.remove(&(file_id, current_versions)).unwrap().1,
-        );
-        self.document_map.insert(
-            (file_id, new_version),
-            self.document_map
-                .remove(&(file_id, current_versions))
-                .unwrap()
-                .1,
-        );
-        self.semantic_token_map.insert(
-            (file_id, new_version),
-            self.semantic_token_map
-                .remove(&(file_id, current_versions))
-                .unwrap()
-                .1,
-        );
-        self.symbol_table.insert(
-            (file_id, new_version),
-            self.symbol_table
-                .remove(&(file_id, current_versions))
-                .unwrap()
-                .1,
-        );
-        self.generic_types.insert(
-            file_id,
-            new_version,
-            self.generic_types
-                .get_generics(file_id, current_versions)
-                .clone(),
-        );
-    }
-
     pub fn get_latest_version(&self, file_id: FileId) -> FileVersion {
         *self.file_versions.get(&file_id).unwrap()
     }
