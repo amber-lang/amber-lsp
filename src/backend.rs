@@ -110,6 +110,7 @@ impl Backend {
             .await;
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn publish_syntax_errors(&self, file_id: FileId, file_version: FileVersion) {
         let errors = match self.files.errors.get(&(file_id, file_version)) {
             Some(errors) => errors.clone(),
@@ -142,13 +143,22 @@ impl Backend {
             None => return,
         };
 
+        if self.files.analyze_lock.contains_key(&(file_id, version)) {
+            info!("Document {:?} is already being analyzed", file_id);
+            return;
+        }
+
+        info!("Analyzing document: {:?} v{:?}", file_id, version);
+
         let lock = Arc::new(RwLock::new(false));
 
-        let mut lock_w = lock.write().await;
+        let c_lock = lock.clone();
+        let mut lock_w = c_lock.write().await;
 
-        self.files
-            .analyze_lock
-            .insert((file_id, version), lock.clone());
+        info!("Locked");
+        self.files.analyze_lock.insert((file_id, version), lock);
+
+        info!("Inserted lock");
 
         let tokens = self.lsp_analysis.tokenize(&rope.to_string());
 

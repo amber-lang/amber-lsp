@@ -4,6 +4,7 @@ use chumsky::span::SimpleSpan;
 use ropey::Rope;
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::Url;
+use tracing::info;
 
 use crate::{
     analysis::{types::GenericsMap, SymbolTable},
@@ -84,11 +85,11 @@ impl Files {
     #[tracing::instrument(skip_all)]
     pub fn add_new_file_version(&self, file_id: FileId, version: FileVersion) {
         if let Some(old_version) = self.file_versions.insert(file_id, version) {
-            if old_version.0 < 20 {
+            if old_version.0 < 5 {
                 return;
             }
 
-            self.remove_file_version(file_id, old_version.prev_n_version(20));
+            self.remove_file_version(file_id, old_version.prev_n_version(5));
         }
     }
 
@@ -101,7 +102,6 @@ impl Files {
         self.symbol_table.remove(&(file_id, version));
         self.generic_types.clean(file_id, version);
         self.file_dependencies.remove(&(file_id, version));
-        self.analyze_lock.remove(&(file_id, version));
     }
 
     pub fn get_latest_version(&self, file_id: FileId) -> FileVersion {
@@ -127,10 +127,12 @@ impl Files {
 
     #[tracing::instrument(skip_all)]
     pub async fn is_file_analyzed(&self, file: &(FileId, FileVersion)) -> bool {
-        match self.analyze_lock.get(file) {
+        match self.analyze_lock.get(file).map(|lock| lock.clone()) {
             Some(lock) => {
+                info!("Checking if file {:?} is analyzed", file);
                 let result = lock.read().await;
 
+                info!("File {:?} analyzed: {}", file, *result);
                 *result
             }
             None => false,
@@ -138,7 +140,8 @@ impl Files {
     }
 
     pub fn get_files_dependant_on(&self, file_id: FileId) -> Vec<(FileId, FileVersion)> {
-        self.file_dependencies
+        let mut dependant_files = self
+            .file_dependencies
             .iter()
             .filter_map(|file_ref| {
                 let file = file_ref.key();
@@ -150,7 +153,11 @@ impl Files {
                     None
                 }
             })
-            .collect::<Vec<_>>()
+            .collect::<Vec<_>>();
+
+        dependant_files.dedup_by_key(|(file_id, _)| *file_id);
+
+        dependant_files
     }
 
     pub fn add_file_dependency(&self, file: &(FileId, FileVersion), dependency: FileId) {
