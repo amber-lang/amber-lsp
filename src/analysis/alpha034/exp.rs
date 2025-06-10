@@ -137,7 +137,13 @@ pub fn analyze_exp(
                 ..
             }) = fun_symbol
             {
-                let mut symbol_table = files.symbol_table.get_mut(&file).unwrap();
+                let mut symbol_table = match files.symbol_table.get_mut(&file) {
+                    Some(symbol_table) => symbol_table,
+                    None => {
+                        tracing::error!("Symbol table not found for the file");
+                        return DataType::Error;
+                    }
+                };
 
                 let mut last_span = SimpleSpan::new(name_span.end, name_span.end);
                 symbol_table.symbols.insert(
@@ -724,7 +730,13 @@ pub fn analyze_exp(
         Expression::Boolean(_) => DataType::Boolean,
         Expression::Null => DataType::Null,
         Expression::Status => {
-            let mut symbol_table = files.symbol_table.get_mut(&file).unwrap();
+            let mut symbol_table = match files.symbol_table.get_mut(&file) {
+                Some(symbol_table) => symbol_table,
+                None => {
+                    tracing::error!("Symbol table not found for the file");
+                    return DataType::Error;
+                }
+            };
             symbol_table.symbols.insert(
                 exp_span_inclusive,
                 SymbolInfo {

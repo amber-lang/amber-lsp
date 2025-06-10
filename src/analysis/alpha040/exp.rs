@@ -253,7 +253,16 @@ pub fn analyze_exp(
                 ..
             }) = fun_symbol
             {
-                let mut symbol_table = files.symbol_table.get_mut(&file).unwrap();
+                let mut symbol_table = match files.symbol_table.get_mut(&file) {
+                    Some(symbol_table) => symbol_table,
+                    None => {
+                        return ExpAnalysisResult {
+                            exp_ty: DataType::Null,
+                            is_propagating_failure: false,
+                            return_ty: None,
+                        }
+                    }
+                };
 
                 let mut last_span = SimpleSpan::new(name_span.end, name_span.end);
                 symbol_table.symbols.insert(

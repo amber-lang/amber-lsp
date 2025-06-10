@@ -3,7 +3,7 @@ use std::{env::temp_dir, future::Future, path::PathBuf, pin::Pin};
 use clap::builder::OsStr;
 use include_dir::{include_dir, Dir, DirEntry};
 use tower_lsp::lsp_types::Url;
-use tracing::info;
+use tracing::warn;
 
 use crate::backend::{AmberVersion, Backend};
 
@@ -12,7 +12,13 @@ pub const STDLIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/");
 pub fn is_builtin_file(url: &Url) -> bool {
     let cache_dir = temp_dir().join("amber-lsp");
 
-    let file_path = url.to_file_path().unwrap();
+    let file_path = match url.to_file_path() {
+        Ok(path) => path,
+        Err(_) => {
+            warn!("Invalid file path for URL: {}", url);
+            return false;
+        }
+    };
 
     file_path.starts_with(cache_dir) && file_path.ends_with("builtin.ab")
 }
@@ -84,7 +90,7 @@ pub async fn resolve(backend: &Backend, path: String) -> Option<Url> {
     .join(file_path.clone());
 
     if !STDLIB.contains(memory_path.clone()) {
-        info!(
+        warn!(
             "File not found in stdlib: {}",
             memory_path.clone().to_str().unwrap()
         );
@@ -95,7 +101,7 @@ pub async fn resolve(backend: &Backend, path: String) -> Option<Url> {
 
     let file_path = base_path.join(file_path);
 
-    info!("File found in resources: {}", file_path.to_str().unwrap());
+    warn!("File found in resources: {}", file_path.to_str().unwrap());
 
     Url::from_file_path(file_path).ok()
 }

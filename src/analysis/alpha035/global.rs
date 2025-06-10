@@ -108,11 +108,18 @@ pub async fn analyze_global_stmnt(
                         FunctionArgument::Error => return,
                     };
 
-                    let mut symbol_table = backend
-                        .files
-                        .symbol_table
-                        .get_mut(&(file_id, file_version))
-                        .unwrap();
+                    let mut symbol_table =
+                        match backend.files.symbol_table.get_mut(&(file_id, file_version)) {
+                            Some(symbol_table) => symbol_table,
+                            None => {
+                                tracing::warn!(
+                                    "Symbol table not found for file: {:?} version: {}",
+                                    file_id,
+                                    file_version.0,
+                                );
+                                return;
+                            }
+                        };
 
                     insert_symbol_definition(
                         &mut symbol_table,

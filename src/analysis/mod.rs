@@ -199,7 +199,13 @@ pub fn insert_symbol_definition(
                 .definitions
                 .insert(symbol_info.name.to_string(), RangeInclusiveMap::new());
 
-            symbol_table.definitions.get_mut(&symbol_info.name).unwrap()
+            match symbol_table.definitions.get_mut(&symbol_info.name) {
+                Some(definitions) => definitions,
+                None => {
+                    tracing::error!("Failed to insert symbol definition");
+                    return;
+                }
+            }
         }
     };
 
@@ -251,7 +257,13 @@ pub fn import_symbol(
                 .definitions
                 .insert(symbol.to_string(), RangeInclusiveMap::new());
 
-            symbol_table.definitions.get_mut(symbol).unwrap()
+            match symbol_table.definitions.get_mut(symbol) {
+                Some(definitions) => definitions,
+                None => {
+                    tracing::error!("Failed to insert symbol definition");
+                    return;
+                }
+            }
         }
     };
 
@@ -287,10 +299,17 @@ pub fn insert_symbol_reference(
 
     match symbol_info {
         Some(symbol_info) => {
-            let mut current_file_symbol_table = files
-                .symbol_table
-                .get_mut(&reference_location.file)
-                .unwrap();
+            let mut current_file_symbol_table =
+                match files.symbol_table.get_mut(&reference_location.file) {
+                    Some(symbol_table) => symbol_table,
+                    None => {
+                        tracing::error!(
+                            "Symbol table for file {:?} not found",
+                            reference_location.file
+                        );
+                        return;
+                    }
+                };
 
             // If generic is already inferred, use the inferred type
             // if not, use generic as a pointer to the inferred type in the map
@@ -355,10 +374,17 @@ pub fn insert_symbol_reference(
                 (reference_location.start..reference_location.end).into(),
             );
 
-            let mut current_file_symbol_table = files
-                .symbol_table
-                .get_mut(&reference_location.file)
-                .unwrap();
+            let mut current_file_symbol_table =
+                match files.symbol_table.get_mut(&reference_location.file) {
+                    Some(symbol_table) => symbol_table,
+                    None => {
+                        tracing::error!(
+                            "Symbol table for file {:?} not found",
+                            reference_location.file
+                        );
+                        return;
+                    }
+                };
 
             current_file_symbol_table.symbols.insert(
                 span.clone(),
@@ -375,10 +401,16 @@ pub fn insert_symbol_reference(
         }
     }
 
-    let mut current_file_symbol_table = files
-        .symbol_table
-        .get_mut(&reference_location.file)
-        .unwrap();
+    let mut current_file_symbol_table = match files.symbol_table.get_mut(&reference_location.file) {
+        Some(symbol_table) => symbol_table,
+        None => {
+            tracing::error!(
+                "Symbol table for file {:?} not found",
+                reference_location.file
+            );
+            return;
+        }
+    };
 
     let symbol_references = match current_file_symbol_table.references.get_mut(symbol) {
         Some(symbol_references) => symbol_references,
@@ -387,10 +419,13 @@ pub fn insert_symbol_reference(
                 .references
                 .insert(symbol.to_string(), vec![]);
 
-            current_file_symbol_table
-                .references
-                .get_mut(symbol)
-                .unwrap()
+            match current_file_symbol_table.references.get_mut(symbol) {
+                Some(references) => references,
+                None => {
+                    tracing::error!("Failed to insert symbol reference");
+                    return;
+                }
+            }
         }
     };
 
@@ -422,8 +457,16 @@ pub fn get_symbol_definition_info(
                     .get(&definition.start)
                     .cloned()
             } else {
-                let definition_file_symbol_table =
-                    files.symbol_table.get_mut(&definition.file).unwrap();
+                let definition_file_symbol_table = match files
+                    .symbol_table
+                    .get_mut(&definition.file)
+                {
+                    Some(symbol_table) => symbol_table,
+                    None => {
+                        tracing::error!("Symbol table for file {:?} not found", definition.file);
+                        return None;
+                    }
+                };
 
                 definition_file_symbol_table
                     .symbols

@@ -54,11 +54,17 @@ pub async fn analyze_global_stmnt(
                         _ => return,
                     };
 
-                    let mut symbol_table = backend
-                        .files
-                        .symbol_table
-                        .get_mut(&(file_id, file_version))
-                        .unwrap();
+                    let mut symbol_table =
+                        match backend.files.symbol_table.get_mut(&(file_id, file_version)) {
+                            Some(symbol_table) => symbol_table,
+                            None => {
+                                tracing::error!(
+                                    "Symbol table for file {:?} not found",
+                                    (file_id, file_version)
+                                );
+                                return;
+                            }
+                        };
 
                     insert_symbol_definition(
                         &mut symbol_table,

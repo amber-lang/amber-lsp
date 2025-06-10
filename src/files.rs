@@ -84,7 +84,11 @@ impl Files {
     #[tracing::instrument(skip_all)]
     pub fn add_new_file_version(&self, file_id: FileId, version: FileVersion) {
         if let Some(old_version) = self.file_versions.insert(file_id, version) {
-            self.remove_file_version(file_id, old_version);
+            if old_version.0 < 20 {
+                return;
+            }
+
+            self.remove_file_version(file_id, old_version.prev_n_version(20));
         }
     }
 
@@ -97,13 +101,7 @@ impl Files {
         self.symbol_table.remove(&(file_id, version));
         self.generic_types.clean(file_id, version);
         self.file_dependencies.remove(&(file_id, version));
-
-        if 10 > version.0 {
-            return;
-        }
-        // Remove the lock from 10 versions ago
-        self.analyze_lock
-            .remove(&(file_id, version.prev_n_version(10)));
+        self.analyze_lock.remove(&(file_id, version));
     }
 
     pub fn change_latest_file_version(&self, file_id: FileId, new_version: FileVersion) {

@@ -76,7 +76,9 @@ impl Backend {
                 return Ok((file_id, version));
             }
 
-            let text = match self.files.fs.read(&uri.to_file_path().unwrap()).await {
+            let file_path = uri.to_file_path().map_err(|_| Error::internal_error())?;
+
+            let text = match self.files.fs.read(&file_path).await {
                 Ok(text) => Rope::from_str(&text),
                 Err(_) => {
                     return Err(Error::internal_error());
@@ -121,16 +123,11 @@ impl Backend {
 
         let diagnostics = errors
             .iter()
-            .filter_map(|(msg, span)| {
-                || -> Option<Diagnostic> {
-                    let start_position = self.offset_to_position(span.start, &rope)?;
-                    let end_position = self.offset_to_position(span.end, &rope)?;
+            .map(|(msg, span)| {
+                let start_position = self.offset_to_position(span.start, &rope);
+                let end_position = self.offset_to_position(span.end, &rope);
 
-                    Some(Diagnostic::new_simple(
-                        Range::new(start_position, end_position),
-                        msg.to_string(),
-                    ))
-                }()
+                Diagnostic::new_simple(Range::new(start_position, end_position), msg.to_string())
             })
             .collect::<Vec<_>>();
 
@@ -204,14 +201,15 @@ impl Backend {
         .await;
     }
 
-    pub fn offset_to_position(&self, offset: usize, rope: &Rope) -> Option<Position> {
+    pub fn offset_to_position(&self, offset: usize, rope: &Rope) -> Position {
         let line = rope
             .try_char_to_line(offset)
             .ok()
             .unwrap_or(rope.len_lines());
         let first_char_of_line = rope.try_line_to_char(line).ok().unwrap_or(rope.len_chars());
         let column = offset - first_char_of_line;
-        Some(Position::new(line as u32, column as u32))
+
+        Position::new(line as u32, column as u32)
     }
 
     async fn analyze_dependencies(&self, file_id: FileId) {
@@ -423,12 +421,15 @@ impl LanguageServer for Backend {
                 .document_map
                 .insert((file_id, new_version), Rope::from_str(&change.text));
         } else {
-            let mut document = self
-                .files
-                .document_map
-                .get(&(file_id, version))
-                .unwrap()
-                .clone();
+            let mut document = match self.files.document_map.get(&(file_id, version)) {
+                Some(document) => document.clone(),
+                None => {
+                    return self
+                        .client
+                        .log_message(MessageType::ERROR, format!("document {uri} is not open"))
+                        .await;
+                }
+            };
 
             params
                 .content_changes
@@ -683,24 +684,18 @@ impl LanguageServer for Backend {
                                 }
                             };
 
-                        let start_position = self
-                            .offset_to_position(definition.start, &definition_file_rope)
-                            .unwrap();
-                        let end_position = self
-                            .offset_to_position(definition.end, &definition_file_rope)
-                            .unwrap();
+                        let start_position =
+                            self.offset_to_position(definition.start, &definition_file_rope);
+                        let end_position =
+                            self.offset_to_position(definition.end, &definition_file_rope);
 
                         let file_url = self.files.lookup(&definition.file.0);
 
                         match symbol_info.symbol_type {
                             SymbolType::ImportPath => {
                                 let selection_range = Range {
-                                    start: self
-                                        .offset_to_position(symbol_info.span.start, &rope)
-                                        .unwrap(),
-                                    end: self
-                                        .offset_to_position(symbol_info.span.end, &rope)
-                                        .unwrap(),
+                                    start: self.offset_to_position(symbol_info.span.start, &rope),
+                                    end: self.offset_to_position(symbol_info.span.end, &rope),
                                 };
 
                                 Some(GotoDefinitionResponse::Link(vec![LocationLink {
@@ -828,12 +823,10 @@ impl LanguageServer for Backend {
 
         let version = self.files.get_latest_version(file_id);
 
-        let symbol_table = self
-            .files
-            .symbol_table
-            .get(&(file_id, version))
-            .unwrap()
-            .clone();
+        let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
+            Some(symbol_table) => symbol_table.clone(),
+            None => return Ok(None),
+        };
 
         let completions = match symbol_info.symbol_type {
             SymbolType::ImportPath => {
