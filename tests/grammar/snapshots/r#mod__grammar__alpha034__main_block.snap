@@ -62,7 +62,7 @@ expression: "parse_unwrap(&tokenize(\"\n        main {\n            echo 10\n   
                             86..90,
                         ),
                     ),
-                    81..91,
+                    81..90,
                 ),
             ],
         ),

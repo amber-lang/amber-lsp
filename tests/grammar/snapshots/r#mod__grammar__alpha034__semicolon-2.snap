@@ -1,6 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse_unwrap(\"1; 2;\")"
+expression: "parse_unwrap(&tokenize(\"1; 2;\"))"
 ---
 [
     (
@@ -17,10 +17,10 @@ expression: "parse_unwrap(\"1; 2;\")"
                         0..1,
                     ),
                 ),
-                0..2,
+                0..1,
             ),
         ),
-        0..2,
+        0..1,
     ),
     (
         Statement(
@@ -36,9 +36,9 @@ expression: "parse_unwrap(\"1; 2;\")"
                         3..4,
                     ),
                 ),
-                3..5,
+                3..4,
             ),
         ),
-        3..5,
+        3..4,
     ),
 ]

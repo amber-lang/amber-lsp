@@ -97,6 +97,6 @@ expression: "parse(&tokenize(\"$command {unclosed interpolation$ let x = 10\"))"
         ],
     ),
     [
-        found "interpolation" at 19..32 expected '"("', '";"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
+        found "interpolation" at 19..32 expected '"("', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
     ],
 )

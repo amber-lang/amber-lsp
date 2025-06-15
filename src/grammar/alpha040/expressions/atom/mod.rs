@@ -38,7 +38,6 @@ pub fn atom_parser<'a>(
         command::command_parser(stmnts.clone(), expr.clone()),
         number::number_parser(),
     ))
-    .then_ignore(just(T![';']).or_not())
     .boxed()
 }
 

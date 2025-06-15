@@ -26,6 +26,7 @@ pub fn function_call_parser<'a>(
                 just(T![","])
                     .recover_with(via_parser(default_recovery().rewind().map(|_| T![","]))),
             )
+            .allow_trailing()
             .collect(),
         )
         .then_ignore(

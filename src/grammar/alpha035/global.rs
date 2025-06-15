@@ -321,10 +321,14 @@ pub fn global_statement_parser<'a>() -> impl AmberParser<'a, Vec<Spanned<GlobalS
         .boxed();
 
     choice((import_parser(), function_parser(), main_parser(), statement))
-        .recover_with(skip_then_retry_until(any().ignored(), end()))
+        .recover_with(via_parser(any().map_with(|_, e| {
+            (
+                GlobalStatement::Statement(Box::new((Statement::Error, e.span()))),
+                e.span(),
+            )
+        })))
         .repeated()
         .collect()
-        .then_ignore(just(T![';']).or_not())
         .then_ignore(end())
         .boxed()
 }

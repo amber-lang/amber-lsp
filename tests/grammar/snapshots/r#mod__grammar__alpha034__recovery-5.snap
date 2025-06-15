@@ -57,142 +57,140 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
             (
                 Statement(
                     (
-                        Expression(
-                            (
-                                Var(
-                                    (
-                                        "file",
-                                        102..106,
-                                    ),
-                                ),
-                                102..106,
-                            ),
-                        ),
-                        102..106,
+                        Error,
+                        74..75,
                     ),
                 ),
-                102..106,
+                74..75,
             ),
             (
-                Statement(
+                FunctionDefinition(
+                    [],
                     (
-                        Expression(
-                            (
-                                Var(
-                                    (
-                                        "CmdText",
-                                        115..122,
-                                    ),
-                                ),
-                                115..122,
-                            ),
-                        ),
-                        115..122,
+                        false,
+                        85..75,
                     ),
-                ),
-                115..122,
-            ),
-            (
-                Statement(
                     (
-                        Block(
-                            (
-                                Block(
-                                    [],
-                                    [
+                        "fun",
+                        85..88,
+                    ),
+                    (
+                        "test_cat_cmd",
+                        89..101,
+                    ),
+                    [
+                        (
+                            Typed(
+                                (
+                                    false,
+                                    102..102,
+                                ),
+                                (
+                                    "file",
+                                    102..106,
+                                ),
+                                (
+                                    Text,
+                                    108..112,
+                                ),
+                            ),
+                            102..112,
+                        ),
+                    ],
+                    Some(
+                        (
+                            <Invalid type>,
+                            115..122,
+                        ),
+                    ),
+                    [
+                        (
+                            Return(
+                                (
+                                    "return",
+                                    137..143,
+                                ),
+                                None,
+                            ),
+                            137..143,
+                        ),
+                        (
+                            Error,
+                            144..149,
+                        ),
+                        (
+                            Expression(
+                                (
+                                    Gt(
                                         (
-                                            Return(
-                                                (
-                                                    "return",
-                                                    137..143,
-                                                ),
-                                                None,
+                                            Text(
+                                                [
+                                                    (
+                                                        Text(
+                                                            (
+                                                                "NOT",
+                                                                151..154,
+                                                            ),
+                                                        ),
+                                                        151..154,
+                                                    ),
+                                                    (
+                                                        Text(
+                                                            (
+                                                                "READY",
+                                                                155..160,
+                                                            ),
+                                                        ),
+                                                        155..160,
+                                                    ),
+                                                ],
                                             ),
-                                            137..143,
+                                            150..161,
                                         ),
                                         (
                                             Error,
-                                            144..149,
+                                            164..163,
                                         ),
-                                        (
-                                            Expression(
-                                                (
-                                                    Gt(
-                                                        (
-                                                            Text(
-                                                                [
-                                                                    (
-                                                                        Text(
-                                                                            (
-                                                                                "NOT",
-                                                                                151..154,
-                                                                            ),
-                                                                        ),
-                                                                        151..154,
-                                                                    ),
-                                                                    (
-                                                                        Text(
-                                                                            (
-                                                                                "READY",
-                                                                                155..160,
-                                                                            ),
-                                                                        ),
-                                                                        155..160,
-                                                                    ),
-                                                                ],
-                                                            ),
-                                                            150..161,
-                                                        ),
-                                                        (
-                                                            Error,
-                                                            164..163,
-                                                        ),
-                                                    ),
-                                                    150..163,
-                                                ),
-                                            ),
-                                            150..163,
-                                        ),
-                                        (
-                                            Block(
-                                                (
-                                                    Block(
-                                                        [],
-                                                        [
+                                    ),
+                                    150..163,
+                                ),
+                            ),
+                            150..163,
+                        ),
+                        (
+                            Block(
+                                (
+                                    Block(
+                                        [],
+                                        [
+                                            (
+                                                Expression(
+                                                    (
+                                                        Var(
                                                             (
-                                                                Expression(
-                                                                    (
-                                                                        Var(
-                                                                            (
-                                                                                "file",
-                                                                                165..169,
-                                                                            ),
-                                                                        ),
-                                                                        165..169,
-                                                                    ),
-                                                                ),
+                                                                "file",
                                                                 165..169,
                                                             ),
-                                                        ],
+                                                        ),
+                                                        165..169,
                                                     ),
-                                                    164..170,
                                                 ),
+                                                165..169,
                                             ),
-                                            164..170,
-                                        ),
-                                        (
-                                            Error,
-                                            170..171,
-                                        ),
-                                    ],
+                                        ],
+                                    ),
+                                    164..170,
                                 ),
-                                123..181,
                             ),
+                            164..170,
                         ),
-                        123..181,
-                    ),
+                        (
+                            Error,
+                            170..171,
+                        ),
+                    ],
                 ),
-                123..181,
+                85..181,
             ),
             (
                 FunctionDefinition(
@@ -297,7 +295,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                     ),
                                 ),
                             ),
-                            216..242,
+                            216..241,
                         ),
                     ],
                 ),
@@ -338,10 +336,10 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                                             291..292,
                                                         ),
                                                     ),
-                                                    291..293,
+                                                    291..292,
                                                 ),
                                             ),
-                                            283..293,
+                                            283..292,
                                         ),
                                         (
                                             Echo(
@@ -359,7 +357,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                                     312..313,
                                                 ),
                                             ),
-                                            307..314,
+                                            307..313,
                                         ),
                                         (
                                             IfChain(
@@ -473,7 +471,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
     ),
     [
         found end of input at 74..75 expected something else,
-        found end of input at 106..107 expected something else,
+        found "CmdText" at 115..122 expected "type",
         found end of input at 144..149 expected something else,
         found "{" at 164..165 expected "expression",
         found end of input at 170..171 expected something else,

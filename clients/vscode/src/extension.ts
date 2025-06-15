@@ -66,7 +66,7 @@ export function activate(context: ExtensionContext) {
 				}
 
 
-				// FIXME: Uncomment when endpoint is available
+				// TODO: Uncomment when endpoint is available
 				// const logsDir = join(tmpdir(), 'amber-lsp')
 				// const lastLogFileName = await readdir(logsDir, { withFileTypes: true })
 				// 	.then((files) =>

@@ -14,6 +14,7 @@ pub fn array_parser<'a>(
     .separated_by(
         just(T![","]).recover_with(via_parser(default_recovery().rewind().map(|_| T![","]))),
     )
+    .allow_trailing()
     .collect()
     .delimited_by(
         just(T!["["]),

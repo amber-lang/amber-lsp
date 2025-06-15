@@ -37,7 +37,7 @@ expression: "parse(&tokenize(r#\"\"{\"\"#))"
     ),
     [
         found end of input at 3..3 expected '"\\"', '"{"', or '"\""',
-        found end of input at 3..3 expected '";"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
+        found end of input at 3..3 expected '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
         found end of input at 3..3 expected '"}"', '"\\"', '"{"', or '"\""',
     ],
 )

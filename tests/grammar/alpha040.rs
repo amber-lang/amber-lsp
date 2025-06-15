@@ -89,3 +89,39 @@ fn test_stdlib_text() {
 
     assert_debug_snapshot!(parse_unwrap(&tokens));
 }
+
+#[test]
+fn test_unfinished_function_call() {
+    let input = "
+    import { array_contains } from \"std/array\"
+    
+    let x = [1, 2, 3]
+    let y = 2
+    
+    echo array_contains(x, y)
+    
+    let line = 213
+    
+    for idx, line in lines(\"text.txt\") {
+      echo line
+    }
+    
+    // fun foo(x: Num, y: Text) {
+    
+    // }
+    
+    fun foo(x: Num, y: Text) {
+    }
+    
+    // fun abc() {}
+    
+    array_contains([1, 2, 3],)
+    ";
+
+    let tokens = tokenize(input);
+    assert_debug_snapshot!(tokens);
+
+    let result = parse(&tokens);
+
+    assert_debug_snapshot!(result);
+}

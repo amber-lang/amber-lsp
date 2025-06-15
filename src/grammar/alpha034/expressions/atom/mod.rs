@@ -1,7 +1,4 @@
-use crate::{
-    grammar::alpha034::{lexer::Token, AmberParser, Spanned, Statement},
-    T,
-};
+use crate::grammar::alpha034::{AmberParser, Spanned, Statement};
 
 use super::super::Expression;
 use chumsky::prelude::*;
@@ -33,6 +30,5 @@ pub fn atom_parser<'a>(
         number::number_parser(),
         parentheses::parentheses_parser(expr),
     ))
-    .then_ignore(just(T![';']).or_not())
     .boxed()
 }

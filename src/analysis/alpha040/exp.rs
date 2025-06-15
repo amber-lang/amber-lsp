@@ -229,6 +229,8 @@ pub fn analyze_exp(
                 .map(|fun_symbol| fun_symbol.data_type)
                 .unwrap_or(DataType::Null);
 
+            let mut function_call_scope_end = exp_span.end - 1;
+
             if let Some(failure) = failure {
                 let StmntAnalysisResult {
                     return_ty: failure_return_ty,
@@ -245,6 +247,8 @@ pub fn analyze_exp(
                 is_propagating_failure |= is_prop;
 
                 return_types.extend(failure_return_ty);
+
+                function_call_scope_end = failure.1.start - 1;
             }
 
             if let Some(SymbolInfo {
@@ -264,44 +268,48 @@ pub fn analyze_exp(
                     }
                 };
 
-                let mut last_span = SimpleSpan::new(name_span.end, name_span.end);
-                symbol_table.symbols.insert(
-                    exp_span_inclusive,
-                    SymbolInfo {
-                        name: name.clone(),
-                        symbol_type: SymbolType::Function(FunctionSymbol {
-                            arguments: fun_symbol
-                                .arguments
-                                .iter()
-                                .enumerate()
-                                .map(|(idx, (arg, _))| {
-                                    let arg_span = args
-                                        .get(idx)
-                                        .map(|(_, span)| *span)
-                                        .unwrap_or(SimpleSpan::new(last_span.end, exp_span.end));
+                let mut last_span_end = name_span.end + 1;
+                let fun_symbol = SymbolInfo {
+                    name: name.clone(),
+                    symbol_type: SymbolType::Function(FunctionSymbol {
+                        arguments: fun_symbol
+                            .arguments
+                            .iter()
+                            .enumerate()
+                            .map(|(idx, (arg, _))| {
+                                let arg_span = args
+                                    .get(idx)
+                                    .map(|(_, span)| *span)
+                                    .unwrap_or(SimpleSpan::new(last_span_end, exp_span.end));
 
-                                    last_span = arg_span;
-                                    (
-                                        FunctionArgument {
-                                            name: arg.name.clone(),
-                                            data_type: scoped_generic_types
-                                                .deref_type(&arg.data_type),
-                                            is_optional: arg.is_optional,
-                                            is_ref: arg.is_ref,
-                                        },
-                                        arg_span,
-                                    )
-                                })
-                                .collect(),
-                            ..fun_symbol.clone()
-                        }),
-                        data_type: scoped_generic_types.deref_type(data_type),
-                        is_definition: false,
-                        undefined: false,
-                        span: *exp_span,
-                        contexts: contexts.clone(),
-                    },
-                );
+                                last_span_end = arg_span.end;
+                                (
+                                    FunctionArgument {
+                                        name: arg.name.clone(),
+                                        data_type: scoped_generic_types.deref_type(&arg.data_type),
+                                        is_optional: arg.is_optional,
+                                        is_ref: arg.is_ref,
+                                    },
+                                    arg_span,
+                                )
+                            })
+                            .collect(),
+                        ..fun_symbol.clone()
+                    }),
+                    data_type: scoped_generic_types.deref_type(data_type),
+                    is_definition: false,
+                    undefined: false,
+                    span: *name_span,
+                    contexts: contexts.clone(),
+                };
+
+                symbol_table
+                    .symbols
+                    .insert(name_span.start..=name_span.end, fun_symbol.clone());
+
+                symbol_table
+                    .fun_call_arg_scope
+                    .insert(name_span.end..=function_call_scope_end, fun_symbol);
             }
 
             if matches!(

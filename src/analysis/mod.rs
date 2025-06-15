@@ -158,6 +158,7 @@ pub struct SymbolTable {
     pub definitions: HashMap<String, RangeInclusiveMap<usize, SymbolLocation>>,
     pub references: HashMap<String, Vec<SymbolLocation>>,
     pub public_definitions: HashMap<String, SymbolLocation>,
+    pub fun_call_arg_scope: RangeInclusiveMap<usize, SymbolInfo>,
 }
 
 impl Default for SymbolTable {
@@ -167,6 +168,7 @@ impl Default for SymbolTable {
             definitions: HashMap::new(),
             references: HashMap::new(),
             public_definitions: HashMap::new(),
+            fun_call_arg_scope: RangeInclusiveMap::new(),
         }
     }
 }

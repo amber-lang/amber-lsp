@@ -81,6 +81,7 @@ pub fn default_recovery<'a>() -> impl AmberParser<'a, Token> {
         T![">"],
         T!["<="],
         T![">="],
+        T![","],
     ]);
 
     none_of(keyword_tokens).boxed()

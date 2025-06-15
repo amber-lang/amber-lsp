@@ -108,7 +108,7 @@ expression: "parse(&tokenize(r#\"\n        fun foo(a) {\n\n            return \"
                                     ),
                                 ),
                             ),
-                            35..61,
+                            35..60,
                         ),
                     ],
                 ),

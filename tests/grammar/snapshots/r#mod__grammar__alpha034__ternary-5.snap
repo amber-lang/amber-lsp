@@ -53,7 +53,7 @@ expression: "parse(&tokenize(\"true then 1\"))"
         ],
     ),
     [
-        found end of input at 11..11 expected '"."', '";"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"else"',
+        found end of input at 11..11 expected '"."', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"else"',
         found end of input at 11..11 expected "expression",
     ],
 )

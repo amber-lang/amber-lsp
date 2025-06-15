@@ -8,7 +8,6 @@ use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::{Error, Result};
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
-use tracing::info;
 
 use crate::analysis::{
     self, get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType,
@@ -91,14 +90,14 @@ impl Backend {
                 .document_map
                 .insert((file_id, DEFAULT_VERSION), text);
 
-            self.analize_document(file_id).await;
+            self.analize_document(file_id, DEFAULT_VERSION).await;
 
             Ok((file_id, DEFAULT_VERSION))
         })
     }
 
     #[tracing::instrument(skip_all)]
-    pub async fn publish_diagnostics(
+    async fn publish_diagnostics(
         &self,
         file_id: &FileId,
         diagnostics: Vec<Diagnostic>,
@@ -122,6 +121,10 @@ impl Backend {
             None => return,
         };
 
+        if file_version != version {
+            return;
+        }
+
         let diagnostics = errors
             .iter()
             .map(|(msg, span)| {
@@ -137,28 +140,22 @@ impl Backend {
     }
 
     #[tracing::instrument(skip_all)]
-    pub async fn analize_document(&self, file_id: FileId) {
-        let (rope, version) = match self.files.get_document_latest_version(file_id) {
-            Some(document) => document,
+    pub async fn analize_document(&self, file_id: FileId, version: FileVersion) {
+        let rope = match self.files.document_map.get(&(file_id, version)) {
+            Some(document) => document.clone(),
             None => return,
         };
 
         if self.files.analyze_lock.contains_key(&(file_id, version)) {
-            info!("Document {:?} is already being analyzed", file_id);
             return;
         }
-
-        info!("Analyzing document: {:?} v{:?}", file_id, version);
 
         let lock = Arc::new(RwLock::new(false));
 
         let c_lock = lock.clone();
         let mut lock_w = c_lock.write().await;
 
-        info!("Locked");
         self.files.analyze_lock.insert((file_id, version), lock);
-
-        info!("Inserted lock");
 
         let tokens = self.lsp_analysis.tokenize(&rope.to_string());
 
@@ -179,8 +176,6 @@ impl Backend {
         self.files
             .semantic_token_map
             .insert((file_id, version), semantic_tokens);
-
-        self.publish_syntax_errors(file_id, version).await;
 
         self.files
             .symbol_table
@@ -206,7 +201,7 @@ impl Backend {
         drop(lock_w);
 
         Box::pin(async {
-            self.analyze_dependencies(file_id).await;
+            self.analyze_dependencies(file_id, version).await;
         })
         .await;
     }
@@ -222,7 +217,7 @@ impl Backend {
         Position::new(line as u32, column as u32)
     }
 
-    async fn analyze_dependencies(&self, file_id: FileId) {
+    async fn analyze_dependencies(&self, file_id: FileId, file_version: FileVersion) {
         let deps = self.files.get_files_dependant_on(file_id);
 
         for (dep_file_id, dep_file_version) in deps {
@@ -230,23 +225,26 @@ impl Backend {
                 continue;
             }
 
-            self.analize_document(dep_file_id).await;
+            let new_version = self.files.get_latest_version(file_id);
+            if file_version != new_version {
+                return;
+            }
+
+            self.analize_document(dep_file_id, dep_file_version).await;
             self.publish_syntax_errors(dep_file_id, dep_file_version)
                 .await;
         }
     }
 
-    async fn get_symbol_at_position(
+    async fn position_to_offset(
         &self,
-        file_id: FileId,
+        file: (FileId, FileVersion),
         position: Position,
-    ) -> Option<(SymbolInfo, usize)> {
-        let (rope, version) = match self.files.get_document_latest_version(file_id) {
-            Some(document) => document,
+    ) -> Option<usize> {
+        let rope = match self.files.document_map.get(&file) {
+            Some(document) => document.clone(),
             None => return None,
         };
-
-        let file = (file_id, version);
 
         if !self.files.is_file_analyzed(&file).await {
             return None;
@@ -256,7 +254,21 @@ impl Backend {
             .try_line_to_char(position.line as usize)
             .ok()
             .unwrap_or(rope.len_chars());
-        let offset = char + position.character as usize;
+        Some(char + position.character as usize)
+    }
+
+    async fn get_symbol_at_position(
+        &self,
+        file_id: FileId,
+        position: Position,
+    ) -> Option<(SymbolInfo, usize)> {
+        let version = self.files.get_latest_version(file_id);
+        let file = (file_id, version);
+
+        let offset = match self.position_to_offset(file, position).await {
+            Some(offset) => offset,
+            None => return None,
+        };
 
         let symbol_table = match self.files.symbol_table.get(&file) {
             Some(symbol_table) => symbol_table.clone(),
@@ -374,7 +386,7 @@ impl LanguageServer for Backend {
             Rope::from_str(&params.text_document.text),
         );
 
-        self.analize_document(file_id).await;
+        self.analize_document(file_id, version).await;
 
         self.publish_syntax_errors(file_id, version).await;
     }
@@ -394,14 +406,7 @@ impl LanguageServer for Backend {
             }
         };
 
-        let version = self.files.get_latest_version(file_id);
-
-        if !self.files.document_map.contains_key(&(file_id, version)) {
-            return self
-                .client
-                .log_message(MessageType::ERROR, format!("document {uri} is not open"))
-                .await;
-        }
+        self.files.add_new_file_version(file_id, new_version);
 
         if params
             .content_changes
@@ -423,8 +428,8 @@ impl LanguageServer for Backend {
                 .document_map
                 .insert((file_id, new_version), Rope::from_str(&change.text));
         } else {
-            let mut document = match self.files.document_map.get(&(file_id, version)) {
-                Some(document) => document.clone(),
+            let mut document = match self.files.get_document_latest_version(file_id) {
+                Some((document, _)) => document.clone(),
                 None => {
                     return self
                         .client
@@ -453,9 +458,7 @@ impl LanguageServer for Backend {
                 .insert((file_id, new_version), document);
         }
 
-        self.files.add_new_file_version(file_id, new_version);
-
-        self.analize_document(file_id).await;
+        self.analize_document(file_id, new_version).await;
 
         self.publish_syntax_errors(file_id, new_version).await;
     }
@@ -1027,39 +1030,41 @@ impl LanguageServer for Backend {
             }
         };
 
+        let version = self.files.get_latest_version(file_id);
+
+        if !self.files.is_file_analyzed(&(file_id, version)).await {
+            return Ok(None);
+        }
+
+        let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
+            Some(symbol_table) => symbol_table.clone(),
+            None => return Ok(None),
+        };
+
         let position = params.text_document_position_params.position;
 
-        let (symbol_info, offset) = match self.get_symbol_at_position(file_id, position).await {
-            Some((symbol_info, offset)) if !symbol_info.undefined => (symbol_info, offset),
-            _ => {
+        let offset = match self.position_to_offset((file_id, version), position).await {
+            Some(offset) => offset,
+            None => return Ok(None),
+        };
+
+        let symbol_info = match symbol_table.fun_call_arg_scope.get(&offset) {
+            Some(symbol_info) => symbol_info.clone(),
+            None => {
                 return Ok(None);
             }
         };
 
-        if symbol_info
-            .contexts
-            .iter()
-            .any(|ctx| matches!(ctx, Context::Import(_)))
-        {
-            return Ok(None);
-        }
-
         match symbol_info.symbol_type {
             SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {
-                let mut active_parameter = 0_u32;
-
-                info!(
-                    "Signature help for function {} at offset {}",
-                    symbol_info.name, offset
-                );
-                info!("Arguments: {:?}", arguments);
+                let mut active_parameter = None;
 
                 arguments.iter().enumerate().for_each(|(idx, (_, span))| {
                     let start = span.start;
                     let end = span.end;
 
                     if offset >= start && offset <= end {
-                        active_parameter = idx as u32;
+                        active_parameter = Some(idx as u32);
                     }
                 });
 
@@ -1080,10 +1085,10 @@ impl LanguageServer for Backend {
                                 })
                                 .collect::<Vec<ParameterInformation>>(),
                         ),
-                        active_parameter: Some(active_parameter),
+                        active_parameter,
                     }],
                     active_signature: Some(0),
-                    active_parameter: Some(active_parameter),
+                    active_parameter,
                 }))
             }
             _ => Ok(None),

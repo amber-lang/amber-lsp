@@ -4,7 +4,6 @@ use chumsky::span::SimpleSpan;
 use ropey::Rope;
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::Url;
-use tracing::info;
 
 use crate::{
     analysis::{types::GenericsMap, SymbolTable},
@@ -85,11 +84,11 @@ impl Files {
     #[tracing::instrument(skip_all)]
     pub fn add_new_file_version(&self, file_id: FileId, version: FileVersion) {
         if let Some(old_version) = self.file_versions.insert(file_id, version) {
-            if old_version.0 < 5 {
+            if old_version.0 < 50 {
                 return;
             }
 
-            self.remove_file_version(file_id, old_version.prev_n_version(5));
+            self.remove_file_version(file_id, old_version.prev_n_version(50));
         }
     }
 
@@ -129,10 +128,8 @@ impl Files {
     pub async fn is_file_analyzed(&self, file: &(FileId, FileVersion)) -> bool {
         match self.analyze_lock.get(file).map(|lock| lock.clone()) {
             Some(lock) => {
-                info!("Checking if file {:?} is analyzed", file);
                 let result = lock.read().await;
 
-                info!("File {:?} analyzed: {}", file, *result);
                 *result
             }
             None => false,

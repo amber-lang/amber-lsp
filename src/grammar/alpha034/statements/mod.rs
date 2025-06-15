@@ -1,5 +1,7 @@
 use chumsky::prelude::*;
 
+use crate::{grammar::Token, T};
+
 use super::{expressions::parse_expr, AmberParser, Spanned, Statement};
 
 pub mod block;
@@ -32,6 +34,7 @@ pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
             const_init::const_init_parser(stmnt.clone()),
             parse_expr(stmnt).map_with(|expr, e| (Statement::Expression(Box::new(expr)), e.span())),
         ))
+        .then_ignore(just(T![';']).or_not())
         .boxed()
         .labelled("statement")
     })
