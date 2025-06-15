@@ -90,7 +90,7 @@ impl Backend {
                 .document_map
                 .insert((file_id, DEFAULT_VERSION), text);
 
-            self.analize_document(file_id, DEFAULT_VERSION).await;
+            self.analyze_document(file_id, DEFAULT_VERSION).await;
 
             Ok((file_id, DEFAULT_VERSION))
         })
@@ -140,7 +140,7 @@ impl Backend {
     }
 
     #[tracing::instrument(skip_all)]
-    pub async fn analize_document(&self, file_id: FileId, version: FileVersion) {
+    pub async fn analyze_document(&self, file_id: FileId, version: FileVersion) {
         let rope = match self.files.document_map.get(&(file_id, version)) {
             Some(document) => document.clone(),
             None => return,
@@ -230,7 +230,7 @@ impl Backend {
                 return;
             }
 
-            self.analize_document(dep_file_id, dep_file_version).await;
+            self.analyze_document(dep_file_id, dep_file_version).await;
             self.publish_syntax_errors(dep_file_id, dep_file_version)
                 .await;
         }
@@ -386,7 +386,7 @@ impl LanguageServer for Backend {
             Rope::from_str(&params.text_document.text),
         );
 
-        self.analize_document(file_id, version).await;
+        self.analyze_document(file_id, version).await;
 
         self.publish_syntax_errors(file_id, version).await;
     }
@@ -458,7 +458,7 @@ impl LanguageServer for Backend {
                 .insert((file_id, new_version), document);
         }
 
-        self.analize_document(file_id, new_version).await;
+        self.analyze_document(file_id, new_version).await;
 
         self.publish_syntax_errors(file_id, new_version).await;
     }

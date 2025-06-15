@@ -84,6 +84,8 @@ impl Files {
     #[tracing::instrument(skip_all)]
     pub fn add_new_file_version(&self, file_id: FileId, version: FileVersion) {
         if let Some(old_version) = self.file_versions.insert(file_id, version) {
+            // The threshold value of 50 is used to limit the number of file versions retained.
+            // Versions older than 50 are considered outdated and are removed to optimize memory usage.
             if old_version.0 < 50 {
                 return;
             }
