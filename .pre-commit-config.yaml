@@ -1,0 +1,36 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+      - id: check-yaml
+      - id: check-toml
+
+  - repo: local
+    hooks:
+      - id: find-fixme-phrase
+        name: Find FIXME phrase
+        entry: bash -c 'git diff --cached --name-only --diff-filter=ACM | grep -E "\.(txt|js|ts|py|rs|go|java|c|cpp|sh)$" | xargs -r grep -l "FIXME" && exit 1 || exit 0'
+        language: system
+        files: '\.(txt|js|ts|py|rs|go|java|c|cpp|sh)$'
+        description: Checks for the "FIXME" phrase in staged text files.
+
+  - repo: local
+    hooks:
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: cargo clippy --all-targets --all-features -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt --check
+        entry: cargo fmt -- --check
+        language: system
+        types: [rust]
+        pass_filenames: false
