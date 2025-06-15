@@ -15,7 +15,7 @@ In order to develop Amber LSP you will need few things:
 
 * Rust
 * Node.JS
-* python
+* Python
 
 In order to use pre-commit hook you have to run following commands:
 ```bash
