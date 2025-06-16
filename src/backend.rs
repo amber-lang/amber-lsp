@@ -110,12 +110,7 @@ impl Backend {
     }
 
     #[tracing::instrument(skip_all)]
-    pub async fn publish_syntax_errors(&self, file_id: FileId, file_version: FileVersion) {
-        let errors = match self.files.errors.get(&(file_id, file_version)) {
-            Some(errors) => errors.clone(),
-            None => return,
-        };
-
+    pub async fn publish_issues(&self, file_id: FileId, file_version: FileVersion) {
         let (rope, version) = match self.files.get_document_latest_version(file_id) {
             Some(document) => document,
             None => return,
@@ -125,15 +120,43 @@ impl Backend {
             return;
         }
 
-        let diagnostics = errors
-            .iter()
-            .map(|(msg, span)| {
+        let mut diagnostics: Vec<Diagnostic> = vec![];
+
+        if let Some(errors) = self.files.errors.get(&(file_id, file_version)) {
+            let error_diags = errors.iter().map(|(msg, span)| {
                 let start_position = self.offset_to_position(span.start, &rope);
                 let end_position = self.offset_to_position(span.end, &rope);
 
-                Diagnostic::new_simple(Range::new(start_position, end_position), msg.to_string())
-            })
-            .collect::<Vec<_>>();
+                Diagnostic::new(
+                    Range::new(start_position, end_position),
+                    Some(DiagnosticSeverity::ERROR),
+                    None,
+                    None,
+                    msg.to_string(),
+                    None,
+                    None,
+                )
+            });
+            diagnostics.extend(error_diags);
+        }
+
+        if let Some(warnings) = self.files.warnings.get(&(file_id, file_version)) {
+            let warning_diags = warnings.iter().map(|(msg, span)| {
+                let start_position = self.offset_to_position(span.start, &rope);
+                let end_position = self.offset_to_position(span.end, &rope);
+
+                Diagnostic::new(
+                    Range::new(start_position, end_position),
+                    Some(DiagnosticSeverity::WARNING),
+                    None,
+                    None,
+                    msg.to_string(),
+                    None,
+                    None,
+                )
+            });
+            diagnostics.extend(warning_diags);
+        }
 
         self.publish_diagnostics(&file_id, diagnostics, Some(version))
             .await;
@@ -231,8 +254,7 @@ impl Backend {
             }
 
             self.analyze_document(dep_file_id, dep_file_version).await;
-            self.publish_syntax_errors(dep_file_id, dep_file_version)
-                .await;
+            self.publish_issues(dep_file_id, dep_file_version).await;
         }
     }
 
@@ -388,7 +410,7 @@ impl LanguageServer for Backend {
 
         self.analyze_document(file_id, version).await;
 
-        self.publish_syntax_errors(file_id, version).await;
+        self.publish_issues(file_id, version).await;
     }
 
     #[tracing::instrument(skip_all)]
@@ -460,7 +482,7 @@ impl LanguageServer for Backend {
 
         self.analyze_document(file_id, new_version).await;
 
-        self.publish_syntax_errors(file_id, new_version).await;
+        self.publish_issues(file_id, new_version).await;
     }
 
     async fn did_change_watched_files(&self, _: DidChangeWatchedFilesParams) {
