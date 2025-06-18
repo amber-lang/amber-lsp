@@ -1,6 +1,6 @@
 ---
 source: tests/analysis/alpha034.rs
-expression: a_defs.get(&38)
+expression: a_defs.get(&33)
 ---
 Some(
     SymbolLocation {
@@ -12,7 +12,7 @@ Some(
                 1,
             ),
         ),
-        start: 28,
-        end: 29,
+        start: 24,
+        end: 25,
     },
 )

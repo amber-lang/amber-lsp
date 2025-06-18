@@ -114,8 +114,8 @@ async fn test_variable_definition() {
 
     let a_defs = symbol_table.definitions.get("a").unwrap();
 
-    assert_debug_snapshot!(a_defs.get(&36)); // in scope - second var init
-    assert_debug_snapshot!(a_defs.get(&37)); // in scope - second var overshadowing
+    assert_debug_snapshot!(a_defs.get(&32)); // in scope - second var init
+    assert_debug_snapshot!(a_defs.get(&33)); // in scope - second var overshadowing
 }
 
 #[test]
