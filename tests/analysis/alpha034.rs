@@ -33,8 +33,10 @@ async fn test_function_definition() {
             Path::new("/main.ab")
         }
     };
+    let uri = Uri::from_file_path(file).unwrap();
+
     vfs.write(
-        file,
+        &uri.to_file_path().unwrap(),
         "
     fun foo(a, b) {
         let b = a
@@ -48,7 +50,6 @@ async fn test_function_definition() {
     .await
     .unwrap();
 
-    let uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -94,8 +95,10 @@ async fn test_variable_definition() {
             Path::new("/main.ab")
         }
     };
+    let uri = Uri::from_file_path(file).unwrap();
+
     vfs.write(
-        file,
+        &uri.to_file_path().unwrap(),
         "
     let a = 1
 
@@ -107,7 +110,6 @@ async fn test_variable_definition() {
     .await
     .unwrap();
 
-    let uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -142,8 +144,10 @@ async fn test_variable_scope() {
             Path::new("/main.ab")
         }
     };
+    let uri = Uri::from_file_path(file).unwrap();
+
     vfs.write(
-        file,
+        &uri.to_file_path().unwrap(),
         "
     let a = 1;
 
@@ -183,7 +187,6 @@ async fn test_variable_scope() {
     .await
     .unwrap();
 
-    let uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -225,8 +228,10 @@ async fn test_symbol_reference_in_expression() {
             Path::new("/main.ab")
         }
     };
+    let uri = Uri::from_file_path(file).unwrap();
+
     vfs.write(
-        file,
+        &uri.to_file_path().unwrap(),
         r#"
     let a = 1;
     let b = a + 1;
@@ -249,7 +254,6 @@ async fn test_symbol_reference_in_expression() {
     .await
     .unwrap();
 
-    let uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -285,9 +289,12 @@ async fn test_public_definitions() {
             Path::new("/main.ab")
         }
     };
-    vfs.write(file, r#"pub fun foo() {}"#).await.unwrap();
-
     let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(&uri.to_file_path().unwrap(), r#"pub fun foo() {}"#)
+        .await
+        .unwrap();
+
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -322,9 +329,11 @@ async fn test_import_specific_symbols() {
             (Path::new("/src.ab"), Path::new("/main.ab"))
         }
     };
+    let src_uri = Uri::from_file_path(src_file).unwrap();
+    let main_uri = Uri::from_file_path(main_file).unwrap();
 
     vfs.write(
-        src_file,
+        &src_uri.to_file_path().unwrap(),
         r#"pub fun foo(a, b) {
         return a + b
     }"#,
@@ -332,7 +341,7 @@ async fn test_import_specific_symbols() {
     .await
     .unwrap();
     vfs.write(
-        main_file,
+        &main_uri.to_file_path().unwrap(),
         r#"
     import { foo } from "src.ab"
 
@@ -342,10 +351,8 @@ async fn test_import_specific_symbols() {
     .await
     .unwrap();
 
-    let src_uri = Uri::from_file_path(src_file).unwrap();
     let src_file_id = backend.open_document(&src_uri).await.unwrap();
 
-    let main_uri = Uri::from_file_path(main_file).unwrap();
     let main_file_id = backend.open_document(&main_uri).await.unwrap();
 
     let src_symbol_table = backend.files.symbol_table.get(&src_file_id).unwrap();
@@ -384,10 +391,14 @@ async fn test_import_all_symbols() {
             (Path::new("/src.ab"), Path::new("/main.ab"))
         }
     };
+    let src_uri = Uri::from_file_path(src_file).unwrap();
+    let main_uri = Uri::from_file_path(main_file).unwrap();
 
-    vfs.write(src_file, r#"pub fun foo() {}"#).await.unwrap();
+    vfs.write(&src_uri.to_file_path().unwrap(), r#"pub fun foo() {}"#)
+        .await
+        .unwrap();
     vfs.write(
-        main_file,
+        &main_uri.to_file_path().unwrap(),
         r#"
     import * from "src.ab"
 
@@ -397,10 +408,8 @@ async fn test_import_all_symbols() {
     .await
     .unwrap();
 
-    let src_uri = Uri::from_file_path(src_file).unwrap();
     let src_file_id = backend.open_document(&src_uri).await.unwrap();
 
-    let main_uri = Uri::from_file_path(main_file).unwrap();
     let main_file_id = backend.open_document(&main_uri).await.unwrap();
 
     let src_symbol_table = backend.files.symbol_table.get(&src_file_id).unwrap();
@@ -439,8 +448,10 @@ async fn test_generic_type_inference() {
             Path::new("/main.ab")
         }
     };
+    let file_uri = Uri::from_file_path(file).unwrap();
+
     vfs.write(
-        file,
+        &file_uri.to_file_path().unwrap(),
         r#"
     fun foo(a, b, c) {
         if b == 10 {
@@ -458,7 +469,6 @@ async fn test_generic_type_inference() {
     .await
     .unwrap();
 
-    let file_uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&file_uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -504,8 +514,10 @@ async fn test_generics_reference() {
             Path::new("/main.ab")
         }
     };
+    let file_uri = Uri::from_file_path(file).unwrap();
+
     vfs.write(
-        file,
+        &file_uri.to_file_path().unwrap(),
         r#"
     fun foo(a, b) {
         return a + b
@@ -520,7 +532,6 @@ async fn test_generics_reference() {
     .await
     .unwrap();
 
-    let file_uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&file_uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
