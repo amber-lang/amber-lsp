@@ -15,7 +15,6 @@ pub fn is_builtin_file(url: &Url) -> bool {
     let file_path = match url.to_file_path() {
         Ok(path) => path,
         Err(_) => {
-            warn!("Invalid file path for URL: {}", url);
             return false;
         }
     };
@@ -23,7 +22,7 @@ pub fn is_builtin_file(url: &Url) -> bool {
     file_path.starts_with(cache_dir) && file_path.ends_with("builtin.ab")
 }
 
-#[tracing::instrument(skip(backend))]
+#[tracing::instrument(skip_all)]
 async fn save_resources(backend: &Backend) -> PathBuf {
     let cache_dir = temp_dir().join("amber-lsp");
 
@@ -78,7 +77,7 @@ fn save_entry<'a>(
     })
 }
 
-#[tracing::instrument(skip(backend))]
+#[tracing::instrument(skip_all)]
 pub async fn resolve(backend: &Backend, path: String) -> Option<Url> {
     let file_path = path + ".ab";
 

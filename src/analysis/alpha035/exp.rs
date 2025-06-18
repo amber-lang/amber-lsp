@@ -26,7 +26,7 @@ pub struct ExpAnalysisResult {
     pub return_ty: Option<DataType>,
 }
 
-#[tracing::instrument(skip(file_version, files, scoped_generic_types))]
+#[tracing::instrument(skip_all)]
 pub fn analyze_exp(
     file_id: FileId,
     file_version: FileVersion,
