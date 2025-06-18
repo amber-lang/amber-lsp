@@ -208,10 +208,7 @@ pub fn analyze_stmnt(
 
             match &vars {
                 IterLoopVars::WithIndex((var1, var1_span), (var2, var2_span)) => {
-                    let mut symbol_table = files
-                        .symbol_table
-                        .entry(file)
-                        .or_insert_with(Default::default);
+                    let mut symbol_table = files.symbol_table.entry(file).or_default();
                     insert_symbol_definition(
                         &mut symbol_table,
                         &SymbolInfo {
@@ -245,10 +242,7 @@ pub fn analyze_stmnt(
                     );
                 }
                 IterLoopVars::Single((var, var_span)) => {
-                    let mut symbol_table = files
-                        .symbol_table
-                        .entry(file)
-                        .or_insert_with(Default::default);
+                    let mut symbol_table = files.symbol_table.entry(file).or_default();
                     insert_symbol_definition(
                         &mut symbol_table,
                         &SymbolInfo {
@@ -294,10 +288,7 @@ pub fn analyze_stmnt(
                 _ => DataType::Error,
             };
 
-            let mut symbol_table = files
-                .symbol_table
-                .entry(file)
-                .or_insert_with(Default::default);
+            let mut symbol_table = files.symbol_table.entry(file).or_default();
             insert_symbol_definition(
                 &mut symbol_table,
                 &SymbolInfo {
@@ -325,10 +316,7 @@ pub fn analyze_stmnt(
                 contexts,
             );
 
-            let mut symbol_table = files
-                .symbol_table
-                .entry(file)
-                .or_insert_with(Default::default);
+            let mut symbol_table = files.symbol_table.entry(file).or_default();
             insert_symbol_definition(
                 &mut symbol_table,
                 &SymbolInfo {

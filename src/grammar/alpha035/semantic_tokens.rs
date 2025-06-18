@@ -1,5 +1,5 @@
 use chumsky::span::SimpleSpan;
-use tower_lsp::lsp_types::SemanticTokenType;
+use tower_lsp_server::lsp_types::SemanticTokenType;
 
 use crate::grammar::SpannedSemanticToken;
 

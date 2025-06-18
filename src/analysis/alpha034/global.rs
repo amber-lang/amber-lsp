@@ -136,7 +136,7 @@ pub async fn analyze_global_stmnt(
                     .files
                     .symbol_table
                     .entry((file_id, file_version))
-                    .or_insert_with(Default::default);
+                    .or_default();
 
                 insert_symbol_definition(
                     &mut symbol_table,
@@ -207,7 +207,7 @@ pub async fn analyze_global_stmnt(
                         .files
                         .symbol_table
                         .entry((file_id, file_version))
-                        .or_insert_with(Default::default);
+                        .or_default();
 
                     insert_symbol_definition(
                         &mut symbol_table,
@@ -279,7 +279,7 @@ pub async fn analyze_global_stmnt(
                                     .files
                                     .symbol_table
                                     .entry((file_id, file_version))
-                                    .or_insert_with(Default::default);
+                                    .or_default();
 
                                 symbol_table.symbols.insert(
                                     span.start..=span.end,
@@ -324,7 +324,7 @@ pub async fn analyze_global_stmnt(
                                         .files
                                         .symbol_table
                                         .entry((file_id, file_version))
-                                        .or_insert_with(Default::default);
+                                        .or_default();
 
                                     import_symbol(
                                         &mut symbol_table,
@@ -351,7 +351,7 @@ pub async fn analyze_global_stmnt(
                                         .files
                                         .symbol_table
                                         .entry((file_id, file_version))
-                                        .or_insert_with(Default::default);
+                                        .or_default();
 
                                     symbol_table.symbols.insert(
                                         span.start..=span.end,
@@ -391,7 +391,7 @@ pub async fn analyze_global_stmnt(
                                 .files
                                 .symbol_table
                                 .entry((file_id, file_version))
-                                .or_insert_with(Default::default);
+                                .or_default();
 
                             import_symbol(
                                 &mut symbol_table,
@@ -418,7 +418,7 @@ pub async fn analyze_global_stmnt(
                         .files
                         .symbol_table
                         .entry((file_id, file_version))
-                        .or_insert_with(Default::default);
+                        .or_default();
 
                     insert_symbol_definition(
                         &mut symbol_table,

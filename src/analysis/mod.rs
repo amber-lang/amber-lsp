@@ -1,6 +1,6 @@
 use rangemap::RangeInclusiveMap;
 use std::{collections::HashMap, ops::RangeInclusive};
-use tower_lsp::lsp_types::Url;
+use tower_lsp_server::{lsp_types::Uri, UriExt};
 use types::{DataType, GenericsMap};
 
 use crate::{
@@ -481,17 +481,17 @@ pub fn get_symbol_definition_info(
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn map_import_path(uri: &Url, path: &str, backend: &Backend) -> Url {
+pub async fn map_import_path(uri: &Uri, path: &str, backend: &Backend) -> Uri {
     if path.starts_with("std/") || path == "std" || path == "builtin" {
         match backend.amber_version {
             AmberVersion::Alpha034 if path == "std" => {
-                if let Some(url) = resolve(backend, "std/main".to_string()).await {
-                    return url;
+                if let Some(uri) = resolve(backend, "std/main".to_string()).await {
+                    return uri;
                 }
             }
             _ => {
-                if let Some(url) = resolve(backend, path.to_string()).await {
-                    return url;
+                if let Some(uri) = resolve(backend, path.to_string()).await {
+                    return uri;
                 }
             }
         }
@@ -499,5 +499,5 @@ pub async fn map_import_path(uri: &Url, path: &str, backend: &Backend) -> Url {
 
     let path = uri.to_file_path().unwrap().parent().unwrap().join(path);
 
-    Url::from_file_path(path).unwrap()
+    Uri::from_file_path(path).unwrap()
 }

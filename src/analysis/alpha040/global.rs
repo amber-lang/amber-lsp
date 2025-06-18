@@ -29,11 +29,11 @@ pub async fn analyze_global_stmnt(
 ) {
     let mut contexts = vec![];
 
-    let url = backend.files.lookup(&file_id);
+    let uri = backend.files.lookup(&file_id);
 
     let mut default_imports = vec![];
 
-    if !is_builtin_file(&url) {
+    if !is_builtin_file(&uri) {
         default_imports.push((
             GlobalStatement::Import(
                 (false, Span::new(0, 0)),
@@ -237,7 +237,7 @@ pub async fn analyze_global_stmnt(
                     .files
                     .symbol_table
                     .entry((file_id, file_version))
-                    .or_insert_with(Default::default);
+                    .or_default();
 
                 insert_symbol_definition(
                     &mut symbol_table,
@@ -330,7 +330,7 @@ pub async fn analyze_global_stmnt(
                         .files
                         .symbol_table
                         .entry((file_id, file_version))
-                        .or_insert_with(Default::default);
+                        .or_default();
 
                     insert_symbol_definition(
                         &mut symbol_table,
@@ -402,7 +402,7 @@ pub async fn analyze_global_stmnt(
                                     .files
                                     .symbol_table
                                     .entry((file_id, file_version))
-                                    .or_insert_with(Default::default);
+                                    .or_default();
 
                                 symbol_table.symbols.insert(
                                     span.start..=span.end,
@@ -447,7 +447,7 @@ pub async fn analyze_global_stmnt(
                                         .files
                                         .symbol_table
                                         .entry((file_id, file_version))
-                                        .or_insert_with(Default::default);
+                                        .or_default();
 
                                     import_symbol(
                                         &mut symbol_table,
@@ -474,7 +474,7 @@ pub async fn analyze_global_stmnt(
                                         .files
                                         .symbol_table
                                         .entry((file_id, file_version))
-                                        .or_insert_with(Default::default);
+                                        .or_default();
 
                                     symbol_table.symbols.insert(
                                         span.start..=span.end,
@@ -514,7 +514,7 @@ pub async fn analyze_global_stmnt(
                                 .files
                                 .symbol_table
                                 .entry((file_id, file_version))
-                                .or_insert_with(Default::default);
+                                .or_default();
 
                             import_symbol(
                                 &mut symbol_table,
@@ -541,7 +541,7 @@ pub async fn analyze_global_stmnt(
                         .files
                         .symbol_table
                         .entry((file_id, file_version))
-                        .or_insert_with(Default::default);
+                        .or_default();
 
                     insert_symbol_definition(
                         &mut symbol_table,

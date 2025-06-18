@@ -5,9 +5,10 @@ use std::sync::Arc;
 use chumsky::container::Seq;
 use ropey::Rope;
 use tokio::sync::RwLock;
-use tower_lsp::jsonrpc::{Error, Result};
-use tower_lsp::lsp_types::*;
-use tower_lsp::{Client, LanguageServer};
+use tower_lsp_server::jsonrpc::{Error, Result};
+use tower_lsp_server::lsp_types::*;
+use tower_lsp_server::UriExt;
+use tower_lsp_server::{Client, LanguageServer};
 
 use crate::analysis::{
     self, get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType,
@@ -68,14 +69,21 @@ impl Backend {
     }
 
     #[tracing::instrument(skip_all)]
-    pub fn open_document<'a>(&'a self, uri: &'a Url) -> PinnedFuture<'a, (FileId, FileVersion)> {
+    pub fn open_document<'a>(&'a self, uri: &'a Uri) -> PinnedFuture<'a, (FileId, FileVersion)> {
         Box::pin(async move {
             if let Some(file_id) = self.files.get(uri) {
                 let version = self.files.get_latest_version(file_id);
                 return Ok((file_id, version));
             }
 
-            let file_path = uri.to_file_path().map_err(|_| Error::internal_error())?;
+            let file_path = match uri.to_file_path() {
+                Some(path) => path,
+                None => {
+                    return Err(Error::invalid_params(
+                        "Invalid URI: Unable to convert to file path.",
+                    ));
+                }
+            };
 
             let text = match self.files.fs.read(&file_path).await {
                 Ok(text) => Rope::from_str(&text),
@@ -284,7 +292,6 @@ impl Backend {
     }
 }
 
-#[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
         Ok(InitializeResult {
@@ -694,7 +701,7 @@ impl LanguageServer for Backend {
                         let end_position =
                             self.offset_to_position(definition.end, &definition_file_rope);
 
-                        let file_url = self.files.lookup(&definition.file.0);
+                        let file_uri = self.files.lookup(&definition.file.0);
 
                         match symbol_info.symbol_type {
                             SymbolType::ImportPath => {
@@ -705,7 +712,7 @@ impl LanguageServer for Backend {
 
                                 Some(GotoDefinitionResponse::Link(vec![LocationLink {
                                     origin_selection_range: Some(selection_range),
-                                    target_uri: file_url,
+                                    target_uri: file_uri,
                                     target_range: Range {
                                         start: Position {
                                             line: 0,
@@ -729,7 +736,7 @@ impl LanguageServer for Backend {
                                 }]))
                             }
                             _ => Some(GotoDefinitionResponse::Scalar(Location::new(
-                                file_url,
+                                file_uri,
                                 Range {
                                     start: start_position,
                                     end: end_position,

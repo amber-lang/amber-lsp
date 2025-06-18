@@ -7,7 +7,7 @@ use amber_lsp::{
 };
 use insta::assert_debug_snapshot;
 use tokio::test;
-use tower_lsp::{lsp_types::Url, LspService};
+use tower_lsp_server::{lsp_types::Uri, LspService, UriExt};
 
 #[test]
 async fn test_function_definition() {
@@ -41,14 +41,14 @@ async fn test_function_definition() {
 
         return b
     }
-    
+
     foo(1, 2)
     ",
     )
     .await
     .unwrap();
 
-    let uri = Url::from_file_path(file).unwrap();
+    let uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -98,7 +98,7 @@ async fn test_variable_definition() {
         file,
         "
     let a = 1
-    
+
     let a = 2 + a;
 
     echo a
@@ -107,7 +107,7 @@ async fn test_variable_definition() {
     .await
     .unwrap();
 
-    let uri = Url::from_file_path(file).unwrap();
+    let uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -183,7 +183,7 @@ async fn test_variable_scope() {
     .await
     .unwrap();
 
-    let uri = Url::from_file_path(file).unwrap();
+    let uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -249,7 +249,7 @@ async fn test_symbol_reference_in_expression() {
     .await
     .unwrap();
 
-    let uri = Url::from_file_path(file).unwrap();
+    let uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -287,7 +287,7 @@ async fn test_public_definitions() {
     };
     vfs.write(file, r#"pub fun foo() {}"#).await.unwrap();
 
-    let uri = Url::from_file_path(file).unwrap();
+    let uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -342,10 +342,10 @@ async fn test_import_specific_symbols() {
     .await
     .unwrap();
 
-    let src_uri = Url::from_file_path(src_file).unwrap();
+    let src_uri = Uri::from_file_path(src_file).unwrap();
     let src_file_id = backend.open_document(&src_uri).await.unwrap();
 
-    let main_uri = Url::from_file_path(main_file).unwrap();
+    let main_uri = Uri::from_file_path(main_file).unwrap();
     let main_file_id = backend.open_document(&main_uri).await.unwrap();
 
     let src_symbol_table = backend.files.symbol_table.get(&src_file_id).unwrap();
@@ -397,10 +397,10 @@ async fn test_import_all_symbols() {
     .await
     .unwrap();
 
-    let src_uri = Url::from_file_path(src_file).unwrap();
+    let src_uri = Uri::from_file_path(src_file).unwrap();
     let src_file_id = backend.open_document(&src_uri).await.unwrap();
 
-    let main_uri = Url::from_file_path(main_file).unwrap();
+    let main_uri = Uri::from_file_path(main_file).unwrap();
     let main_file_id = backend.open_document(&main_uri).await.unwrap();
 
     let src_symbol_table = backend.files.symbol_table.get(&src_file_id).unwrap();
@@ -458,7 +458,7 @@ async fn test_generic_type_inference() {
     .await
     .unwrap();
 
-    let file_uri = Url::from_file_path(file).unwrap();
+    let file_uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&file_uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
@@ -520,7 +520,7 @@ async fn test_generics_reference() {
     .await
     .unwrap();
 
-    let file_uri = Url::from_file_path(file).unwrap();
+    let file_uri = Uri::from_file_path(file).unwrap();
     let file_id = backend.open_document(&file_uri).await.unwrap();
 
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();

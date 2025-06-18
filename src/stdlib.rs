@@ -2,19 +2,19 @@ use std::{env::temp_dir, future::Future, path::PathBuf, pin::Pin};
 
 use clap::builder::OsStr;
 use include_dir::{include_dir, Dir, DirEntry};
-use tower_lsp::lsp_types::Url;
+use tower_lsp_server::{lsp_types::Uri, UriExt};
 use tracing::warn;
 
 use crate::backend::{AmberVersion, Backend};
 
 pub const STDLIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/");
 
-pub fn is_builtin_file(url: &Url) -> bool {
+pub fn is_builtin_file(uri: &Uri) -> bool {
     let cache_dir = temp_dir().join("amber-lsp");
 
-    let file_path = match url.to_file_path() {
-        Ok(path) => path,
-        Err(_) => {
+    let file_path = match uri.to_file_path() {
+        Some(path) => path,
+        None => {
             return false;
         }
     };
@@ -78,7 +78,7 @@ fn save_entry<'a>(
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn resolve(backend: &Backend, path: String) -> Option<Url> {
+pub async fn resolve(backend: &Backend, path: String) -> Option<Uri> {
     let file_path = path + ".ab";
 
     let memory_path = match backend.amber_version {
@@ -102,7 +102,7 @@ pub async fn resolve(backend: &Backend, path: String) -> Option<Url> {
 
     warn!("File found in resources: {}", file_path.to_str().unwrap());
 
-    Url::from_file_path(file_path).ok()
+    Uri::from_file_path(file_path)
 }
 
 pub async fn find_in_stdlib(backend: &Backend, path: &str) -> Vec<String> {

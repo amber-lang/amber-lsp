@@ -3,7 +3,7 @@ use std::sync::Arc;
 use chumsky::span::SimpleSpan;
 use ropey::Rope;
 use tokio::sync::RwLock;
-use tower_lsp::lsp_types::Url;
+use tower_lsp_server::lsp_types::Uri;
 
 use crate::{
     analysis::{types::GenericsMap, SymbolTable},
@@ -66,19 +66,19 @@ impl Files {
         }
     }
 
-    pub fn insert(&self, url: Url, version: FileVersion) -> FileId {
-        let file_id = self.paths.insert(url);
+    pub fn insert(&self, uri: Uri, version: FileVersion) -> FileId {
+        let file_id = self.paths.insert(uri);
         self.add_new_file_version(file_id, version);
 
         file_id
     }
 
-    pub fn lookup(&self, file_id: &FileId) -> Url {
+    pub fn lookup(&self, file_id: &FileId) -> Uri {
         self.paths.lookup(file_id)
     }
 
-    pub fn get(&self, url: &Url) -> Option<FileId> {
-        self.paths.get(url)
+    pub fn get(&self, uri: &Uri) -> Option<FileId> {
+        self.paths.get(uri)
     }
 
     #[tracing::instrument(skip_all)]
@@ -160,7 +160,7 @@ impl Files {
     }
 
     pub fn add_file_dependency(&self, file: &(FileId, FileVersion), dependency: FileId) {
-        let mut dependencies = self.file_dependencies.entry(*file).or_insert(vec![]);
+        let mut dependencies = self.file_dependencies.entry(*file).or_default();
 
         dependencies.push(dependency);
     }
