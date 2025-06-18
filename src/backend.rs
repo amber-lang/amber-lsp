@@ -800,6 +800,12 @@ impl LanguageServer for Backend {
             }
         };
 
+        let version = self.files.get_latest_version(file_id);
+
+        if !self.files.is_file_analyzed(&(file_id, version)).await {
+            return Ok(None);
+        }
+
         let position = params.text_document_position_params.position;
 
         let symbol_info = match self.get_symbol_at_position(file_id, position).await {
@@ -846,6 +852,12 @@ impl LanguageServer for Backend {
             }
         };
 
+        let version = self.files.get_latest_version(file_id);
+
+        if !self.files.is_file_analyzed(&(file_id, version)).await {
+            return Ok(None);
+        }
+
         let position = params.text_document_position.position;
 
         let symbol_info = match self.get_symbol_at_position(file_id, position).await {
@@ -854,8 +866,6 @@ impl LanguageServer for Backend {
                 return Ok(None);
             }
         };
-
-        let version = self.files.get_latest_version(file_id);
 
         let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
             Some(symbol_table) => symbol_table.clone(),
@@ -1009,7 +1019,7 @@ impl LanguageServer for Backend {
                                             .join(", ")
                                     ))
                                 },
-                                kind: Some(CompletionItemKind::FUNCTION),
+                                kind: Some(CompletionItemKind::METHOD),
                                 detail: Some(symbol_info.to_string(&self.files.generic_types)),
                                 insert_text_format: Some(InsertTextFormat::SNIPPET),
                                 command: Some(Command {
