@@ -142,7 +142,7 @@ pub fn analyze_stmnt(
 
             get_stmnt_analysis_result(stmnts, exps)
         }
-        Statement::IfCondition(_, if_cond, _, else_cond) => {
+        Statement::IfCondition(_, if_cond, comments, else_cond) => {
             let mut stmnts = vec![];
             let mut exps = vec![];
 
@@ -197,6 +197,12 @@ pub fn analyze_stmnt(
                 }
                 _ => {}
             }
+
+            comments.iter().for_each(|(comment, _)| {
+                if let Comment::DocString(docs) = comment {
+                    let _ = handle_doc_strings(docs, contexts);
+                }
+            });
 
             if let Some(else_cond) = else_cond {
                 match &else_cond.0 {
