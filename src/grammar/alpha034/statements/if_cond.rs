@@ -2,8 +2,8 @@ use chumsky::prelude::*;
 
 use crate::{
     grammar::alpha034::{
-        expressions::parse_expr, lexer::Token, parser::default_recovery, AmberParser,
-        ElseCondition, IfChainContent, IfCondition, Spanned, Statement,
+        expressions::parse_expr, lexer::Token, parser::default_recovery, statements::comment,
+        AmberParser, Comment, ElseCondition, IfChainContent, IfCondition, Spanned, Statement,
     },
     T,
 };
@@ -70,10 +70,15 @@ pub fn if_cond_parser<'a>(
     just(T!["if"])
         .map_with(|_, e| ("if".to_string(), e.span()))
         .then(cond_parser(stmnts.clone()))
+        .then(
+            comment::comment_parser()
+                .repeated()
+                .collect::<Vec<Spanned<Comment>>>(),
+        )
         .then(else_cond_parser(stmnts).or_not())
-        .map_with(|((if_keyword, if_cond), else_cond), e| {
+        .map_with(|(((if_keyword, if_cond), comments), else_cond), e| {
             (
-                Statement::IfCondition(if_keyword, if_cond, else_cond),
+                Statement::IfCondition(if_keyword, if_cond, comments, else_cond),
                 e.span(),
             )
         })
@@ -87,18 +92,26 @@ pub fn if_chain_parser<'a>(
         .map_with(|_, e| ("if".to_string(), e.span()))
         .then_ignore(just(T!["{"]))
         .then(
-            cond_parser(stmnts.clone())
-                .recover_with(via_parser(
-                    default_recovery().map_with(|_, e| (IfCondition::Error, e.span())),
-                ))
-                .repeated()
-                .collect::<Vec<Spanned<IfCondition>>>(),
+            choice((
+                cond_parser(stmnts.clone()),
+                comment::comment_parser().map_with(|c, e| (IfCondition::Comment(c), e.span())),
+            ))
+            .recover_with(via_parser(
+                default_recovery().map_with(|_, e| (IfCondition::Error, e.span())),
+            ))
+            .repeated()
+            .collect::<Vec<Spanned<IfCondition>>>(),
         )
         .then(else_cond_parser(stmnts).or_not())
+        .then(
+            comment::comment_parser()
+                .repeated()
+                .collect::<Vec<Spanned<Comment>>>(),
+        )
         .then_ignore(
             just(T!["}"]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
         )
-        .map_with(|((if_keyword, if_conds), else_cond), e| {
+        .map_with(|(((if_keyword, if_conds), else_cond), comments), e| {
             let mut if_chain: Vec<Spanned<IfChainContent>> = if_conds
                 .into_iter()
                 .map(|if_cond| (IfChainContent::IfCondition(if_cond.clone()), if_cond.1))
@@ -107,6 +120,12 @@ pub fn if_chain_parser<'a>(
             if let Some(else_cond) = else_cond {
                 if_chain.push((IfChainContent::Else(else_cond.clone()), else_cond.1));
             }
+
+            if_chain.extend(
+                comments
+                    .into_iter()
+                    .map(|c| (IfChainContent::Comment(c.clone()), c.1)),
+            );
 
             (Statement::IfChain(if_keyword, if_chain), e.span())
         })

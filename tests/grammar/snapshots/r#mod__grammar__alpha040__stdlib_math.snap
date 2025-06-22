@@ -6,8 +6,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Sums an array's contents",
+                Comment(
+                    (
+                        DocString(
+                            "Sums an array's contents",
+                        ),
+                        0..29,
+                    ),
                 ),
                 0..29,
             ),
@@ -335,8 +340,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns a number, rounded to the nearest integer",
+                Comment(
+                    (
+                        DocString(
+                            "Returns a number, rounded to the nearest integer",
+                        ),
+                        186..239,
+                    ),
                 ),
                 186..239,
             ),
@@ -573,6 +583,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             306..385,
                         ),
+                        [],
                         None,
                     ),
                     303..385,
@@ -720,8 +731,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns the largest integer less than or equal to a number",
+                Comment(
+                    (
+                        DocString(
+                            "Returns the largest integer less than or equal to a number",
+                        ),
+                        447..510,
+                    ),
                 ),
                 447..510,
             ),
@@ -1049,8 +1065,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns the smallest integer greater than or equal to a number",
+                Comment(
+                    (
+                        DocString(
+                            "Returns the smallest integer greater than or equal to a number",
+                        ),
+                        677..744,
+                    ),
                 ),
                 677..744,
             ),
@@ -1157,8 +1178,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns the absolute value of a number",
+                Comment(
+                    (
+                        DocString(
+                            "Returns the absolute value of a number",
+                        ),
+                        840..883,
+                    ),
                 ),
                 840..883,
             ),
@@ -1274,6 +1300,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             948..974,
                         ),
+                        [],
                         None,
                     ),
                     945..974,

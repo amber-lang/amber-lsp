@@ -7,8 +7,8 @@ use crate::{
     files::{FileVersion, Files},
     grammar::{
         alpha040::{
-            Block, ElseCondition, FailureHandler, IfChainContent, IfCondition, IterLoopVars,
-            Statement, VariableInitType,
+            Block, Comment, ElseCondition, FailureHandler, IfChainContent, IfCondition,
+            IterLoopVars, Statement, VariableInitType,
         },
         CommandModifier, Spanned,
     },
@@ -101,6 +101,10 @@ pub fn analyze_stmnt(
                             stmnts.push(stmnt);
                         }
                         IfCondition::Error => {}
+                        IfCondition::Comment((Comment::DocString(docs), _)) => {
+                            let _ = handle_doc_strings(docs, contexts);
+                        }
+                        IfCondition::Comment(_) => {}
                     },
                     IfChainContent::Else((else_cond, _)) => match else_cond {
                         ElseCondition::Else(_, block) => {
@@ -129,12 +133,16 @@ pub fn analyze_stmnt(
                             stmnts.push(stmnt);
                         }
                     },
+                    IfChainContent::Comment((Comment::DocString(docs), _)) => {
+                        let _ = handle_doc_strings(docs, contexts);
+                    }
+                    IfChainContent::Comment(_) => {}
                 }
             }
 
             get_stmnt_analysis_result(stmnts, exps)
         }
-        Statement::IfCondition(_, if_cond, else_cond) => {
+        Statement::IfCondition(_, if_cond, _, else_cond) => {
             let mut stmnts = vec![];
             let mut exps = vec![];
 
@@ -183,6 +191,9 @@ pub fn analyze_stmnt(
 
                     stmnts.push(stmnt);
                     exps.push(exp);
+                }
+                IfCondition::Comment((Comment::DocString(docs), _)) => {
+                    let _ = handle_doc_strings(docs, contexts);
                 }
                 _ => {}
             }
@@ -949,29 +960,28 @@ pub fn analyze_stmnt(
 
             get_stmnt_analysis_result(vec![], vec![exp1, exp2])
         }
-        Statement::DocString(docs) => match contexts.last() {
-            Some(Context::DocString(doc_string)) => {
-                let new_doc_string = format!("{}\n{}", doc_string, docs);
-                *contexts.last_mut().unwrap() = Context::DocString(new_doc_string);
-
-                StmntAnalysisResult {
-                    is_propagating_failure: false,
-                    return_ty: None,
-                }
-            }
-            _ => {
-                contexts.push(Context::DocString(docs.clone()));
-
-                StmntAnalysisResult {
-                    is_propagating_failure: false,
-                    return_ty: None,
-                }
-            }
-        },
+        Statement::Comment((Comment::DocString(docs), _)) => handle_doc_strings(docs, contexts),
         Statement::Comment(_) | Statement::Shebang(_) | Statement::Error => StmntAnalysisResult {
             is_propagating_failure: false,
             return_ty: None,
         },
+    }
+}
+
+fn handle_doc_strings(docs: &String, contexts: &mut Vec<Context>) -> StmntAnalysisResult {
+    match contexts.last() {
+        Some(Context::DocString(doc_string)) => {
+            let new_doc_string = format!("{}\n{}", doc_string, docs);
+            *contexts.last_mut().unwrap() = Context::DocString(new_doc_string);
+        }
+        _ => {
+            contexts.push(Context::DocString(docs.clone()));
+        }
+    }
+
+    StmntAnalysisResult {
+        is_propagating_failure: false,
+        return_ty: None,
     }
 }
 

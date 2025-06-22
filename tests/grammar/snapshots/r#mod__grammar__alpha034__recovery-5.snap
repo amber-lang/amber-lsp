@@ -9,7 +9,12 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                 Statement(
                     (
                         Comment(
-                            "comments",
+                            (
+                                Comment(
+                                    "comments",
+                                ),
+                                9..21,
+                            ),
                         ),
                         9..21,
                     ),
@@ -20,7 +25,12 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                 Statement(
                     (
                         Comment(
-                            "comments",
+                            (
+                                Comment(
+                                    "comments",
+                                ),
+                                29..41,
+                            ),
                         ),
                         29..41,
                     ),

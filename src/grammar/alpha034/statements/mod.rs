@@ -20,7 +20,7 @@ pub mod var_set;
 pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
     recursive(|stmnt| {
         choice((
-            comment::comment_parser(),
+            comment::comment_parser().map_with(|c, e| (Statement::Comment(c), e.span())),
             shebang::shebang_parser(),
             var_init::var_init_parser(stmnt.clone()),
             var_set::var_set_parser(stmnt.clone()),

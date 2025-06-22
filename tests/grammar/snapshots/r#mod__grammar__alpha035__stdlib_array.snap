@@ -6,8 +6,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns index of the first value found in the specified array",
+                Comment(
+                    (
+                        DocString(
+                            "Returns index of the first value found in the specified array",
+                        ),
+                        0..66,
+                    ),
                 ),
                 0..66,
             ),
@@ -17,8 +22,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If the value is not found, the function returns -1",
+                Comment(
+                    (
+                        DocString(
+                            "If the value is not found, the function returns -1",
+                        ),
+                        66..121,
+                    ),
                 ),
                 66..121,
             ),
@@ -199,6 +209,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                 ),
                                                 214..283,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         211..283,
@@ -246,8 +257,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Search the value in array and return an array with the index of the various items",
+                Comment(
+                    (
+                        DocString(
+                            "Search the value in array and return an array with the index of the various items",
+                        ),
+                        307..393,
+                    ),
                 ),
                 307..393,
             ),
@@ -455,6 +471,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                 ),
                                                 506..580,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         503..580,
@@ -493,8 +510,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Check if the value is in the array",
+                Comment(
+                    (
+                        DocString(
+                            "Check if the value is in the array",
+                        ),
+                        608..647,
+                    ),
                 ),
                 608..647,
             ),

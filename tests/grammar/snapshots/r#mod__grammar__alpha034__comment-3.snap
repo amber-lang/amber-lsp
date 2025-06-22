@@ -13,7 +13,12 @@ expression: "parse_unwrap(&tokenize(\"\n        main {\n            // abc\n    
             [
                 (
                     Comment(
-                        "abc",
+                        (
+                            Comment(
+                                "abc",
+                            ),
+                            28..35,
+                        ),
                     ),
                     28..35,
                 ),

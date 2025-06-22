@@ -40,7 +40,12 @@ expression: "parse_unwrap(&tokenize(\"1 + 2 // This is a comment without a newli
         Statement(
             (
                 Comment(
-                    "This is a comment without a newline",
+                    (
+                        Comment(
+                            "This is a comment without a newline",
+                        ),
+                        6..44,
+                    ),
                 ),
                 6..44,
             ),

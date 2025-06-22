@@ -105,10 +105,11 @@ pub fn analyze_stmnt(
                             );
                         }
                     },
+                    IfChainContent::Comment(_) => {}
                 }
             }
         }
-        Statement::IfCondition(_, if_cond, else_cond) => {
+        Statement::IfCondition(_, if_cond, _, else_cond) => {
             match &if_cond.0 {
                 IfCondition::IfCondition(exp, block) => {
                     analyze_exp(

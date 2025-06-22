@@ -51,6 +51,7 @@ expression: "parse_unwrap(&tokenize(\"if true { echo 10 }\"))"
                         ),
                         3..19,
                     ),
+                    [],
                     None,
                 ),
                 0..19,

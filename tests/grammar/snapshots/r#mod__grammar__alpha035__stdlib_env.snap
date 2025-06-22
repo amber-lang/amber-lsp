@@ -56,8 +56,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Retrieves the value of an environment variable, optionally sourcing it from a file if not already set.",
+                Comment(
+                    (
+                        DocString(
+                            "Retrieves the value of an environment variable, optionally sourcing it from a file if not already set.",
+                        ),
+                        49..156,
+                    ),
                 ),
                 49..156,
             ),
@@ -300,6 +305,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             264..302,
                         ),
+                        [],
                         None,
                     ),
                     261..302,
@@ -493,6 +499,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             311..409,
                         ),
+                        [],
                         None,
                     ),
                     308..409,
@@ -521,8 +528,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Load the env file in the environment, using `xargs`",
+                Comment(
+                    (
+                        DocString(
+                            "Load the env file in the environment, using `xargs`",
+                        ),
+                        428..484,
+                    ),
                 ),
                 428..484,
             ),
@@ -727,8 +739,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Check if a variable inside the Shell session exist",
+                Comment(
+                    (
+                        DocString(
+                            "Check if a variable inside the Shell session exist",
+                        ),
+                        591..646,
+                    ),
                 ),
                 591..646,
             ),
@@ -956,8 +973,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Set a constant inside the Shell session",
+                Comment(
+                    (
+                        DocString(
+                            "Set a constant inside the Shell session",
+                        ),
+                        780..824,
+                    ),
                 ),
                 780..824,
             ),
@@ -1178,8 +1200,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Get a constant inside the Shell session",
+                Comment(
+                    (
+                        DocString(
+                            "Get a constant inside the Shell session",
+                        ),
+                        948..992,
+                    ),
                 ),
                 948..992,
             ),
@@ -1324,8 +1351,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Set a constant inside the Shell session",
+                Comment(
+                    (
+                        DocString(
+                            "Set a constant inside the Shell session",
+                        ),
+                        1082..1126,
+                    ),
                 ),
                 1082..1126,
             ),
@@ -1546,8 +1578,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Get a constant inside the Shell session",
+                Comment(
+                    (
+                        DocString(
+                            "Get a constant inside the Shell session",
+                        ),
+                        1243..1287,
+                    ),
                 ),
                 1243..1287,
             ),
@@ -1692,8 +1729,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Remove a variable inside the Shell session",
+                Comment(
+                    (
+                        DocString(
+                            "Remove a variable inside the Shell session",
+                        ),
+                        1372..1419,
+                    ),
                 ),
                 1372..1419,
             ),
@@ -1799,8 +1841,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Check if the command exist",
+                Comment(
+                    (
+                        DocString(
+                            "Check if the command exist",
+                        ),
+                        1483..1514,
+                    ),
                 ),
                 1483..1514,
             ),
@@ -2007,8 +2054,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Create a prompt and return the value",
+                Comment(
+                    (
+                        DocString(
+                            "Create a prompt and return the value",
+                        ),
+                        1651..1692,
+                    ),
                 ),
                 1651..1692,
             ),
@@ -2214,8 +2266,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Confirm prompt (Yes/No), return true if choice is Yes",
+                Comment(
+                    (
+                        DocString(
+                            "Confirm prompt (Yes/No), return true if choice is Yes",
+                        ),
+                        1810..1868,
+                    ),
                 ),
                 1810..1868,
             ),
@@ -2225,8 +2282,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "\"No\" is the default choice, set default_yes to true for \"Yes\" as default choice",
+                Comment(
+                    (
+                        DocString(
+                            "\"No\" is the default choice, set default_yes to true for \"Yes\" as default choice",
+                        ),
+                        1868..1952,
+                    ),
                 ),
                 1868..1952,
             ),
@@ -2928,8 +2990,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Checks if the command has failed",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if the command has failed",
+                        ),
+                        2340..2377,
+                    ),
                 ),
                 2340..2377,
             ),
@@ -3068,8 +3135,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Close the script",
+                Comment(
+                    (
+                        DocString(
+                            "Close the script",
+                        ),
+                        2480..2501,
+                    ),
                 ),
                 2480..2501,
             ),
@@ -3187,8 +3259,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Check if the script is running with a user with root permission",
+                Comment(
+                    (
+                        DocString(
+                            "Check if the script is running with a user with root permission",
+                        ),
+                        2563..2631,
+                    ),
                 ),
                 2563..2631,
             ),
@@ -3316,6 +3393,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             2664..2713,
                         ),
+                        [],
                         None,
                     ),
                     2661..2713,
@@ -3347,8 +3425,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "`printf` the text following the arguments",
+                Comment(
+                    (
+                        DocString(
+                            "`printf` the text following the arguments",
+                        ),
+                        2735..2781,
+                    ),
                 ),
                 2735..2781,
             ),
@@ -3712,8 +3795,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Escape the text to be used with `printf`",
+                Comment(
+                    (
+                        DocString(
+                            "Escape the text to be used with `printf`",
+                        ),
+                        2950..2995,
+                    ),
                 ),
                 2950..2995,
             ),
@@ -3990,8 +4078,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Prepare a text with formatting options for `printf`",
+                Comment(
+                    (
+                        DocString(
+                            "Prepare a text with formatting options for `printf`",
+                        ),
+                        3124..3180,
+                    ),
                 ),
                 3124..3180,
             ),
@@ -4256,8 +4349,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Return a text as bold",
+                Comment(
+                    (
+                        DocString(
+                            "Return a text as bold",
+                        ),
+                        3323..3349,
+                    ),
                 ),
                 3323..3349,
             ),
@@ -4411,8 +4509,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Return a text as italic",
+                Comment(
+                    (
+                        DocString(
+                            "Return a text as italic",
+                        ),
+                        3445..3473,
+                    ),
                 ),
                 3445..3473,
             ),
@@ -4566,8 +4669,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Return a text as underlined",
+                Comment(
+                    (
+                        DocString(
+                            "Return a text as underlined",
+                        ),
+                        3571..3603,
+                    ),
                 ),
                 3571..3603,
             ),
@@ -4721,8 +4829,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Print a text with a specified color",
+                Comment(
+                    (
+                        DocString(
+                            "Print a text with a specified color",
+                        ),
+                        3705..3745,
+                    ),
                 ),
                 3705..3745,
             ),
@@ -4943,8 +5056,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Print a text as Info",
+                Comment(
+                    (
+                        DocString(
+                            "Print a text as Info",
+                        ),
+                        3860..3885,
+                    ),
                 ),
                 3860..3885,
             ),
@@ -5175,8 +5293,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Print a text as Success",
+                Comment(
+                    (
+                        DocString(
+                            "Print a text as Success",
+                        ),
+                        3983..4011,
+                    ),
                 ),
                 3983..4011,
             ),
@@ -5407,8 +5530,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Print a text as Warning",
+                Comment(
+                    (
+                        DocString(
+                            "Print a text as Warning",
+                        ),
+                        4112..4140,
+                    ),
                 ),
                 4112..4140,
             ),
@@ -5639,8 +5767,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Print a text as Error and exit if the status code is greater than 0",
+                Comment(
+                    (
+                        DocString(
+                            "Print a text as Error and exit if the status code is greater than 0",
+                        ),
+                        4241..4313,
+                    ),
                 ),
                 4241..4313,
             ),
@@ -5953,6 +6086,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             4431..4462,
                         ),
+                        [],
                         None,
                     ),
                     4428..4462,

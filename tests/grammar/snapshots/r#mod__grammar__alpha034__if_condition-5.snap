@@ -43,6 +43,7 @@ expression: "parse_unwrap(&tokenize(\"\n        if true: echo 10\n        else: 
                         ),
                         12..25,
                     ),
+                    [],
                     Some(
                         (
                             InlineElse(

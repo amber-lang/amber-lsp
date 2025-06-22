@@ -123,6 +123,7 @@ pub enum FunctionArgument {
 pub enum IfCondition {
     IfCondition(Box<Spanned<Expression>>, Spanned<Block>),
     InlineIfCondition(Box<Spanned<Expression>>, Box<Spanned<Statement>>),
+    Comment(Spanned<Comment>),
     Error,
 }
 
@@ -136,6 +137,7 @@ pub enum ElseCondition {
 pub enum IfChainContent {
     IfCondition(Spanned<IfCondition>),
     Else(Spanned<ElseCondition>),
+    Comment(Spanned<Comment>),
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -161,6 +163,7 @@ pub enum Statement {
     IfCondition(
         Spanned<String>,
         Spanned<IfCondition>,
+        Vec<Spanned<Comment>>,
         Option<Spanned<ElseCondition>>,
     ),
     IfChain(Spanned<String>, Vec<Spanned<IfChainContent>>),
@@ -183,9 +186,14 @@ pub enum Statement {
     Fail(Spanned<String>, Option<Box<Spanned<Expression>>>),
     Echo(Spanned<String>, Box<Spanned<Expression>>),
     Block(Spanned<Block>),
-    Comment(String),
+    Comment(Spanned<Comment>),
     Shebang(String),
     Error,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum Comment {
+    Comment(String),
 }
 
 #[derive(PartialEq, Debug, Clone)]

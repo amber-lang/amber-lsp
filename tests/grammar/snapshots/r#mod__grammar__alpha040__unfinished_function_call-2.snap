@@ -311,7 +311,12 @@ expression: result
                 Statement(
                     (
                         Comment(
-                            "fun foo(x: Num, y: Text) {",
+                            (
+                                Comment(
+                                    "fun foo(x: Num, y: Text) {",
+                                ),
+                                225..255,
+                            ),
                         ),
                         225..255,
                     ),
@@ -322,7 +327,12 @@ expression: result
                 Statement(
                     (
                         Comment(
-                            "}",
+                            (
+                                Comment(
+                                    "}",
+                                ),
+                                264..269,
+                            ),
                         ),
                         264..269,
                     ),
@@ -389,7 +399,12 @@ expression: result
                 Statement(
                     (
                         Comment(
-                            "fun abc() {}",
+                            (
+                                Comment(
+                                    "fun abc() {}",
+                                ),
+                                320..336,
+                            ),
                         ),
                         320..336,
                     ),

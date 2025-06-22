@@ -6,8 +6,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Finds the first occurrence of a pettern in the content and replaces it with provided replacement text",
+                Comment(
+                    (
+                        DocString(
+                            "Finds the first occurrence of a pettern in the content and replaces it with provided replacement text",
+                        ),
+                        0..106,
+                    ),
                 ),
                 0..106,
             ),
@@ -179,8 +184,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Replaces all occurences of a pattern in the content with provided replacement text",
+                Comment(
+                    (
+                        DocString(
+                            "Replaces all occurences of a pattern in the content with provided replacement text",
+                        ),
+                        211..298,
+                    ),
                 ),
                 211..298,
             ),
@@ -352,8 +362,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Replaces all occurences of a regex pattern in the content with provided replacement text",
+                Comment(
+                    (
+                        DocString(
+                            "Replaces all occurences of a regex pattern in the content with provided replacement text",
+                        ),
+                        399..492,
+                    ),
                 ),
                 399..492,
             ),
@@ -363,8 +378,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        492..496,
+                    ),
                 ),
                 492..496,
             ),
@@ -374,8 +394,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Function uses `sed`",
+                Comment(
+                    (
+                        DocString(
+                            "Function uses `sed`",
+                        ),
+                        496..520,
+                    ),
                 ),
                 496..520,
             ),
@@ -621,8 +646,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "This function splits the input `text` into an array of substrings using the specified `delimiter`.",
+                Comment(
+                    (
+                        DocString(
+                            "This function splits the input `text` into an array of substrings using the specified `delimiter`.",
+                        ),
+                        676..780,
+                    ),
                 ),
                 676..780,
             ),
@@ -935,8 +965,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Splits a `text` into an array of substrings based on newline characters.",
+                Comment(
+                    (
+                        DocString(
+                            "Splits a `text` into an array of substrings based on newline characters.",
+                        ),
+                        973..1050,
+                    ),
                 ),
                 973..1050,
             ),
@@ -1040,8 +1075,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Splits a `text` into an array of substrings based on space character.",
+                Comment(
+                    (
+                        DocString(
+                            "Splits a `text` into an array of substrings based on space character.",
+                        ),
+                        1118..1192,
+                    ),
                 ),
                 1118..1192,
             ),
@@ -1135,8 +1175,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Merge a text using the delimeter specified",
+                Comment(
+                    (
+                        DocString(
+                            "Merge a text using the delimeter specified",
+                        ),
+                        1257..1304,
+                    ),
                 ),
                 1257..1304,
             ),
@@ -1366,8 +1411,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Trim the spaces at top of the text using `sed`",
+                Comment(
+                    (
+                        DocString(
+                            "Trim the spaces at top of the text using `sed`",
+                        ),
+                        1428..1479,
+                    ),
                 ),
                 1428..1479,
             ),
@@ -1587,8 +1637,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Trim the spaces at end of the text using `sed`",
+                Comment(
+                    (
+                        DocString(
+                            "Trim the spaces at end of the text using `sed`",
+                        ),
+                        1583..1634,
+                    ),
                 ),
                 1583..1634,
             ),
@@ -1808,8 +1863,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Trim the spaces from the text input",
+                Comment(
+                    (
+                        DocString(
+                            "Trim the spaces from the text input",
+                        ),
+                        1740..1780,
+                    ),
                 ),
                 1740..1780,
             ),
@@ -1910,8 +1970,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Lowercase the text input using `tr`",
+                Comment(
+                    (
+                        DocString(
+                            "Lowercase the text input using `tr`",
+                        ),
+                        1855..1895,
+                    ),
                 ),
                 1855..1895,
             ),
@@ -2131,8 +2196,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Lowercase the text input using `tr`",
+                Comment(
+                    (
+                        DocString(
+                            "Lowercase the text input using `tr`",
+                        ),
+                        1995..2035,
+                    ),
                 ),
                 1995..2035,
             ),
@@ -2352,8 +2422,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Attempts to parse a given text into a number, returning the parsed number or zero if parsing fails.",
+                Comment(
+                    (
+                        DocString(
+                            "Attempts to parse a given text into a number, returning the parsed number or zero if parsing fails.",
+                        ),
+                        2135..2239,
+                    ),
                 ),
                 2135..2239,
             ),
@@ -2633,8 +2708,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Splits a text into an array of individual characters.",
+                Comment(
+                    (
+                        DocString(
+                            "Splits a text into an array of individual characters.",
+                        ),
+                        2384..2442,
+                    ),
                 ),
                 2384..2442,
             ),
@@ -3053,8 +3133,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Get the text or array length",
+                Comment(
+                    (
+                        DocString(
+                            "Get the text or array length",
+                        ),
+                        2644..2677,
+                    ),
                 ),
                 2644..2677,
             ),
@@ -3257,6 +3342,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                 ),
                                                 2748..2818,
                                             ),
+                                            [],
                                             Some(
                                                 (
                                                     InlineElse(
@@ -3413,8 +3499,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Check if text contain the value",
+                Comment(
+                    (
+                        DocString(
+                            "Check if text contain the value",
+                        ),
+                        2901..2937,
+                    ),
                 ),
                 2901..2937,
             ),
@@ -3701,8 +3792,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Reverse a text using `rev`",
+                Comment(
+                    (
+                        DocString(
+                            "Reverse a text using `rev`",
+                        ),
+                        3095..3126,
+                    ),
                 ),
                 3095..3126,
             ),
@@ -3838,8 +3934,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Check if text starts with a value",
+                Comment(
+                    (
+                        DocString(
+                            "Check if text starts with a value",
+                        ),
+                        3205..3243,
+                    ),
                 ),
                 3205..3243,
             ),
@@ -4120,8 +4221,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Check if text ends with a value",
+                Comment(
+                    (
+                        DocString(
+                            "Check if text ends with a value",
+                        ),
+                        3403..3439,
+                    ),
                 ),
                 3403..3439,
             ),
@@ -4402,8 +4508,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns a substring from `text` starting at the given `index` (0-based).",
+                Comment(
+                    (
+                        DocString(
+                            "Returns a substring from `text` starting at the given `index` (0-based).",
+                        ),
+                        3597..3674,
+                    ),
                 ),
                 3597..3674,
             ),
@@ -4413,8 +4524,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If `index` is negative, the substring starts from the end of `text` based on the absolute value of `index`.",
+                Comment(
+                    (
+                        DocString(
+                            "If `index` is negative, the substring starts from the end of `text` based on the absolute value of `index`.",
+                        ),
+                        3674..3786,
+                    ),
                 ),
                 3674..3786,
             ),
@@ -4424,8 +4540,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If `length` is provided, the substring will include `length` characters; otherwise, it slices to the end of `text`.",
+                Comment(
+                    (
+                        DocString(
+                            "If `length` is provided, the substring will include `length` characters; otherwise, it slices to the end of `text`.",
+                        ),
+                        3786..3906,
+                    ),
                 ),
                 3786..3906,
             ),
@@ -4435,8 +4556,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If `length` is negative, an empty string is returned.",
+                Comment(
+                    (
+                        DocString(
+                            "If `length` is negative, an empty string is returned.",
+                        ),
+                        3906..3964,
+                    ),
                 ),
                 3906..3964,
             ),
@@ -4608,6 +4734,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             4034..4073,
                         ),
+                        [],
                         None,
                     ),
                     4031..4073,
@@ -4663,6 +4790,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             4081..4103,
                         ),
+                        [],
                         None,
                     ),
                     4078..4103,
@@ -4817,8 +4945,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns the character from `text` at the specified `index` (0-based).",
+                Comment(
+                    (
+                        DocString(
+                            "Returns the character from `text` at the specified `index` (0-based).",
+                        ),
+                        4168..4242,
+                    ),
                 ),
                 4168..4242,
             ),
@@ -4828,8 +4961,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If `index` is negative, the substring starts from the end of `text` based on the absolute value of `index`.",
+                Comment(
+                    (
+                        DocString(
+                            "If `index` is negative, the substring starts from the end of `text` based on the absolute value of `index`.",
+                        ),
+                        4242..4354,
+                    ),
                 ),
                 4242..4354,
             ),
@@ -5030,8 +5168,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Capitalize the first letter of the given `text`",
+                Comment(
+                    (
+                        DocString(
+                            "Capitalize the first letter of the given `text`",
+                        ),
+                        4459..4511,
+                    ),
                 ),
                 4459..4511,
             ),
@@ -5239,8 +5382,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Pads `text` with the specified `pad` character on left until it reaches the desired `length`.",
+                Comment(
+                    (
+                        DocString(
+                            "Pads `text` with the specified `pad` character on left until it reaches the desired `length`.",
+                        ),
+                        4610..4708,
+                    ),
                 ),
                 4610..4708,
             ),
@@ -5389,6 +5537,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             4772..4804,
                         ),
+                        [],
                         None,
                     ),
                     4769..4804,
@@ -5620,8 +5769,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Pads `text` with the specified `pad` character on the right until it reaches the desired `length`.",
+                Comment(
+                    (
+                        DocString(
+                            "Pads `text` with the specified `pad` character on the right until it reaches the desired `length`.",
+                        ),
+                        4921..5024,
+                    ),
                 ),
                 4921..5024,
             ),
@@ -5770,6 +5924,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             5088..5120,
                         ),
+                        [],
                         None,
                     ),
                     5085..5120,
@@ -6001,8 +6156,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Pads `text` with zeros on the left until it reaches the desired `length`.",
+                Comment(
+                    (
+                        DocString(
+                            "Pads `text` with zeros on the left until it reaches the desired `length`.",
+                        ),
+                        5237..5315,
+                    ),
                 ),
                 5237..5315,
             ),

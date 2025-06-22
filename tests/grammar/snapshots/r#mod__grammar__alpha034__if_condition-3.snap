@@ -51,6 +51,7 @@ expression: "parse_unwrap(&tokenize(\"if true { echo 10 } else {}\"))"
                         ),
                         3..19,
                     ),
+                    [],
                     Some(
                         (
                             Else(

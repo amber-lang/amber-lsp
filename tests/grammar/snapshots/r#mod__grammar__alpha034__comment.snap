@@ -7,7 +7,12 @@ expression: "parse_unwrap(&tokenize(\"\n        // This is a comment\n        1 
         Statement(
             (
                 Comment(
-                    "This is a comment",
+                    (
+                        Comment(
+                            "This is a comment",
+                        ),
+                        9..30,
+                    ),
                 ),
                 9..30,
             ),

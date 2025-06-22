@@ -6,8 +6,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Replaces all occurences of a pattern in the content with the provided replace text.",
+                Comment(
+                    (
+                        DocString(
+                            "Replaces all occurences of a pattern in the content with the provided replace text.",
+                        ),
+                        0..88,
+                    ),
                 ),
                 0..88,
             ),
@@ -179,8 +184,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Replaces the first occurence of a pattern in the content with the provided replace text.",
+                Comment(
+                    (
+                        DocString(
+                            "Replaces the first occurence of a pattern in the content with the provided replace text.",
+                        ),
+                        179..272,
+                    ),
                 ),
                 179..272,
             ),
@@ -352,8 +362,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Replaces all occurences of a regex pattern in the content with the provided replace text.",
+                Comment(
+                    (
+                        DocString(
+                            "Replaces all occurences of a regex pattern in the content with the provided replace text.",
+                        ),
+                        366..460,
+                    ),
                 ),
                 366..460,
             ),
@@ -363,8 +378,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        460..464,
+                    ),
                 ),
                 460..464,
             ),
@@ -374,8 +394,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Function uses `sed`",
+                Comment(
+                    (
+                        DocString(
+                            "Function uses `sed`",
+                        ),
+                        464..488,
+                    ),
                 ),
                 464..488,
             ),
@@ -645,19 +670,34 @@ expression: parse_unwrap(&tokens)
                                                             [
                                                                 (
                                                                     Comment(
-                                                                        "GNU sed versions 4.0 through 4.2 support extended regex syntax,",
+                                                                        (
+                                                                            Comment(
+                                                                                "GNU sed versions 4.0 through 4.2 support extended regex syntax,",
+                                                                            ),
+                                                                            721..788,
+                                                                        ),
                                                                     ),
                                                                     721..788,
                                                                 ),
                                                                 (
                                                                     Comment(
-                                                                        "but only via the \"-r\" option; use that if the version information",
+                                                                        (
+                                                                            Comment(
+                                                                                "but only via the \"-r\" option; use that if the version information",
+                                                                            ),
+                                                                            800..869,
+                                                                        ),
                                                                     ),
                                                                     800..869,
                                                                 ),
                                                                 (
                                                                     Comment(
-                                                                        "contains \"GNU sed\".",
+                                                                        (
+                                                                            Comment(
+                                                                                "contains \"GNU sed\".",
+                                                                            ),
+                                                                            881..904,
+                                                                        ),
                                                                     ),
                                                                     881..904,
                                                                 ),
@@ -1157,6 +1197,7 @@ expression: parse_unwrap(&tokens)
                                                 ),
                                                 698..1160,
                                             ),
+                                            [],
                                             Some(
                                                 (
                                                     Else(
@@ -1345,8 +1386,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Splits the input `text` into an array of substrings using the specified `delimiter`.",
+                Comment(
+                    (
+                        DocString(
+                            "Splits the input `text` into an array of substrings using the specified `delimiter`.",
+                        ),
+                        1260..1349,
+                    ),
                 ),
                 1260..1349,
             ),
@@ -1659,8 +1705,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Splits a `text` into an array of substrings based on newline characters.",
+                Comment(
+                    (
+                        DocString(
+                            "Splits a `text` into an array of substrings based on newline characters.",
+                        ),
+                        1543..1620,
+                    ),
                 ),
                 1543..1620,
             ),
@@ -1764,8 +1815,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Splits a `text` into an array of substrings based on space character.",
+                Comment(
+                    (
+                        DocString(
+                            "Splits a `text` into an array of substrings based on space character.",
+                        ),
+                        1694..1768,
+                    ),
                 ),
                 1694..1768,
             ),
@@ -1859,8 +1915,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Merges text using the delimeter specified.",
+                Comment(
+                    (
+                        DocString(
+                            "Merges text using the delimeter specified.",
+                        ),
+                        1841..1888,
+                    ),
                 ),
                 1841..1888,
             ),
@@ -2090,8 +2151,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Trims the spaces at top of the text using `sed`.",
+                Comment(
+                    (
+                        DocString(
+                            "Trims the spaces at top of the text using `sed`.",
+                        ),
+                        2013..2066,
+                    ),
                 ),
                 2013..2066,
             ),
@@ -2311,8 +2377,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Trims the spaces at end of the text using `sed`.",
+                Comment(
+                    (
+                        DocString(
+                            "Trims the spaces at end of the text using `sed`.",
+                        ),
+                        2171..2224,
+                    ),
                 ),
                 2171..2224,
             ),
@@ -2532,8 +2603,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Trims the spaces from the text input.",
+                Comment(
+                    (
+                        DocString(
+                            "Trims the spaces from the text input.",
+                        ),
+                        2331..2373,
+                    ),
                 ),
                 2331..2373,
             ),
@@ -2634,8 +2710,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Makes the text input lowercase using `tr`.",
+                Comment(
+                    (
+                        DocString(
+                            "Makes the text input lowercase using `tr`.",
+                        ),
+                        2448..2495,
+                    ),
                 ),
                 2448..2495,
             ),
@@ -2855,8 +2936,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Makes the text input uppercase using `tr`.",
+                Comment(
+                    (
+                        DocString(
+                            "Makes the text input uppercase using `tr`.",
+                        ),
+                        2600..2647,
+                    ),
                 ),
                 2600..2647,
             ),
@@ -3076,8 +3162,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Attempts to parse a given text into a number, returning the parsed number or zero if parsing fails.",
+                Comment(
+                    (
+                        DocString(
+                            "Attempts to parse a given text into a number, returning the parsed number or zero if parsing fails.",
+                        ),
+                        2752..2856,
+                    ),
                 ),
                 2752..2856,
             ),
@@ -3357,8 +3448,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Splits a text into an array of individual characters.",
+                Comment(
+                    (
+                        DocString(
+                            "Splits a text into an array of individual characters.",
+                        ),
+                        3010..3068,
+                    ),
                 ),
                 3010..3068,
             ),
@@ -3771,8 +3867,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Checks if some text contains a value.",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if some text contains a value.",
+                        ),
+                        3276..3318,
+                    ),
                 ),
                 3276..3318,
             ),
@@ -4059,8 +4160,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Checks if an array value is in the text.",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if an array value is in the text.",
+                        ),
+                        3482..3527,
+                    ),
                 ),
                 3482..3527,
             ),
@@ -4227,6 +4333,7 @@ expression: parse_unwrap(&tokens)
                                                 ),
                                                 3623..3684,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         3620..3684,
@@ -4265,8 +4372,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Checks if all the arrays values are in the string",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if all the arrays values are in the string",
+                        ),
+                        3712..3766,
+                    ),
                 ),
                 3712..3766,
             ),
@@ -4442,6 +4554,7 @@ expression: parse_unwrap(&tokens)
                                                 ),
                                                 3862..3928,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         3859..3928,
@@ -4480,8 +4593,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Match all occurences of a regex pattern.",
+                Comment(
+                    (
+                        DocString(
+                            "Match all occurences of a regex pattern.",
+                        ),
+                        3955..4000,
+                    ),
                 ),
                 3955..4000,
             ),
@@ -4491,8 +4609,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        4000..4004,
+                    ),
                 ),
                 4000..4004,
             ),
@@ -4502,8 +4625,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Function uses `sed`",
+                Comment(
+                    (
+                        DocString(
+                            "Function uses `sed`",
+                        ),
+                        4004..4028,
+                    ),
                 ),
                 4004..4028,
             ),
@@ -4717,19 +4845,34 @@ expression: parse_unwrap(&tokens)
                                                             [
                                                                 (
                                                                     Comment(
-                                                                        "GNU sed versions 4.0 through 4.2 support extended regex syntax,",
+                                                                        (
+                                                                            Comment(
+                                                                                "GNU sed versions 4.0 through 4.2 support extended regex syntax,",
+                                                                            ),
+                                                                            4222..4289,
+                                                                        ),
                                                                     ),
                                                                     4222..4289,
                                                                 ),
                                                                 (
                                                                     Comment(
-                                                                        "but only via the \"-r\" option; use that if the version information",
+                                                                        (
+                                                                            Comment(
+                                                                                "but only via the \"-r\" option; use that if the version information",
+                                                                            ),
+                                                                            4301..4370,
+                                                                        ),
                                                                     ),
                                                                     4301..4370,
                                                                 ),
                                                                 (
                                                                     Comment(
-                                                                        "contains \"GNU sed\".",
+                                                                        (
+                                                                            Comment(
+                                                                                "contains \"GNU sed\".",
+                                                                            ),
+                                                                            4382..4405,
+                                                                        ),
                                                                     ),
                                                                     4382..4405,
                                                                 ),
@@ -5201,6 +5344,7 @@ expression: parse_unwrap(&tokens)
                                                 ),
                                                 4199..4653,
                                             ),
+                                            [],
                                             Some(
                                                 (
                                                     Else(
@@ -5406,6 +5550,7 @@ expression: parse_unwrap(&tokens)
                                                 ),
                                                 4747..4795,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         4744..4795,
@@ -5444,8 +5589,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Checks if an array value (with regular expression) is in the text.",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if an array value (with regular expression) is in the text.",
+                        ),
+                        4822..4893,
+                    ),
                 ),
                 4822..4893,
             ),
@@ -5621,6 +5771,7 @@ expression: parse_unwrap(&tokens)
                                                 ),
                                                 4987..5053,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         4984..5053,
@@ -5659,8 +5810,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Reverses text using `rev`.",
+                Comment(
+                    (
+                        DocString(
+                            "Reverses text using `rev`.",
+                        ),
+                        5081..5112,
+                    ),
                 ),
                 5081..5112,
             ),
@@ -5796,8 +5952,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Checks if text starts with a value.",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if text starts with a value.",
+                        ),
+                        5193..5233,
+                    ),
                 ),
                 5193..5233,
             ),
@@ -6078,8 +6239,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Checks if text ends with a value.",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if text ends with a value.",
+                        ),
+                        5394..5432,
+                    ),
                 ),
                 5394..5432,
             ),
@@ -6360,8 +6526,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Returns a substring from `text` starting at the given `index` (0-based).",
+                Comment(
+                    (
+                        DocString(
+                            "Returns a substring from `text` starting at the given `index` (0-based).",
+                        ),
+                        5591..5668,
+                    ),
                 ),
                 5591..5668,
             ),
@@ -6371,8 +6542,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        5668..5672,
+                    ),
                 ),
                 5668..5672,
             ),
@@ -6382,8 +6558,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "If `index` is negative, the substring starts from the end of `text` based on the absolute value of `index`.",
+                Comment(
+                    (
+                        DocString(
+                            "If `index` is negative, the substring starts from the end of `text` based on the absolute value of `index`.",
+                        ),
+                        5672..5784,
+                    ),
                 ),
                 5672..5784,
             ),
@@ -6393,8 +6574,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "If `length` is provided, the substring will include `length` characters; otherwise, it slices to the end of `text`.",
+                Comment(
+                    (
+                        DocString(
+                            "If `length` is provided, the substring will include `length` characters; otherwise, it slices to the end of `text`.",
+                        ),
+                        5784..5904,
+                    ),
                 ),
                 5784..5904,
             ),
@@ -6404,8 +6590,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "If `length` is negative, an empty string is returned.",
+                Comment(
+                    (
+                        DocString(
+                            "If `length` is negative, an empty string is returned.",
+                        ),
+                        5904..5962,
+                    ),
                 ),
                 5904..5962,
             ),
@@ -6577,6 +6768,7 @@ expression: parse_unwrap(&tokens)
                             ),
                             6032..6071,
                         ),
+                        [],
                         None,
                     ),
                     6029..6071,
@@ -6632,6 +6824,7 @@ expression: parse_unwrap(&tokens)
                             ),
                             6079..6101,
                         ),
+                        [],
                         None,
                     ),
                     6076..6101,
@@ -6786,8 +6979,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Returns the character from `text` at the specified `index` (0-based).",
+                Comment(
+                    (
+                        DocString(
+                            "Returns the character from `text` at the specified `index` (0-based).",
+                        ),
+                        6167..6241,
+                    ),
                 ),
                 6167..6241,
             ),
@@ -6797,8 +6995,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        6241..6245,
+                    ),
                 ),
                 6241..6245,
             ),
@@ -6808,8 +7011,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "If `index` is negative, the substring starts from the end of `text` based on the absolute value of `index`.",
+                Comment(
+                    (
+                        DocString(
+                            "If `index` is negative, the substring starts from the end of `text` based on the absolute value of `index`.",
+                        ),
+                        6245..6357,
+                    ),
                 ),
                 6245..6357,
             ),
@@ -7010,8 +7218,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Capitalize the first letter of the given `text`.",
+                Comment(
+                    (
+                        DocString(
+                            "Capitalize the first letter of the given `text`.",
+                        ),
+                        6463..6516,
+                    ),
                 ),
                 6463..6516,
             ),
@@ -7150,6 +7363,7 @@ expression: parse_unwrap(&tokens)
                                                 ),
                                                 6600..6650,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         6597..6650,
@@ -7377,15 +7591,17 @@ expression: parse_unwrap(&tokens)
                                                 ),
                                                 6733..6805,
                                             ),
+                                            [
+                                                (
+                                                    Comment(
+                                                        "GNU sed supports \\U",
+                                                    ),
+                                                    6814..6837,
+                                                ),
+                                            ],
                                             None,
                                         ),
-                                        6730..6805,
-                                    ),
-                                    (
-                                        Comment(
-                                            "GNU sed supports \\U",
-                                        ),
-                                        6814..6837,
+                                        6730..6837,
                                     ),
                                     (
                                         Expression(
@@ -7784,6 +8000,7 @@ expression: parse_unwrap(&tokens)
                                                 ),
                                                 6954..7037,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         6951..7037,
@@ -7915,8 +8132,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Pads `text` with the specified `pad` character on left until it reaches the desired `length`.",
+                Comment(
+                    (
+                        DocString(
+                            "Pads `text` with the specified `pad` character on left until it reaches the desired `length`.",
+                        ),
+                        7150..7248,
+                    ),
                 ),
                 7150..7248,
             ),
@@ -8065,6 +8287,7 @@ expression: parse_unwrap(&tokens)
                             ),
                             7312..7344,
                         ),
+                        [],
                         None,
                     ),
                     7309..7344,
@@ -8296,8 +8519,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Pads `text` with the specified `pad` character on the right until it reaches the desired `length`.",
+                Comment(
+                    (
+                        DocString(
+                            "Pads `text` with the specified `pad` character on the right until it reaches the desired `length`.",
+                        ),
+                        7462..7565,
+                    ),
                 ),
                 7462..7565,
             ),
@@ -8446,6 +8674,7 @@ expression: parse_unwrap(&tokens)
                             ),
                             7629..7661,
                         ),
+                        [],
                         None,
                     ),
                     7626..7661,
@@ -8677,8 +8906,13 @@ expression: parse_unwrap(&tokens)
     (
         Statement(
             (
-                DocString(
-                    "Pads `text` with zeros on the left until it reaches the desired `length`.",
+                Comment(
+                    (
+                        DocString(
+                            "Pads `text` with zeros on the left until it reaches the desired `length`.",
+                        ),
+                        7779..7857,
+                    ),
                 ),
                 7779..7857,
             ),

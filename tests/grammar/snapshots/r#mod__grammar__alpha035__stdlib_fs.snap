@@ -6,8 +6,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Check if directory exists",
+                Comment(
+                    (
+                        DocString(
+                            "Check if directory exists",
+                        ),
+                        0..30,
+                    ),
                 ),
                 0..30,
             ),
@@ -175,8 +180,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Check if file exists",
+                Comment(
+                    (
+                        DocString(
+                            "Check if file exists",
+                        ),
+                        133..158,
+                    ),
                 ),
                 133..158,
             ),
@@ -344,8 +354,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Get the file content",
+                Comment(
+                    (
+                        DocString(
+                            "Get the file content",
+                        ),
+                        262..287,
+                    ),
                 ),
                 262..287,
             ),
@@ -460,8 +475,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Write the content to the file",
+                Comment(
+                    (
+                        DocString(
+                            "Write the content to the file",
+                        ),
+                        341..375,
+                    ),
                 ),
                 341..375,
             ),
@@ -471,8 +491,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Doesn't check if the file exist",
+                Comment(
+                    (
+                        DocString(
+                            "Doesn't check if the file exist",
+                        ),
+                        375..411,
+                    ),
                 ),
                 375..411,
             ),
@@ -632,8 +657,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Append the content to the file",
+                Comment(
+                    (
+                        DocString(
+                            "Append the content to the file",
+                        ),
+                        492..527,
+                    ),
                 ),
                 492..527,
             ),
@@ -643,8 +673,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Doesn't check if the file exist",
+                Comment(
+                    (
+                        DocString(
+                            "Doesn't check if the file exist",
+                        ),
+                        527..563,
+                    ),
                 ),
                 527..563,
             ),
@@ -810,8 +845,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Create a symbolic link",
+                Comment(
+                    (
+                        DocString(
+                            "Create a symbolic link",
+                        ),
+                        646..673,
+                    ),
                 ),
                 646..673,
             ),
@@ -821,8 +861,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If the file doens't exist return a boolean and print a message",
+                Comment(
+                    (
+                        DocString(
+                            "If the file doens't exist return a boolean and print a message",
+                        ),
+                        673..740,
+                    ),
                 ),
                 673..740,
             ),
@@ -1043,6 +1088,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             817..913,
                         ),
+                        [],
                         None,
                     ),
                     814..913,
@@ -1149,8 +1195,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Create a directory with all intermediate directories as required",
+                Comment(
+                    (
+                        DocString(
+                            "Create a directory with all intermediate directories as required",
+                        ),
+                        979..1048,
+                    ),
                 ),
                 979..1048,
             ),
@@ -1317,6 +1368,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             1094..1156,
                         ),
+                        [],
                         None,
                     ),
                     1091..1156,
@@ -1328,8 +1380,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Set the file as executable",
+                Comment(
+                    (
+                        DocString(
+                            "Set the file as executable",
+                        ),
+                        1160..1191,
+                    ),
                 ),
                 1160..1191,
             ),
@@ -1339,8 +1396,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If the file doesn't exist return a boolean and print a message",
+                Comment(
+                    (
+                        DocString(
+                            "If the file doesn't exist return a boolean and print a message",
+                        ),
+                        1191..1258,
+                    ),
                 ),
                 1191..1258,
             ),
@@ -1524,6 +1586,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             1309..1388,
                         ),
+                        [],
                         None,
                     ),
                     1306..1388,
@@ -1630,8 +1693,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Change the owner of the file",
+                Comment(
+                    (
+                        DocString(
+                            "Change the owner of the file",
+                        ),
+                        1452..1485,
+                    ),
                 ),
                 1452..1485,
             ),
@@ -1641,8 +1709,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If the file doesn't exist return false",
+                Comment(
+                    (
+                        DocString(
+                            "If the file doesn't exist return false",
+                        ),
+                        1485..1528,
+                    ),
                 ),
                 1485..1528,
             ),
@@ -1894,6 +1967,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             1588..1695,
                         ),
+                        [],
                         None,
                     ),
                     1585..1695,

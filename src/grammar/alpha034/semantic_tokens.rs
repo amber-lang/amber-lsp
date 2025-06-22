@@ -254,6 +254,10 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                                 tokens.extend(semantic_tokens_from_expr(expr));
                                 tokens.extend(semantic_tokens_from_stmnts(&vec![*stmnt.clone()]));
                             }
+                            IfCondition::Comment((_, span)) => tokens.push((
+                                hash_semantic_token_type(SemanticTokenType::COMMENT),
+                                *span,
+                            )),
                             IfCondition::Error => {}
                         },
                         IfChainContent::Else((else_cond, _)) => match else_cond {
@@ -277,11 +281,13 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                                 tokens.extend(semantic_tokens_from_stmnts(&vec![*stmnt.clone()]));
                             }
                         },
+                        IfChainContent::Comment((_, span)) => tokens
+                            .push((hash_semantic_token_type(SemanticTokenType::COMMENT), *span)),
                     });
 
                 tokens
             }
-            Statement::IfCondition((_, if_span), (if_cond, _), else_cond) => {
+            Statement::IfCondition((_, if_span), (if_cond, _), comments, else_cond) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::KEYWORD),
                     *if_span,
@@ -299,8 +305,12 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                         tokens.extend(semantic_tokens_from_expr(expr));
                         tokens.extend(semantic_tokens_from_stmnts(&vec![*stmnt.clone()]));
                     }
-                    IfCondition::Error => {}
+                    IfCondition::Comment(_) | IfCondition::Error => {}
                 }
+
+                comments.iter().for_each(|(_, span)| {
+                    tokens.push((hash_semantic_token_type(SemanticTokenType::COMMENT), *span))
+                });
 
                 if let Some((else_cond, _)) = else_cond {
                     match else_cond {

@@ -6,8 +6,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "### EXPERIMENTAL",
+                Comment(
+                    (
+                        DocString(
+                            "### EXPERIMENTAL",
+                        ),
+                        0..21,
+                    ),
                 ),
                 0..21,
             ),
@@ -17,8 +22,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        21..26,
+                    ),
                 ),
                 21..26,
             ),
@@ -28,8 +38,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Formats a date with a special format.",
+                Comment(
+                    (
+                        DocString(
+                            "Formats a date with a special format.",
+                        ),
+                        26..68,
+                    ),
                 ),
                 26..68,
             ),
@@ -39,8 +54,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        68..72,
+                    ),
                 ),
                 68..72,
             ),
@@ -50,8 +70,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If no date is specified, the current date is used.",
+                Comment(
+                    (
+                        DocString(
+                            "If no date is specified, the current date is used.",
+                        ),
+                        72..127,
+                    ),
                 ),
                 72..127,
             ),
@@ -61,8 +86,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        127..131,
+                    ),
                 ),
                 127..131,
             ),
@@ -72,8 +102,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If no format is specified, \"%FT%T%Z\" format is used.",
+                Comment(
+                    (
+                        DocString(
+                            "If no format is specified, \"%FT%T%Z\" format is used.",
+                        ),
+                        131..188,
+                    ),
                 ),
                 131..188,
             ),
@@ -83,8 +118,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        188..192,
+                    ),
                 ),
                 188..192,
             ),
@@ -94,8 +134,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "For more info about format type \"man date\" on your shell or go to <https://www.gnu.org/software/coreutils/date>.",
+                Comment(
+                    (
+                        DocString(
+                            "For more info about format type \"man date\" on your shell or go to <https://www.gnu.org/software/coreutils/date>.",
+                        ),
+                        192..309,
+                    ),
                 ),
                 192..309,
             ),
@@ -105,8 +150,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        309..313,
+                    ),
                 ),
                 309..313,
             ),
@@ -116,8 +166,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Format :",
+                Comment(
+                    (
+                        DocString(
+                            "Format :",
+                        ),
+                        313..327,
+                    ),
                 ),
                 313..327,
             ),
@@ -127,8 +182,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "```",
+                Comment(
+                    (
+                        DocString(
+                            "```",
+                        ),
+                        327..335,
+                    ),
                 ),
                 327..335,
             ),
@@ -138,8 +198,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%%     a literal %",
+                Comment(
+                    (
+                        DocString(
+                            "%%     a literal %",
+                        ),
+                        335..358,
+                    ),
                 ),
                 335..358,
             ),
@@ -149,8 +214,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%a     locale's abbreviated weekday name (e.g., Sun)",
+                Comment(
+                    (
+                        DocString(
+                            "%a     locale's abbreviated weekday name (e.g., Sun)",
+                        ),
+                        358..415,
+                    ),
                 ),
                 358..415,
             ),
@@ -160,8 +230,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%A     locale's full weekday name (e.g., Sunday)",
+                Comment(
+                    (
+                        DocString(
+                            "%A     locale's full weekday name (e.g., Sunday)",
+                        ),
+                        415..468,
+                    ),
                 ),
                 415..468,
             ),
@@ -171,8 +246,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%b     locale's abbreviated month name (e.g., Jan)",
+                Comment(
+                    (
+                        DocString(
+                            "%b     locale's abbreviated month name (e.g., Jan)",
+                        ),
+                        468..523,
+                    ),
                 ),
                 468..523,
             ),
@@ -182,8 +262,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%B     locale's full month name (e.g., January)",
+                Comment(
+                    (
+                        DocString(
+                            "%B     locale's full month name (e.g., January)",
+                        ),
+                        523..575,
+                    ),
                 ),
                 523..575,
             ),
@@ -193,8 +278,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%c     locale's date and time (e.g., Thu Mar  3 23:05:25 2005)",
+                Comment(
+                    (
+                        DocString(
+                            "%c     locale's date and time (e.g., Thu Mar  3 23:05:25 2005)",
+                        ),
+                        575..642,
+                    ),
                 ),
                 575..642,
             ),
@@ -204,8 +294,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%C     century; like %Y, except omit last two digits (e.g., 20)",
+                Comment(
+                    (
+                        DocString(
+                            "%C     century; like %Y, except omit last two digits (e.g., 20)",
+                        ),
+                        642..710,
+                    ),
                 ),
                 642..710,
             ),
@@ -215,8 +310,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%d     day of month (e.g., 01)",
+                Comment(
+                    (
+                        DocString(
+                            "%d     day of month (e.g., 01)",
+                        ),
+                        710..745,
+                    ),
                 ),
                 710..745,
             ),
@@ -226,8 +326,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%D     date; same as %m/%d/%y",
+                Comment(
+                    (
+                        DocString(
+                            "%D     date; same as %m/%d/%y",
+                        ),
+                        745..779,
+                    ),
                 ),
                 745..779,
             ),
@@ -237,8 +342,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%e     day of month, space padded; same as %_d",
+                Comment(
+                    (
+                        DocString(
+                            "%e     day of month, space padded; same as %_d",
+                        ),
+                        779..830,
+                    ),
                 ),
                 779..830,
             ),
@@ -248,8 +358,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%F     full date; like %+4Y-%m-%d",
+                Comment(
+                    (
+                        DocString(
+                            "%F     full date; like %+4Y-%m-%d",
+                        ),
+                        830..868,
+                    ),
                 ),
                 830..868,
             ),
@@ -259,8 +374,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%g     last two digits of year of ISO week number (see %G)",
+                Comment(
+                    (
+                        DocString(
+                            "%g     last two digits of year of ISO week number (see %G)",
+                        ),
+                        868..931,
+                    ),
                 ),
                 868..931,
             ),
@@ -270,8 +390,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%G     year of ISO week number (see %V); normally useful only with %V",
+                Comment(
+                    (
+                        DocString(
+                            "%G     year of ISO week number (see %V); normally useful only with %V",
+                        ),
+                        931..1005,
+                    ),
                 ),
                 931..1005,
             ),
@@ -281,8 +406,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%h     same as %b",
+                Comment(
+                    (
+                        DocString(
+                            "%h     same as %b",
+                        ),
+                        1005..1027,
+                    ),
                 ),
                 1005..1027,
             ),
@@ -292,8 +422,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%H     hour (00..23)",
+                Comment(
+                    (
+                        DocString(
+                            "%H     hour (00..23)",
+                        ),
+                        1027..1052,
+                    ),
                 ),
                 1027..1052,
             ),
@@ -303,8 +438,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%I     hour (01..12)",
+                Comment(
+                    (
+                        DocString(
+                            "%I     hour (01..12)",
+                        ),
+                        1052..1077,
+                    ),
                 ),
                 1052..1077,
             ),
@@ -314,8 +454,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%j     day of year (001..366)",
+                Comment(
+                    (
+                        DocString(
+                            "%j     day of year (001..366)",
+                        ),
+                        1077..1111,
+                    ),
                 ),
                 1077..1111,
             ),
@@ -325,8 +470,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%k     hour, space padded ( 0..23); same as %_H",
+                Comment(
+                    (
+                        DocString(
+                            "%k     hour, space padded ( 0..23); same as %_H",
+                        ),
+                        1111..1163,
+                    ),
                 ),
                 1111..1163,
             ),
@@ -336,8 +486,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%l     hour, space padded ( 1..12); same as %_I",
+                Comment(
+                    (
+                        DocString(
+                            "%l     hour, space padded ( 1..12); same as %_I",
+                        ),
+                        1163..1215,
+                    ),
                 ),
                 1163..1215,
             ),
@@ -347,8 +502,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%m     month (01..12)",
+                Comment(
+                    (
+                        DocString(
+                            "%m     month (01..12)",
+                        ),
+                        1215..1241,
+                    ),
                 ),
                 1215..1241,
             ),
@@ -358,8 +518,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%M     minute (00..59)",
+                Comment(
+                    (
+                        DocString(
+                            "%M     minute (00..59)",
+                        ),
+                        1241..1268,
+                    ),
                 ),
                 1241..1268,
             ),
@@ -369,8 +534,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%n     a newline",
+                Comment(
+                    (
+                        DocString(
+                            "%n     a newline",
+                        ),
+                        1268..1289,
+                    ),
                 ),
                 1268..1289,
             ),
@@ -380,8 +550,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%N     nanoseconds (000000000..999999999)",
+                Comment(
+                    (
+                        DocString(
+                            "%N     nanoseconds (000000000..999999999)",
+                        ),
+                        1289..1335,
+                    ),
                 ),
                 1289..1335,
             ),
@@ -391,8 +566,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%p     locale's equivalent of either AM or PM; blank if not known",
+                Comment(
+                    (
+                        DocString(
+                            "%p     locale's equivalent of either AM or PM; blank if not known",
+                        ),
+                        1335..1405,
+                    ),
                 ),
                 1335..1405,
             ),
@@ -402,8 +582,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%P     like %p, but lower case",
+                Comment(
+                    (
+                        DocString(
+                            "%P     like %p, but lower case",
+                        ),
+                        1405..1440,
+                    ),
                 ),
                 1405..1440,
             ),
@@ -413,8 +598,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%q     quarter of year (1..4)",
+                Comment(
+                    (
+                        DocString(
+                            "%q     quarter of year (1..4)",
+                        ),
+                        1440..1474,
+                    ),
                 ),
                 1440..1474,
             ),
@@ -424,8 +614,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%r     locale's 12-hour clock time (e.g., 11:11:04 PM)",
+                Comment(
+                    (
+                        DocString(
+                            "%r     locale's 12-hour clock time (e.g., 11:11:04 PM)",
+                        ),
+                        1474..1533,
+                    ),
                 ),
                 1474..1533,
             ),
@@ -435,8 +630,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%R     24-hour hour and minute; same as %H:%M",
+                Comment(
+                    (
+                        DocString(
+                            "%R     24-hour hour and minute; same as %H:%M",
+                        ),
+                        1533..1583,
+                    ),
                 ),
                 1533..1583,
             ),
@@ -446,8 +646,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%s     seconds since the Epoch (1970-01-01 00:00 UTC)",
+                Comment(
+                    (
+                        DocString(
+                            "%s     seconds since the Epoch (1970-01-01 00:00 UTC)",
+                        ),
+                        1583..1641,
+                    ),
                 ),
                 1583..1641,
             ),
@@ -457,8 +662,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%S     second (00..60)",
+                Comment(
+                    (
+                        DocString(
+                            "%S     second (00..60)",
+                        ),
+                        1641..1668,
+                    ),
                 ),
                 1641..1668,
             ),
@@ -468,8 +678,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%t     a tab",
+                Comment(
+                    (
+                        DocString(
+                            "%t     a tab",
+                        ),
+                        1668..1685,
+                    ),
                 ),
                 1668..1685,
             ),
@@ -479,8 +694,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%T     time; same as %H:%M:%S",
+                Comment(
+                    (
+                        DocString(
+                            "%T     time; same as %H:%M:%S",
+                        ),
+                        1685..1719,
+                    ),
                 ),
                 1685..1719,
             ),
@@ -490,8 +710,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%u     day of week (1..7); 1 is Monday",
+                Comment(
+                    (
+                        DocString(
+                            "%u     day of week (1..7); 1 is Monday",
+                        ),
+                        1719..1762,
+                    ),
                 ),
                 1719..1762,
             ),
@@ -501,8 +726,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%U     week number of year, with Sunday as first day of week (00..53)",
+                Comment(
+                    (
+                        DocString(
+                            "%U     week number of year, with Sunday as first day of week (00..53)",
+                        ),
+                        1762..1836,
+                    ),
                 ),
                 1762..1836,
             ),
@@ -512,8 +742,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%V     ISO week number, with Monday as first day of week (01..53)",
+                Comment(
+                    (
+                        DocString(
+                            "%V     ISO week number, with Monday as first day of week (01..53)",
+                        ),
+                        1836..1906,
+                    ),
                 ),
                 1836..1906,
             ),
@@ -523,8 +758,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%w     day of week (0..6); 0 is Sunday",
+                Comment(
+                    (
+                        DocString(
+                            "%w     day of week (0..6); 0 is Sunday",
+                        ),
+                        1906..1949,
+                    ),
                 ),
                 1906..1949,
             ),
@@ -534,8 +774,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%W     week number of year, with Monday as first day of week (00..53)",
+                Comment(
+                    (
+                        DocString(
+                            "%W     week number of year, with Monday as first day of week (00..53)",
+                        ),
+                        1949..2023,
+                    ),
                 ),
                 1949..2023,
             ),
@@ -545,8 +790,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%x     locale's date representation (e.g., 12/31/99)",
+                Comment(
+                    (
+                        DocString(
+                            "%x     locale's date representation (e.g., 12/31/99)",
+                        ),
+                        2023..2080,
+                    ),
                 ),
                 2023..2080,
             ),
@@ -556,8 +806,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%X     locale's time representation (e.g., 23:13:48)",
+                Comment(
+                    (
+                        DocString(
+                            "%X     locale's time representation (e.g., 23:13:48)",
+                        ),
+                        2080..2137,
+                    ),
                 ),
                 2080..2137,
             ),
@@ -567,8 +822,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%y     last two digits of year (00..99)",
+                Comment(
+                    (
+                        DocString(
+                            "%y     last two digits of year (00..99)",
+                        ),
+                        2137..2181,
+                    ),
                 ),
                 2137..2181,
             ),
@@ -578,8 +838,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%Y     year",
+                Comment(
+                    (
+                        DocString(
+                            "%Y     year",
+                        ),
+                        2181..2197,
+                    ),
                 ),
                 2181..2197,
             ),
@@ -589,8 +854,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%z     +hhmm numeric time zone (e.g., -0400)",
+                Comment(
+                    (
+                        DocString(
+                            "%z     +hhmm numeric time zone (e.g., -0400)",
+                        ),
+                        2197..2246,
+                    ),
                 ),
                 2197..2246,
             ),
@@ -600,8 +870,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%:z    +hh:mm numeric time zone (e.g., -04:00)",
+                Comment(
+                    (
+                        DocString(
+                            "%:z    +hh:mm numeric time zone (e.g., -04:00)",
+                        ),
+                        2246..2297,
+                    ),
                 ),
                 2246..2297,
             ),
@@ -611,8 +886,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%::z   +hh:mm:ss numeric time zone (e.g., -04:00:00)",
+                Comment(
+                    (
+                        DocString(
+                            "%::z   +hh:mm:ss numeric time zone (e.g., -04:00:00)",
+                        ),
+                        2297..2354,
+                    ),
                 ),
                 2297..2354,
             ),
@@ -622,8 +902,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%:::z  numeric time zone with : to necessary precision (e.g., -04, +05:30)",
+                Comment(
+                    (
+                        DocString(
+                            "%:::z  numeric time zone with : to necessary precision (e.g., -04, +05:30)",
+                        ),
+                        2354..2433,
+                    ),
                 ),
                 2354..2433,
             ),
@@ -633,8 +918,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "%Z     alphabetic time zone abbreviation (e.g., EDT)",
+                Comment(
+                    (
+                        DocString(
+                            "%Z     alphabetic time zone abbreviation (e.g., EDT)",
+                        ),
+                        2433..2490,
+                    ),
                 ),
                 2433..2490,
             ),
@@ -644,8 +934,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "```",
+                Comment(
+                    (
+                        DocString(
+                            "```",
+                        ),
+                        2490..2498,
+                    ),
                 ),
                 2490..2498,
             ),
@@ -655,8 +950,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        2498..2503,
+                    ),
                 ),
                 2498..2503,
             ),
@@ -666,8 +966,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "By default, date pads numeric fields with zeroes.  The following optional flags may follow '%':",
+                Comment(
+                    (
+                        DocString(
+                            "By default, date pads numeric fields with zeroes.  The following optional flags may follow '%':",
+                        ),
+                        2503..2603,
+                    ),
                 ),
                 2503..2603,
             ),
@@ -677,8 +982,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        2603..2607,
+                    ),
                 ),
                 2603..2607,
             ),
@@ -688,8 +998,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "```",
+                Comment(
+                    (
+                        DocString(
+                            "```",
+                        ),
+                        2607..2615,
+                    ),
                 ),
                 2607..2615,
             ),
@@ -699,8 +1014,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "-      (hyphen) do not pad the field",
+                Comment(
+                    (
+                        DocString(
+                            "-      (hyphen) do not pad the field",
+                        ),
+                        2615..2656,
+                    ),
                 ),
                 2615..2656,
             ),
@@ -710,8 +1030,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "_      (underscore) pad with spaces",
+                Comment(
+                    (
+                        DocString(
+                            "_      (underscore) pad with spaces",
+                        ),
+                        2656..2696,
+                    ),
                 ),
                 2656..2696,
             ),
@@ -721,8 +1046,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "0      (zero) pad with zeros",
+                Comment(
+                    (
+                        DocString(
+                            "0      (zero) pad with zeros",
+                        ),
+                        2696..2729,
+                    ),
                 ),
                 2696..2729,
             ),
@@ -732,8 +1062,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "+      pad with zeros, and put '+' before future years with >4 digits",
+                Comment(
+                    (
+                        DocString(
+                            "+      pad with zeros, and put '+' before future years with >4 digits",
+                        ),
+                        2729..2803,
+                    ),
                 ),
                 2729..2803,
             ),
@@ -743,8 +1078,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "^      use upper case if possible",
+                Comment(
+                    (
+                        DocString(
+                            "^      use upper case if possible",
+                        ),
+                        2803..2841,
+                    ),
                 ),
                 2803..2841,
             ),
@@ -754,8 +1094,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "#      use opposite case if possible",
+                Comment(
+                    (
+                        DocString(
+                            "#      use opposite case if possible",
+                        ),
+                        2841..2882,
+                    ),
                 ),
                 2841..2882,
             ),
@@ -765,8 +1110,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "```",
+                Comment(
+                    (
+                        DocString(
+                            "```",
+                        ),
+                        2882..2890,
+                    ),
                 ),
                 2882..2890,
             ),
@@ -976,6 +1326,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             2980..3012,
                         ),
+                        [],
                         None,
                     ),
                     2977..3012,
@@ -1106,6 +1457,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             3020..3064,
                         ),
+                        [],
                         None,
                     ),
                     3017..3064,
@@ -1256,6 +1608,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             3072..3140,
                         ),
+                        [],
                         Some(
                             (
                                 Else(
@@ -1392,8 +1745,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns the current timestamp (seconds since the Epoch (1970-01-01 00:00 UTC)).",
+                Comment(
+                    (
+                        DocString(
+                            "Returns the current timestamp (seconds since the Epoch (1970-01-01 00:00 UTC)).",
+                        ),
+                        3210..3294,
+                    ),
                 ),
                 3210..3294,
             ),
@@ -1509,8 +1867,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "### EXPERIMENTAL",
+                Comment(
+                    (
+                        DocString(
+                            "### EXPERIMENTAL",
+                        ),
+                        3381..3402,
+                    ),
                 ),
                 3381..3402,
             ),
@@ -1520,8 +1883,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        3402..3406,
+                    ),
                 ),
                 3402..3406,
             ),
@@ -1531,8 +1899,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Adds a value to a date.",
+                Comment(
+                    (
+                        DocString(
+                            "Adds a value to a date.",
+                        ),
+                        3406..3434,
+                    ),
                 ),
                 3406..3434,
             ),
@@ -1542,8 +1915,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        3434..3439,
+                    ),
                 ),
                 3434..3439,
             ),
@@ -1553,8 +1931,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If no date is specified, the current date is used.",
+                Comment(
+                    (
+                        DocString(
+                            "If no date is specified, the current date is used.",
+                        ),
+                        3439..3494,
+                    ),
                 ),
                 3439..3494,
             ),
@@ -1564,8 +1947,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        3494..3499,
+                    ),
                 ),
                 3494..3499,
             ),
@@ -1575,8 +1963,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Example : `date_add(\"+3 days\")`",
+                Comment(
+                    (
+                        DocString(
+                            "Example : `date_add(\"+3 days\")`",
+                        ),
+                        3499..3535,
+                    ),
                 ),
                 3499..3535,
             ),
@@ -1586,8 +1979,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        3535..3540,
+                    ),
                 ),
                 3535..3540,
             ),
@@ -1597,8 +1995,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "You can use (+/-):",
+                Comment(
+                    (
+                        DocString(
+                            "You can use (+/-):",
+                        ),
+                        3540..3564,
+                    ),
                 ),
                 3540..3564,
             ),
@@ -1608,8 +2011,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        3564..3568,
+                    ),
                 ),
                 3564..3568,
             ),
@@ -1619,8 +2027,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "- years",
+                Comment(
+                    (
+                        DocString(
+                            "- years",
+                        ),
+                        3568..3580,
+                    ),
                 ),
                 3568..3580,
             ),
@@ -1630,8 +2043,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "- months",
+                Comment(
+                    (
+                        DocString(
+                            "- months",
+                        ),
+                        3580..3593,
+                    ),
                 ),
                 3580..3593,
             ),
@@ -1641,8 +2059,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "- days",
+                Comment(
+                    (
+                        DocString(
+                            "- days",
+                        ),
+                        3593..3604,
+                    ),
                 ),
                 3593..3604,
             ),
@@ -1652,8 +2075,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "- hours",
+                Comment(
+                    (
+                        DocString(
+                            "- hours",
+                        ),
+                        3604..3616,
+                    ),
                 ),
                 3604..3616,
             ),
@@ -1663,8 +2091,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "- minutes",
+                Comment(
+                    (
+                        DocString(
+                            "- minutes",
+                        ),
+                        3616..3630,
+                    ),
                 ),
                 3616..3630,
             ),
@@ -1674,8 +2107,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "- seconds",
+                Comment(
+                    (
+                        DocString(
+                            "- seconds",
+                        ),
+                        3630..3644,
+                    ),
                 ),
                 3630..3644,
             ),
@@ -1902,6 +2340,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             3722..3766,
                         ),
+                        [],
                         None,
                     ),
                     3719..3766,
@@ -2110,8 +2549,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "### EXPERIMENTAL",
+                Comment(
+                    (
+                        DocString(
+                            "### EXPERIMENTAL",
+                        ),
+                        3873..3894,
+                    ),
                 ),
                 3873..3894,
             ),
@@ -2121,8 +2565,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Compares two dates.",
+                Comment(
+                    (
+                        DocString(
+                            "Compares two dates.",
+                        ),
+                        3894..3918,
+                    ),
                 ),
                 3894..3918,
             ),
@@ -2132,8 +2581,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        3918..3922,
+                    ),
                 ),
                 3918..3922,
             ),
@@ -2143,8 +2597,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns 1 if date_a is after date_b.",
+                Comment(
+                    (
+                        DocString(
+                            "Returns 1 if date_a is after date_b.",
+                        ),
+                        3922..3963,
+                    ),
                 ),
                 3922..3963,
             ),
@@ -2154,8 +2613,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        3963..3967,
+                    ),
                 ),
                 3963..3967,
             ),
@@ -2165,8 +2629,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns 0 if date_a and date_b is the same.",
+                Comment(
+                    (
+                        DocString(
+                            "Returns 0 if date_a and date_b is the same.",
+                        ),
+                        3967..4015,
+                    ),
                 ),
                 3967..4015,
             ),
@@ -2176,8 +2645,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        4015..4020,
+                    ),
                 ),
                 4015..4020,
             ),
@@ -2187,8 +2661,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns -1 if date_b is after date_a.",
+                Comment(
+                    (
+                        DocString(
+                            "Returns -1 if date_b is after date_a.",
+                        ),
+                        4020..4062,
+                    ),
                 ),
                 4020..4062,
             ),
@@ -2198,8 +2677,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        4062..4066,
+                    ),
                 ),
                 4062..4066,
             ),
@@ -2209,8 +2693,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If date_b is not provided, current date will be used.",
+                Comment(
+                    (
+                        DocString(
+                            "If date_b is not provided, current date will be used.",
+                        ),
+                        4066..4124,
+                    ),
                 ),
                 4066..4124,
             ),
@@ -2395,6 +2884,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             4233..4285,
                         ),
+                        [],
                         None,
                     ),
                     4230..4285,
@@ -2637,6 +3127,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             4413..4448,
                         ),
+                        [],
                         None,
                     ),
                     4410..4448,
@@ -2695,6 +3186,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             4456..4492,
                         ),
+                        [],
                         None,
                     ),
                     4453..4492,
@@ -2762,6 +3254,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             4500..4536,
                         ),
+                        [],
                         None,
                     ),
                     4497..4536,

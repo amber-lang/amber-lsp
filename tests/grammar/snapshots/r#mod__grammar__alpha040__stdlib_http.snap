@@ -31,8 +31,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Downloads a file from a given URL and saves it to a specified path using available command-line tools.",
+                Comment(
+                    (
+                        DocString(
+                            "Downloads a file from a given URL and saves it to a specified path using available command-line tools.",
+                        ),
+                        25..132,
+                    ),
                 ),
                 25..132,
             ),
@@ -42,8 +47,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        132..136,
+                    ),
                 ),
                 132..136,
             ),
@@ -53,8 +63,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "It checks for the availability of common command-line tools (`curl`, `wget`, and `aria2c`, in order) and uses the first available tool to perform the download.",
+                Comment(
+                    (
+                        DocString(
+                            "It checks for the availability of common command-line tools (`curl`, `wget`, and `aria2c`, in order) and uses the first available tool to perform the download.",
+                        ),
+                        136..300,
+                    ),
                 ),
                 136..300,
             ),
@@ -64,8 +79,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If none of the tools are available, the function returns `false`.",
+                Comment(
+                    (
+                        DocString(
+                            "If none of the tools are available, the function returns `false`.",
+                        ),
+                        300..370,
+                    ),
                 ),
                 300..370,
             ),

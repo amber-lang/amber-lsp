@@ -50,8 +50,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Checks if a directory exists.",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if a directory exists.",
+                        ),
+                        68..102,
+                    ),
                 ),
                 68..102,
             ),
@@ -219,8 +224,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Checks if a file exists.",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if a file exists.",
+                        ),
+                        208..237,
+                    ),
                 ),
                 208..237,
             ),
@@ -388,8 +398,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Gets file contents from a path.",
+                Comment(
+                    (
+                        DocString(
+                            "Gets file contents from a path.",
+                        ),
+                        344..380,
+                    ),
                 ),
                 344..380,
             ),
@@ -504,8 +519,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Writes content to a file.",
+                Comment(
+                    (
+                        DocString(
+                            "Writes content to a file.",
+                        ),
+                        436..466,
+                    ),
                 ),
                 436..466,
             ),
@@ -515,8 +535,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Doesn't check if the file exist",
+                Comment(
+                    (
+                        DocString(
+                            "Doesn't check if the file exist",
+                        ),
+                        466..502,
+                    ),
                 ),
                 466..502,
             ),
@@ -676,8 +701,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Appends content to a file.",
+                Comment(
+                    (
+                        DocString(
+                            "Appends content to a file.",
+                        ),
+                        585..616,
+                    ),
                 ),
                 585..616,
             ),
@@ -687,8 +717,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        616..620,
+                    ),
                 ),
                 616..620,
             ),
@@ -698,8 +733,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Doesn't check if the file exists.",
+                Comment(
+                    (
+                        DocString(
+                            "Doesn't check if the file exists.",
+                        ),
+                        620..658,
+                    ),
                 ),
                 620..658,
             ),
@@ -865,8 +905,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Creates a symbolic link.",
+                Comment(
+                    (
+                        DocString(
+                            "Creates a symbolic link.",
+                        ),
+                        743..772,
+                    ),
                 ),
                 743..772,
             ),
@@ -876,8 +921,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        772..776,
+                    ),
                 ),
                 772..776,
             ),
@@ -887,8 +937,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If the file doesn't exist, it returns a boolean and prints a message.",
+                Comment(
+                    (
+                        DocString(
+                            "If the file doesn't exist, it returns a boolean and prints a message.",
+                        ),
+                        776..850,
+                    ),
                 ),
                 776..850,
             ),
@@ -1109,6 +1164,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             921..1019,
                         ),
+                        [],
                         None,
                     ),
                     918..1019,
@@ -1215,8 +1271,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Creates a directory with all parent directories as required.",
+                Comment(
+                    (
+                        DocString(
+                            "Creates a directory with all parent directories as required.",
+                        ),
+                        1085..1150,
+                    ),
                 ),
                 1085..1150,
             ),
@@ -1383,6 +1444,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             1196..1260,
                         ),
+                        [],
                         None,
                     ),
                     1193..1260,
@@ -1394,8 +1456,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Sets a file as executable.",
+                Comment(
+                    (
+                        DocString(
+                            "Sets a file as executable.",
+                        ),
+                        1264..1295,
+                    ),
                 ),
                 1264..1295,
             ),
@@ -1405,8 +1472,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        1295..1299,
+                    ),
                 ),
                 1295..1299,
             ),
@@ -1416,8 +1488,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If the file doesn't exist, it returns a boolean and prints a message.",
+                Comment(
+                    (
+                        DocString(
+                            "If the file doesn't exist, it returns a boolean and prints a message.",
+                        ),
+                        1299..1373,
+                    ),
                 ),
                 1299..1373,
             ),
@@ -1632,6 +1709,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             1431..1518,
                         ),
+                        [],
                         None,
                     ),
                     1428..1518,
@@ -1738,8 +1816,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Changes the owner of a file.",
+                Comment(
+                    (
+                        DocString(
+                            "Changes the owner of a file.",
+                        ),
+                        1582..1615,
+                    ),
                 ),
                 1582..1615,
             ),
@@ -1749,8 +1832,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        1615..1619,
+                    ),
                 ),
                 1615..1619,
             ),
@@ -1760,8 +1848,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If the file doesn't exist, it returns `false`",
+                Comment(
+                    (
+                        DocString(
+                            "If the file doesn't exist, it returns `false`",
+                        ),
+                        1619..1669,
+                    ),
                 ),
                 1619..1669,
             ),
@@ -2013,6 +2106,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             1727..1837,
                         ),
+                        [],
                         None,
                     ),
                     1724..1837,
@@ -2119,8 +2213,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Escapes all characters in the passed-in glob except \"*\", \"?\" and \"/\",",
+                Comment(
+                    (
+                        DocString(
+                            "Escapes all characters in the passed-in glob except \"*\", \"?\" and \"/\",",
+                        ),
+                        1901..1975,
+                    ),
                 ),
                 1901..1975,
             ),
@@ -2130,8 +2229,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "to prevent injection attacks.",
+                Comment(
+                    (
+                        DocString(
+                            "to prevent injection attacks.",
+                        ),
+                        1975..2009,
+                    ),
                 ),
                 1975..2009,
             ),
@@ -2332,8 +2436,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Finds all files or directories matching multiple file globs. When",
+                Comment(
+                    (
+                        DocString(
+                            "Finds all files or directories matching multiple file globs. When",
+                        ),
+                        2113..2183,
+                    ),
                 ),
                 2113..2183,
             ),
@@ -2343,8 +2452,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "we have union types, this functionality can be merged into the main",
+                Comment(
+                    (
+                        DocString(
+                            "we have union types, this functionality can be merged into the main",
+                        ),
+                        2183..2255,
+                    ),
                 ),
                 2183..2255,
             ),
@@ -2354,8 +2468,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "`glob` function.",
+                Comment(
+                    (
+                        DocString(
+                            "`glob` function.",
+                        ),
+                        2255..2276,
+                    ),
                 ),
                 2255..2276,
             ),
@@ -2527,6 +2646,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             2353..2427,
                         ),
+                        [],
                         Some(
                             (
                                 Else(
@@ -2991,8 +3111,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Finds all files or directories matching a file glob.",
+                Comment(
+                    (
+                        DocString(
+                            "Finds all files or directories matching a file glob.",
+                        ),
+                        2760..2817,
+                    ),
                 ),
                 2760..2817,
             ),
@@ -3092,8 +3217,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Extract the file detecting from the filename the extension",
+                Comment(
+                    (
+                        DocString(
+                            "Extract the file detecting from the filename the extension",
+                        ),
+                        2895..2958,
+                    ),
                 ),
                 2895..2958,
             ),
@@ -3103,8 +3233,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Supports: bz2, gz, xz, bz2, deb, rar, rpm, tar(gz/xz/bz), zip(war/jar), 7z",
+                Comment(
+                    (
+                        DocString(
+                            "Supports: bz2, gz, xz, bz2, deb, rar, rpm, tar(gz/xz/bz), zip(war/jar), 7z",
+                        ),
+                        2958..3037,
+                    ),
                 ),
                 2958..3037,
             ),
@@ -3114,8 +3249,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Note: Not all the commands supports the output folder path",
+                Comment(
+                    (
+                        DocString(
+                            "Note: Not all the commands supports the output folder path",
+                        ),
+                        3037..3100,
+                    ),
                 ),
                 3037..3100,
             ),
@@ -5388,6 +5528,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             ),
                             3163..4260,
                         ),
+                        [],
                         Some(
                             (
                                 Else(

@@ -6,8 +6,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns index of the first value found in the specified array.",
+                Comment(
+                    (
+                        DocString(
+                            "Returns index of the first value found in the specified array.",
+                        ),
+                        0..67,
+                    ),
                 ),
                 0..67,
             ),
@@ -17,8 +22,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "",
+                Comment(
+                    (
+                        DocString(
+                            "",
+                        ),
+                        67..71,
+                    ),
                 ),
                 67..71,
             ),
@@ -28,8 +38,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "If the value is not found, the function returns -1.",
+                Comment(
+                    (
+                        DocString(
+                            "If the value is not found, the function returns -1.",
+                        ),
+                        71..127,
+                    ),
                 ),
                 71..127,
             ),
@@ -210,6 +225,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                 ),
                                                 212..281,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         209..281,
@@ -257,8 +273,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Searches for a value in an array and returns an array with the index of the various items.",
+                Comment(
+                    (
+                        DocString(
+                            "Searches for a value in an array and returns an array with the index of the various items.",
+                        ),
+                        305..400,
+                    ),
                 ),
                 305..400,
             ),
@@ -466,6 +487,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                 ),
                                                 514..588,
                                             ),
+                                            [],
                                             None,
                                         ),
                                         511..588,
@@ -504,8 +526,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Checks if a value is in the array.",
+                Comment(
+                    (
+                        DocString(
+                            "Checks if a value is in the array.",
+                        ),
+                        616..655,
+                    ),
                 ),
                 616..655,
             ),
@@ -647,8 +674,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns the first element in the array; if the array is empty, the return",
+                Comment(
+                    (
+                        DocString(
+                            "Returns the first element in the array; if the array is empty, the return",
+                        ),
+                        762..840,
+                    ),
                 ),
                 762..840,
             ),
@@ -658,8 +690,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "value is undefined.",
+                Comment(
+                    (
+                        DocString(
+                            "value is undefined.",
+                        ),
+                        840..864,
+                    ),
                 ),
                 840..864,
             ),
@@ -739,8 +776,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Returns the last element in the array; if the array is empty, the return",
+                Comment(
+                    (
+                        DocString(
+                            "Returns the last element in the array; if the array is empty, the return",
+                        ),
+                        916..993,
+                    ),
                 ),
                 916..993,
             ),
@@ -750,8 +792,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "value is undefined.",
+                Comment(
+                    (
+                        DocString(
+                            "value is undefined.",
+                        ),
+                        993..1017,
+                    ),
                 ),
                 993..1017,
             ),
@@ -885,8 +932,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Removes an element at the index from the array; if the index is negative",
+                Comment(
+                    (
+                        DocString(
+                            "Removes an element at the index from the array; if the index is negative",
+                        ),
+                        1103..1180,
+                    ),
                 ),
                 1103..1180,
             ),
@@ -896,8 +948,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "or beyond the end, the return value is undefined, but the array will be",
+                Comment(
+                    (
+                        DocString(
+                            "or beyond the end, the return value is undefined, but the array will be",
+                        ),
+                        1180..1256,
+                    ),
                 ),
                 1180..1256,
             ),
@@ -907,8 +964,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "unchanged.",
+                Comment(
+                    (
+                        DocString(
+                            "unchanged.",
+                        ),
+                        1256..1271,
+                    ),
                 ),
                 1256..1271,
             ),
@@ -1149,8 +1211,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Removes an element at the index from the array, and returns it; if the",
+                Comment(
+                    (
+                        DocString(
+                            "Removes an element at the index from the array, and returns it; if the",
+                        ),
+                        1440..1515,
+                    ),
                 ),
                 1440..1515,
             ),
@@ -1160,8 +1227,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "index is negative or beyond the end, the return value is undefined, but",
+                Comment(
+                    (
+                        DocString(
+                            "index is negative or beyond the end, the return value is undefined, but",
+                        ),
+                        1515..1591,
+                    ),
                 ),
                 1515..1591,
             ),
@@ -1171,8 +1243,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "the array will be unchanged.",
+                Comment(
+                    (
+                        DocString(
+                            "the array will be unchanged.",
+                        ),
+                        1591..1624,
+                    ),
                 ),
                 1591..1624,
             ),
@@ -1461,8 +1538,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Removes the last element from the array, and returns it; if the array",
+                Comment(
+                    (
+                        DocString(
+                            "Removes the last element from the array, and returns it; if the array",
+                        ),
+                        1829..1903,
+                    ),
                 ),
                 1829..1903,
             ),
@@ -1472,8 +1554,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "is empty, the return value is undefined, but the array will be unchanged.",
+                Comment(
+                    (
+                        DocString(
+                            "is empty, the return value is undefined, but the array will be unchanged.",
+                        ),
+                        1903..1981,
+                    ),
                 ),
                 1903..1981,
             ),
@@ -1707,8 +1794,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "Removes the first element from the array, and returns it; if the array",
+                Comment(
+                    (
+                        DocString(
+                            "Removes the first element from the array, and returns it; if the array",
+                        ),
+                        2148..2223,
+                    ),
                 ),
                 2148..2223,
             ),
@@ -1718,8 +1810,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
     (
         Statement(
             (
-                DocString(
-                    "is empty, the return value is undefined, but the array will be unchanged.",
+                Comment(
+                    (
+                        DocString(
+                            "is empty, the return value is undefined, but the array will be unchanged.",
+                        ),
+                        2223..2301,
+                    ),
                 ),
                 2223..2301,
             ),

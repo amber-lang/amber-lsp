@@ -7,7 +7,6 @@ use super::{expressions::parse_expr, AmberParser, Spanned, Statement};
 pub mod block;
 pub mod comment;
 pub mod const_init;
-pub mod doc_string;
 pub mod failed;
 pub mod if_cond;
 pub mod keywords;
@@ -22,8 +21,7 @@ pub mod var_set;
 pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
     recursive(|stmnt| {
         choice((
-            doc_string::doc_string_parser(),
-            comment::comment_parser(),
+            comment::comment_parser().map_with(|com, e| (Statement::Comment(com), e.span())),
             shebang::shebang_parser(),
             var_init::var_init_parser(stmnt.clone()),
             var_set::var_set_parser(stmnt.clone()),
