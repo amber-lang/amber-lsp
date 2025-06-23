@@ -58,7 +58,8 @@ jobs:
       - name: Install Amber
         shell: bash
         run: |
-          sudo apt install bc
+          sudo apt-get update
+          sudo apt-get install -y bc
           bash <(curl -sL "https://github.com/amber-lang/amber/releases/download/0.4.0-alpha/install.sh")
 
       - name: Test coverage
