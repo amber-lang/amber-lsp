@@ -26,6 +26,8 @@ jobs:
         run: cargo fmt --all -- --check
 
   test:
+    needs:
+      - quality-check
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -47,6 +49,9 @@ jobs:
         run: cargo nextest run --no-fail-fast --hide-progress-bar --status-level fail
 
   coverage:
+    needs:
+      - quality-check
+      - test
     runs-on: ubuntu-latest
     container:
       image: xd009642/tarpaulin:develop-nightly
@@ -61,9 +66,12 @@ jobs:
           apt-get update
           apt-get install -y bc
           bash -- <(curl -sL "https://github.com/amber-lang/amber/releases/download/0.4.0-alpha/install.sh") --user
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Test coverage
-        run: ./run_coverage.ab xml
+        run: |
+          echo $GITHUB_PATH
+          ./run_coverage.ab xml
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
