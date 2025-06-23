@@ -1,0 +1,48 @@
+#!/usr/bin/env amber
+
+import { echo_error, env_var_set, echo_success, env_var_get } from "std/env"
+import { starts_with } from "std/text"
+
+fun open_html_report() {
+    let os = trust env_var_get("OSTYPE")
+
+    let open_html_command = "start" // windows command
+
+    if {
+        starts_with(os, "linux"): open_html_command = "xdg-open"
+        starts_with(os, "darwin"): open_html_command = "open"
+    }
+
+    let cov_file_path = "coverage_output/tarpaulin-report.html"
+
+    echo "Coverage results can be seen at {cov_file_path}"
+
+    trust $ {open_html_command} {cov_file_path} $
+}
+
+main(specified_output_formats) {
+    // Ensure necessary components are installed
+    silent $ cargo tarpaulin -V $ failed {
+        $ cargo install cargo-tarpaulin $?
+    }
+
+    trust env_var_set("CARGO_TARPAULIN_CONFIG_FILE", "./Tarpaulin.toml")
+
+    let output_format = "Html"
+
+    // First arg is "bash"
+    if len(specified_output_formats) > 1 {
+        output_format = specified_output_formats[1]
+    }
+
+    // Running code coverage analysis
+    trust $ cargo tarpaulin -o {output_format} $
+
+    let coverage_result_status = status
+
+    if output_format == "Html" {
+        open_html_report()
+    }
+
+    exit coverage_result_status
+}

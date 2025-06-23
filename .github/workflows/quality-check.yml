@@ -46,19 +46,22 @@ jobs:
       - name: Run tests
         run: cargo nextest run --no-fail-fast --hide-progress-bar --status-level fail
 
-  # Figure out how to improve speed of miri tests
-  # miri:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+  coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Set up Rust
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: nightly
-  #         override: true
-  #         components: miri, rust-src
+      - name: Install Amber
+        run: bash <(curl -sL "https://github.com/amber-lang/amber/releases/download/0.4.0-alpha/install.sh")
 
-  #     - name: Run Miri tests
-  #       run: cargo miri test --all-features --verbose
+      - name: Test coverage
+        run: ./run_coverage.ab xml
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true

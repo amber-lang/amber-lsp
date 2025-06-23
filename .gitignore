@@ -17,7 +17,6 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-
 # Added by cargo
 /target
 
@@ -29,3 +28,11 @@ test.*
 
 # VsCode extension
 *.vsix
+
+# Code coverage
+*.profraw
+coverage_output
+
+# Locally generated scripts. We should only have amber scripts in repo.
+# This exclusion helps to not commit built amber scripts.
+*.sh

@@ -1,0 +1,10 @@
+[test_config]
+# Fail immediately after a single test fails.
+fail-immediately = true
+
+# Directory where reports will be saved
+output-dir = "./coverage_output"
+
+fail-under = 80.0
+
+exclude-files = ["src/main.rs", "src/fs.rs", "src/utils.rs", "src/files.rs"]
