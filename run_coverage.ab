@@ -1,6 +1,6 @@
 #!/usr/bin/env amber
 
-import { echo_error, env_var_set, echo_success, env_var_get } from "std/env"
+import { env_var_set, env_var_get } from "std/env"
 import { starts_with } from "std/text"
 
 fun open_html_report() {

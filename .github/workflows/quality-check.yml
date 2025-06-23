@@ -69,9 +69,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Test coverage
-        run: |
-          echo $GITHUB_PATH
-          ./run_coverage.ab xml
+        run: ./run_coverage.ab xml
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
