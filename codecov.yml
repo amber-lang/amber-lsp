@@ -1,16 +1,19 @@
+codecov:
+  branch: code-coverage
+
 flags:
   0.3.4-alpha:
     paths:
-      - src/grammar/alpha034
-      - src/analysis/alpha034
+      - src/grammar/alpha034/
+      - src/analysis/alpha034/
   0.3.5-alpha:
     paths:
-      - src/grammar/alpha035
-      - src/analysis/alpha035
+      - src/grammar/alpha035/
+      - src/analysis/alpha035/
   0.4.0-alpha:
     paths:
-      - src/grammar/alpha040
-      - src/analysis/alpha040
+      - src/grammar/alpha040/
+      - src/analysis/alpha040/
 
 coverage:
   status:
