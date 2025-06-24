@@ -46,6 +46,8 @@ You can test code coverage via `run_coverage.ab` script, which will display resu
 
 We require 80% code coverage.
 
+[![codecov](https://codecov.io/gh/amber-lang/amber-lsp/graph/badge.svg?token=DWX5GL9U8O)](https://codecov.io/gh/amber-lang/amber-lsp)
+
 ### Running lsp
 
 Server for now communicates only via stdio.
