@@ -54,22 +54,17 @@ jobs:
       - test
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/amber-lang/amber:alpine-0.4.0-alpha
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install stable Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      - name: Install tarpaulin
-        run: cargo install cargo-tarpaulin
-
       - name: Test coverage
-        run: ./run_coverage.ab xml
+        uses: ghcr.io/amber-lang/amber:alpine-0.4.0-alpha
+        with:
+          args: |
+            ./run_coverage.ab xml
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
