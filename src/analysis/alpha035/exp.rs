@@ -70,7 +70,7 @@ pub fn analyze_exp(
                     vec![]
                 }
                 None => {
-                    files.report_error(&file, &format!("{} is not defined", name), *name_span);
+                    files.report_error(&file, &format!("{} is not defined", name), *exp_span);
 
                     vec![]
                 }
@@ -138,6 +138,7 @@ pub fn analyze_exp(
                 .filter(|(_, is_optional, _)| !*is_optional)
                 .count()
                 > args.len()
+                && fun_symbol.is_some()
             {
                 files.report_error(
                     &file,
@@ -263,7 +264,13 @@ pub fn analyze_exp(
             );
 
             match get_symbol_definition_info(files, name, &file, name_span.start) {
-                Some(info) => info.data_type,
+                Some(info) => {
+                    if matches!(info.symbol_type, SymbolType::Function(_)) {
+                        files.report_error(&file, &format!("{} is a function.", name), *name_span);
+                    }
+
+                    info.data_type
+                }
                 None => DataType::Null,
             }
         }
