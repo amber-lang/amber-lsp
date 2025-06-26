@@ -60,11 +60,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Test coverage
+      - name: Build script
         uses: docker://ghcr.io/amber-lang/amber:alpine-0.4.0-alpha
         with:
           args: |
-            ./run_coverage.ab xml
+            build ./run_coverage.ab ./run_coverage.sh
+
+      - name: Test coverage
+        run: ./run_coverage.sh xml
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
