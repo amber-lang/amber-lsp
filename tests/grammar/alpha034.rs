@@ -64,6 +64,7 @@ fn test_variable_get() {
 fn test_number() {
     assert_debug_snapshot!(parse_unwrap(&tokenize("1")));
     assert_debug_snapshot!(parse_unwrap(&tokenize("1.0")));
+    assert_debug_snapshot!(parse_unwrap(&tokenize(".23")));
     assert_debug_snapshot!(parse_unwrap(&tokenize("-1.0")));
     assert_debug_snapshot!(parse_unwrap(&tokenize("-1.24")));
     assert_debug_snapshot!(parse_unwrap(&tokenize("-5")));

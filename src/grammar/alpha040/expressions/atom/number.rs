@@ -20,15 +20,17 @@ pub fn number_parser<'a>() -> impl AmberParser<'a, Spanned<Expression>> {
         Ok(word)
     });
 
-    int.then(just(T!['.']).ignore_then(int).or_not())
-        .map(|(int, float)| {
-            let float = float.unwrap_or('0'.to_string());
-
-            format!("{}.{}", int, float)
-        })
-        .from_str::<f32>()
-        .unwrapped()
-        .map_with(|num, e| (Expression::Number((num, e.span())), e.span()))
-        .boxed()
-        .labelled("number")
+    choice((
+        int.then(just(T!['.']).ignore_then(int))
+            .map(|(int, float)| format!("{}.{}", int, float)),
+        just(T!['.'])
+            .ignore_then(int)
+            .map(|float| format!("0.{}", float)),
+        int.map(|int| format!("{}.0", int)),
+    ))
+    .from_str::<f32>()
+    .unwrapped()
+    .map_with(|num, e| (Expression::Number((num, e.span())), e.span()))
+    .boxed()
+    .labelled("number")
 }
