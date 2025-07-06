@@ -5,7 +5,7 @@ fun target_to_valid_vsce_target(target: Text): Text {
 
     if {
         ends_with(target, "apple-darwin"): prefix = "darwin"
-        ends_with(target, "windwos-msvc"): prefix = "win32"
+        ends_with(target, "windows-msvc"): prefix = "win32"
     }
 
     let suffix = "arm64"
