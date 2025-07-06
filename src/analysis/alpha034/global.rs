@@ -120,7 +120,7 @@ pub async fn analyze_global_stmnt(
                             backend.files.report_error(
                                 &(file_id, file_version),
                                 &format!(
-                                    "Function returns type {return_type:?}, but expected {ty:?}"
+                                    "Function returns type {return_type:?}, but expected {ty:?}",
                                 ),
                                 *ty_span,
                             );
