@@ -239,7 +239,7 @@ impl Display for GenericsMap {
         collection.sort_unstable_by_key(|(id, _)| *id);
 
         for (_, s) in collection {
-            writeln!(f, "{}", s)?;
+            writeln!(f, "{s}")?;
         }
 
         Ok(())

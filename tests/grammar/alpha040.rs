@@ -32,7 +32,7 @@ fn parse(
 fn parse_unwrap(tokens: &[Spanned<Token>]) -> Vec<Spanned<GlobalStatement>> {
     let (ast, errors) = parse(tokens);
     if !errors.is_empty() {
-        panic!("Errors: {:?}", errors);
+        panic!("Errors: {errors:?}");
     }
     ast.unwrap()
 }

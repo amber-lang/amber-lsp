@@ -22,11 +22,11 @@ pub fn number_parser<'a>() -> impl AmberParser<'a, Spanned<Expression>> {
 
     choice((
         int.then(just(T!['.']).ignore_then(int))
-            .map(|(int, float)| format!("{}.{}", int, float)),
+            .map(|(int, float)| format!("{int}.{float}")),
         just(T!['.'])
             .ignore_then(int)
-            .map(|float| format!("0.{}", float)),
-        int.map(|int| format!("{}.0", int)),
+            .map(|float| format!("0.{float}")),
+        int.map(|int| format!("{int}.0")),
     ))
     .from_str::<f32>()
     .unwrapped()

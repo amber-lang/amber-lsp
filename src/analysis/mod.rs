@@ -102,7 +102,7 @@ impl SymbolInfo {
                     if compiler_flags_str.is_empty() {
                         "".to_string()
                     } else {
-                        format!("{}\n", compiler_flags_str)
+                        format!("{compiler_flags_str}\n")
                     },
                     if *is_public { "pub " } else { "" },
                     self.name,
@@ -372,7 +372,7 @@ pub fn insert_symbol_reference(
         None => {
             files.report_error(
                 &reference_location.file,
-                &format!("\"{}\" is not defined", symbol),
+                &format!("\"{symbol}\" is not defined"),
                 (reference_location.start..reference_location.end).into(),
             );
 

@@ -143,12 +143,12 @@ pub fn analyze_exp(
                     .map(|(arg, _)| (arg.data_type.clone(), arg.is_optional, arg.is_ref))
                     .collect::<Vec<(DataType, bool, bool)>>(),
                 Some(_) => {
-                    files.report_error(&file, &format!("{} is not a function", name), *exp_span);
+                    files.report_error(&file, &format!("{name} is not a function"), *exp_span);
 
                     vec![]
                 }
                 None => {
-                    files.report_error(&file, &format!("{} is not defined", name), *exp_span);
+                    files.report_error(&file, &format!("{name} is not defined"), *exp_span);
 
                     vec![]
                 }
@@ -350,7 +350,7 @@ pub fn analyze_exp(
             match get_symbol_definition_info(files, name, &file, name_span.start) {
                 Some(info) => {
                     if matches!(info.symbol_type, SymbolType::Function(_)) {
-                        files.report_error(&file, &format!("{} is a function", name), *name_span);
+                        files.report_error(&file, &format!("{name} is a function"), *name_span);
                     }
 
                     info.data_type

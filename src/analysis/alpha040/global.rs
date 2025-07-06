@@ -213,8 +213,7 @@ pub async fn analyze_global_stmnt(
                             backend.files.report_error(
                                 &(file_id, file_version),
                                 &format!(
-                                    "Function returns type {:?}, but expected {:?}",
-                                    inferred_return_type, ty
+                                    "Function returns type {inferred_return_type:?}, but expected {ty:?}"
                                 ),
                                 *ty_span,
                             );
@@ -394,7 +393,7 @@ pub async fn analyze_global_stmnt(
                             if import_context.imported_symbols.contains(&ident.to_string()) {
                                 backend.files.report_error(
                                     &(file_id, file_version),
-                                    &format!("Duplicate import '{}'", ident),
+                                    &format!("Duplicate import '{ident}'"),
                                     *span,
                                 );
 
@@ -466,7 +465,7 @@ pub async fn analyze_global_stmnt(
                                 None => {
                                     backend.files.report_error(
                                         &(file_id, file_version),
-                                        &format!("Could not resolve '{}'", ident),
+                                        &format!("Could not resolve '{ident}'"),
                                         *span,
                                     );
 

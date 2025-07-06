@@ -13,7 +13,10 @@ import {
 	ServerOptions,
 	Trace,
 } from 'vscode-languageclient/node';
-import { platform } from 'os'
+import { platform, tmpdir } from 'os'
+import { join } from 'path';
+import { readdir, readFile } from 'fs/promises';
+import axios from 'axios';
 
 let client: LanguageClient;
 
@@ -65,32 +68,33 @@ export function activate(context: ExtensionContext) {
 					return { action: CloseAction.Restart, handled: true };
 				}
 
+				const logsDir = join(tmpdir(), 'amber-lsp')
+				const lastLogFileName = await readdir(logsDir, { withFileTypes: true })
+					.then((files) =>
+							files
+								.filter((file) => file.isFile() && file.name.startsWith('amber-lsp.log'))
+								.sort()
+								.at(-1)
+								.name
+							);
 
-				// TODO: Uncomment when endpoint is available
-				// const logsDir = join(tmpdir(), 'amber-lsp')
-				// const lastLogFileName = await readdir(logsDir, { withFileTypes: true })
-				// 	.then((files) =>
-				// 			files
-				// 				.filter((file) => file.isFile() && file.name.startsWith('amber-lsp.log'))
-				// 				.sort()
-				// 				.at(-1)
-				// 				.name
-				// 			);
+				if (!lastLogFileName) {
+					window.showErrorMessage("No log file found. Please report the issue to github.com/amber-lang/amber-lsp/issues");
+					return { action: CloseAction.DoNotRestart, handled: true };
+				}
 
-				// if (!lastLogFileName) {
-				// 	window.showErrorMessage("No log file found. Please report the issue to github.com/amber-lang/amber-lsp/issues");
-				// 	return { action: CloseAction.DoNotRestart, handled: true };
-				// }
+				const logs = await readFile(join(logsDir, lastLogFileName)).then((data) => {
+					const logs = data.toString().split('\n');
+					return logs.slice(-10).join('\n');
+				});
 
-				// const lastHundredLogLines = await readFile(join(logsDir, lastLogFileName)).then((data) => {
-				// 	const logs = data.toString().split('\n');
-				// 	return logs.slice(-100).join('\n');
-				// });
+				await axios.post('https://docs.amber-lang.com/api/amber-lsp/crash-report', {
+				  logs,
+          editor: 'vscode',
+          os: platform(),
+          lspVersion: '0.1.4-alpha',
+				})
 
-				// const res = await axios.post('https://amber-lang.com/api/amber-lsp/crash-report', {
-				// 	logs: lastHundredLogLines,
-				// })
-				
 				window.showInformationMessage("Crash report sent successfully. Thank you for helping us improve Amber!");
 				return { action: CloseAction.DoNotRestart, handled: true };
 			}
@@ -110,7 +114,7 @@ export function activate(context: ExtensionContext) {
 		if (!changes || !changes.range.isEmpty || changes.text.length > 1) {
 			return
 		}
-	
+
 		if (changes && /[a-zA-Z]|\.|\//.test(changes.text)) {
 			const position = changes.range.start;
 			const lineText = document.lineAt(position.line).text;

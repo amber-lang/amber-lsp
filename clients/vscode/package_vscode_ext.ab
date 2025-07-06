@@ -1,0 +1,28 @@
+import { starts_with, ends_with } from "std/text"
+
+fun target_to_valid_vsce_target(target: Text): Text {
+    let prefix = "linux"
+
+    if {
+        ends_with(target, "apple-darwin"): prefix = "darwin"
+        ends_with(target, "windwos-msvc"): prefix = "win32"
+    }
+
+    let suffix = "arm64"
+
+    if starts_with(target, "x86_64") {
+        suffix = "x64"
+    }
+
+    return "{prefix}-{suffix}"
+}
+
+main (args) {
+    let target = target_to_valid_vsce_target(args[1])
+
+    $ vsce package -o amber-ext-{target}.vsce --target {target} $?
+
+    if args[2] == "publish" {
+        $ vsce publish --target {target} $?
+    }
+}

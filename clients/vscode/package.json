@@ -4,9 +4,10 @@
 	"author": "KrosFire",
 	"license": "MIT",
 	"version": "1.0.0",
+	"publisher": "amber-lsp-publisher",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/KrosFire/amber-lsp"
+		"url": "https://github.com/amber-lang/amber-lsp"
 	},
 	"categories": [],
 	"keywords": [

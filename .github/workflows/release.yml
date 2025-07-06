@@ -196,14 +196,14 @@ jobs:
           path: |
             ${{ steps.cargo-dist.outputs.paths }}
             ${{ env.BUILD_MANIFEST_NAME }}
-  
+
   # Package the VSCode extension
   package-vscode-extension:
     needs:
       - plan
       - build-local-artifacts
       - build-global-artifacts
-    
+
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix }}
@@ -228,7 +228,7 @@ jobs:
       - name: Fetch local artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: artifacts-build-local-${{ join(matrix.targets, '_') }}
+          pattern: artifacts-build-local-${{ matrix.targets }}
           path: clients/vscode/out/
           merge-multiple: true
 
@@ -245,16 +245,24 @@ jobs:
           done
         working-directory: clients/vscode/out
 
-      - name: Package extension
-        run:  vsce package -o amber-ext-${{ join(matrix.targets, '_') }}.vsix
+      - name: Build script
+        uses: docker://ghcr.io/amber-lang/amber:alpine-0.4.0-alpha
+        with:
+          args: |
+            build ./clients/vscode/package_vscode_ext.ab ./clients/vscode/package_vscode_ext.sh
+
+      - name: Package and publish extension
+        run: ./package_vscode_ext.sh ${{ matrix.targets }} publish
         working-directory: clients/vscode
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Upload .vsix as artifact
         uses: actions/upload-artifact@v4
         with:
           name: artifacts-vscode-extension-${{ join(matrix.targets, '_') }}
           path: clients/vscode/amber-ext-${{ join(matrix.targets, '_') }}.vsix
-  
+
   # Determines if we should publish/announce
   host:
     needs:

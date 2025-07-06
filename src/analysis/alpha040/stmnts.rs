@@ -977,7 +977,7 @@ pub fn analyze_stmnt(
 fn handle_doc_strings(docs: &String, contexts: &mut Vec<Context>) -> StmntAnalysisResult {
     match contexts.last() {
         Some(Context::DocString(doc_string)) => {
-            let new_doc_string = format!("{}\n{}", doc_string, docs);
+            let new_doc_string = format!("{doc_string}\n{docs}");
             *contexts.last_mut().unwrap() = Context::DocString(new_doc_string);
         }
         _ => {
