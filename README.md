@@ -50,10 +50,26 @@ We require 80% code coverage.
 
 ### Running lsp
 
+To run the server just use command `cargo run` or build the project with `cargo build` and find the `amber-lsp` executable in the `target` directory.
+
 Server for now communicates only via stdio.
+
+You can check usage of the command with `-h` flag:
+```sh
+amber-lsp -h
+
+Usage: amber-lsp [OPTIONS]
+
+Options:
+  -a, --amber-version <AMBER_VERSION>  Version of the Amber language to use [default: auto] [possible values: auto, 0.3.4-alpha, 0.3.5-alpha, 0.4.0-alpha]
+  -h, --help                           Print help
+  -V, --version                        Print version
+```
 
 If you're using VsCode, you can test the extension by running pre defined script
 "Run Extension (Release Build)" in tests tab.
 
 If you're using Zed, you need to clone [Zed extension repo](https://github.com/amber-lang/amber-zed) and change "cached_binary_path"
 to local Amber LSP server binary.
+
+If you want to connect the server to some other editor, build the project and link to the executable
