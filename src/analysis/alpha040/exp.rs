@@ -1,7 +1,6 @@
 use std::vec;
 
 use chumsky::span::SimpleSpan;
-use tracing::info;
 
 use crate::{
     analysis::{
@@ -90,8 +89,6 @@ pub fn analyze_exp(
 
             is_propagating_failure |= prop;
             return_types.extend(index_return_ty);
-
-            info!("array_ty: {}", array_ty.to_string(scoped_generic_types));
 
             match array_ty {
                 DataType::Generic(id) => match scoped_generic_types.get_recursive(id) {

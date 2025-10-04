@@ -1,4 +1,9 @@
-use std::{env::temp_dir, future::Future, path::PathBuf, pin::Pin};
+use std::{
+    env::{current_exe, temp_dir},
+    future::Future,
+    path::PathBuf,
+    pin::Pin,
+};
 
 use clap::builder::OsStr;
 use include_dir::{include_dir, Dir, DirEntry};
@@ -9,22 +14,44 @@ use crate::backend::{AmberVersion, Backend};
 
 pub const STDLIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/");
 
-pub fn is_builtin_file(uri: &Uri) -> bool {
-    let cache_dir = temp_dir().join("amber-lsp");
+#[tracing::instrument]
+pub fn is_builtin_file(uri: &Uri, amber_version: AmberVersion) -> bool {
+    let path = match amber_version {
+        AmberVersion::Alpha034 => "alpha034/".to_string(),
+        AmberVersion::Alpha035 => "alpha035/".to_string(),
+        AmberVersion::Alpha040 => "alpha040/".to_string(),
+    };
+
+    let builtin_file_path = match current_exe() {
+        Ok(exe) => exe.parent().unwrap_or(&temp_dir()).to_path_buf(),
+        Err(_) => temp_dir(),
+    }
+    .join("amber-lsp-resources")
+    .join(path)
+    .join("builtin.ab")
+    .canonicalize();
 
     let file_path = match uri.to_file_path() {
-        Some(path) => path,
+        Some(path) => path.canonicalize(),
         None => {
             return false;
         }
     };
 
-    file_path.starts_with(cache_dir) && file_path.ends_with("builtin.ab")
+    if builtin_file_path.is_err() || file_path.is_err() {
+        return false;
+    }
+
+    file_path.unwrap() == builtin_file_path.unwrap()
 }
 
 #[tracing::instrument(skip_all)]
-async fn save_resources(backend: &Backend) -> PathBuf {
-    let cache_dir = temp_dir().join("amber-lsp");
+pub async fn save_resources(backend: &Backend) -> PathBuf {
+    let cache_dir = match current_exe() {
+        Ok(exe) => exe.parent().unwrap_or(&temp_dir()).to_path_buf(),
+        Err(_) => temp_dir(),
+    }
+    .join("amber-lsp-resources");
 
     let path = match backend.amber_version {
         AmberVersion::Alpha034 => "alpha034/".to_string(),

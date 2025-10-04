@@ -33,7 +33,7 @@ pub async fn analyze_global_stmnt(
 
     let mut default_imports = vec![];
 
-    if !is_builtin_file(&uri) {
+    if !is_builtin_file(&uri, backend.amber_version.clone()) {
         default_imports.push((
             GlobalStatement::Import(
                 (false, Span::new(0, 0)),

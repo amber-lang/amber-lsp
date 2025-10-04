@@ -18,7 +18,7 @@ use crate::files::{FileVersion, Files, DEFAULT_VERSION};
 use crate::fs::{LocalFs, FS};
 use crate::grammar::{self, Grammar, LSPAnalysis, ParserResponse};
 use crate::paths::FileId;
-use crate::stdlib::find_in_stdlib;
+use crate::stdlib::{find_in_stdlib, save_resources};
 
 type PinnedFuture<'a, T> = Pin<Box<dyn Future<Output = Result<T>> + Send + 'a>>;
 
@@ -316,6 +316,8 @@ impl Backend {
 
 impl LanguageServer for Backend {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
+        save_resources(self).await;
+
         Ok(InitializeResult {
             server_info: None,
             capabilities: ServerCapabilities {
