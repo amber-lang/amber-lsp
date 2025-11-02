@@ -4,12 +4,14 @@ use std::fmt::{self, Debug, Display};
 pub mod alpha034;
 pub mod alpha035;
 pub mod alpha040;
+pub mod alpha050;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Grammar {
     Alpha034(Option<Vec<Spanned<alpha034::GlobalStatement>>>),
     Alpha035(Option<Vec<Spanned<alpha035::GlobalStatement>>>),
     Alpha040(Option<Vec<Spanned<alpha040::GlobalStatement>>>),
+    Alpha050(Option<Vec<Spanned<alpha050::GlobalStatement>>>),
 }
 
 pub type Span = SimpleSpan;
