@@ -15,7 +15,7 @@ jobs:
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: "1.90.0"
           components: rustfmt, clippy
 
       - name: Cargo check
@@ -38,7 +38,7 @@ jobs:
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: "1.90.0"
 
       - name: Install nextest
         uses: taiki-e/install-action@nextest
