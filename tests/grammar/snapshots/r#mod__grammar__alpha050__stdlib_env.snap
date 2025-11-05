@@ -4380,7 +4380,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             3456..3461,
                         ),
                         (
-                            Num,
+                            Int,
                             3463..3466,
                         ),
                     ),
@@ -4397,7 +4397,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             3468..3470,
                         ),
                         (
-                            Num,
+                            Int,
                             3472..3475,
                         ),
                     ),
@@ -4414,7 +4414,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             3477..3479,
                         ),
                         (
-                            Num,
+                            Int,
                             3481..3484,
                         ),
                     ),
@@ -5131,7 +5131,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             3992..3997,
                         ),
                         (
-                            Num,
+                            Int,
                             3999..4002,
                         ),
                     ),

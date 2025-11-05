@@ -1,0 +1,102 @@
+---
+source: tests/analysis/alpha050.rs
+expression: symbol_table.symbols
+---
+{
+    5..=13: SymbolInfo {
+        name: "math_abs",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "num",
+                            data_type: Any,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        14..17,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+        span: 5..13,
+        contexts: [],
+    },
+    14..=17: SymbolInfo {
+        name: "num",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+        span: 14..17,
+        contexts: [],
+    },
+    28..=31: SymbolInfo {
+        name: "num",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+        span: 28..31,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    45..=48: SymbolInfo {
+        name: "num",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+        span: 45..48,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    60..=63: SymbolInfo {
+        name: "num",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+        span: 60..63,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+}

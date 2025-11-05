@@ -1,56 +1,52 @@
 import { match_regex, join, replace_regex, split, trim } from "std/text"
 
 /// Checks if a directory exists.
-pub fun dir_exists(path) {
-    $ [ -d "{path}" ] $ failed {
-        return false
-    }
-    return true
+pub fun dir_exists(path: Text): Bool {
+    trust $ [ -d "{path}" ] $
+    return status == 0
 }
 
 /// Checks if a file exists.
-pub fun file_exists(path) {
-    $ [ -f "{path}" ] $ failed {
-        return false
-    }
-    return true
+pub fun file_exists(path: Text): Bool {
+    trust $ [ -f "{path}" ] $
+    return status == 0
 }
 
 /// Gets file contents from a path.
-pub fun file_read(path) {
+pub fun file_read(path: Text): Text? {
     return $ < "{path}" $?
 }
 
 /// Writes content to a file.
 /// Doesn't check if the file exist
-pub fun file_write(path, content) {
+pub fun file_write(path: Text, content: Text): Text? {
     return $ echo "{content}" > "{path}" $?
 }
 
 /// Appends content to a file.
 ///
 /// Doesn't check if the file exists.
-pub fun file_append(path, content) {
+pub fun file_append(path: Text, content: Text): Text? {
     return $ echo "{content}" >> "{path}" $?
 }
 
 /// Creates a symbolic link.
 ///
-/// If the file doesn't exist, it returns a boolean and prints a message.
-pub fun symlink_create(origin: Text, destination: Text): Bool {
+/// If the file doesn't exist, it fails and prints a message.
+pub fun symlink_create(origin: Text, destination: Text): Null? {
     if file_exists(origin) {
-        trust $ ln -s "{origin}" "{destination}" $
-        return true
+        $ ln -s "{origin}" "{destination}" $?
+        return null
     }
 
     echo "The file {origin} doesn't exist!"
-    return false
+    fail 1
 }
 
 /// Creates a directory with all parent directories as required.
-pub fun dir_create(path: Text): Null {
+pub fun dir_create(path: Text): Null? {
     if not dir_exists(path) {
-        trust $ mkdir -p "{path}" $
+        $ mkdir -p "{path}" $?
     }
 }
 
@@ -66,10 +62,10 @@ fun is_mac_os_mktemp(): Bool {
 /// Create a temporary directory and return the path.
 /// Please note this does not respect _CS_DARWIN_USER_TEMP_DIR environment variable.
 pub fun temp_dir_create(
-        template: Text = "tmp.XXXXXXXXXX",
-        auto_delete: Bool = false,
-        force_delete: Bool = false
-    ): Text? {
+    template: Text = "tmp.XXXXXXXXXX",
+    auto_delete: Bool = false,
+    force_delete: Bool = false
+): Text? {
     if trim(template) == "" {
         echo "The template cannot be an empty string!"
         fail 1
@@ -103,28 +99,28 @@ pub fun temp_dir_create(
 
 /// Changes the permission bits of a file.
 ///
-/// If the file doesn't exist, it returns `false` and prints a message.
-pub fun file_chmod(path: Text, mode: Text): Bool {
+/// If the file doesn't exist, it fails and prints a message.
+pub fun file_chmod(path: Text, mode: Text): Null? {
     if file_exists(path) {
-        trust $ chmod "{mode}" "{path}" $
-        return true
+        $ chmod "{mode}" "{path}" $?
+        return null
     }
 
     echo "The file {path} doesn't exist!"
-    return false
+    fail 1
 }
 
 /// Changes the owner of a file.
 ///
-/// If the file doesn't exist, it returns `false` and prints a message.
-pub fun file_chown(path: Text, user: Text): Bool {
+/// If the file doesn't exist, it fails and prints a message.
+pub fun file_chown(path: Text, user: Text): Null? {
     if file_exists(path) or dir_exists(path) {
-        trust $ chown -R "{user}" "{path}" $
-        return true
+        $ chown -R "{user}" "{path}" $?
+        return null
     }
 
     echo "The file {path} doesn't exist!"
-    return false
+    fail 1
 }
 
 /// Escapes all characters in the passed-in glob except "*", "?" and "/",
@@ -135,7 +131,7 @@ fun escape_non_glob_chars(path: Text): Text {
 
 /// Finds all files or directories matching multiple file globs. When
 /// we have union types, this functionality can be merged into the main
-/// `glob` function.
+/// `file_glob` function.
 pub fun file_glob_all(paths: [Text]): [Text]? {
     let combined = ""
     if len(paths) == 1 {
@@ -148,7 +144,7 @@ pub fun file_glob_all(paths: [Text]): [Text]? {
         }
         combined = join(items, " ")
     }
-    let files = $ eval "for file in {combined}; do [ -e \\\"\\\$file\\\" ] && echo \\\"\\\$file\\\"; done" $?
+    let files = $ eval "for file in {combined}; do [ -e \\"\\\$file\\" ] && echo \\"\\\$file\\"; done" $?
     return split(files, "\n")
 }
 

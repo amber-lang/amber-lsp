@@ -1,0 +1,64 @@
+---
+source: tests/analysis/alpha050.rs
+expression: symbol_table.symbols
+---
+{
+    5..=18: SymbolInfo {
+        name: "starts_with_a",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "word",
+                            data_type: Any,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        19..23,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Bool,
+        is_definition: true,
+        undefined: false,
+        span: 5..18,
+        contexts: [],
+    },
+    19..=23: SymbolInfo {
+        name: "word",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+        span: 19..23,
+        contexts: [],
+    },
+    38..=42: SymbolInfo {
+        name: "word",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+        span: 38..42,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+}

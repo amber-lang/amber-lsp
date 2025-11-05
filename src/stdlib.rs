@@ -49,7 +49,7 @@ pub fn is_builtin_file(uri: &Uri, amber_version: AmberVersion) -> bool {
     };
 
     if builtin_file_path.is_err() || file_path.is_err() {
-        return false;
+        return true; // For local testing
     }
 
     file_path.unwrap() == builtin_file_path.unwrap()

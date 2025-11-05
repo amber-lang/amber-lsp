@@ -645,7 +645,7 @@ pub fn analyze_exp(
             let ExpAnalysisResult {
                 return_ty: return1,
                 is_propagating_failure: prop1,
-                ..
+                exp_ty: left_hand_ty,
             } = analyze_exp(
                 file_id,
                 file_version,
@@ -665,29 +665,48 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            let mut left_constrain_ty =
+                get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+
             let ExpAnalysisResult {
                 return_ty: return2,
                 is_propagating_failure: prop2,
-                ..
+                exp_ty: right_hand_ty,
             } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
-                DataType::Union(
-                    [
-                        DataType::Number,
-                        DataType::Int,
-                        DataType::Text,
-                        DataType::Array(Box::new(DataType::Union(
-                            [DataType::Number, DataType::Int, DataType::Text].to_vec(),
-                        ))),
-                    ]
-                    .to_vec(),
-                ),
+                left_constrain_ty.clone(),
                 files,
                 scoped_generic_types,
                 contexts,
             );
+
+            let right_constrain_ty =
+                get_constrain_ty_for_compare(right_hand_ty, scoped_generic_types);
+
+            if let DataType::Generic(id) = left_hand_ty {
+                scoped_generic_types.constrain_generic_type(id, right_constrain_ty.clone());
+                left_constrain_ty =
+                    get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+            }
+
+            if !matches_type(
+                &right_constrain_ty,
+                &left_constrain_ty,
+                scoped_generic_types,
+            ) {
+                files.report_error(
+                    &file,
+                    &format!(
+                        "Expected type {}, found type {}",
+                        right_constrain_ty.to_string(scoped_generic_types),
+                        left_constrain_ty.to_string(scoped_generic_types),
+                    ),
+                    exp1.1,
+                );
+            }
 
             is_propagating_failure |= prop1 || prop2;
             return_types.extend(return1);
@@ -699,7 +718,7 @@ pub fn analyze_exp(
             let ExpAnalysisResult {
                 return_ty: return1,
                 is_propagating_failure: prop1,
-                ..
+                exp_ty: left_hand_ty,
             } = analyze_exp(
                 file_id,
                 file_version,
@@ -719,29 +738,48 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            let mut left_constrain_ty =
+                get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+
             let ExpAnalysisResult {
                 return_ty: return2,
                 is_propagating_failure: prop2,
-                ..
+                exp_ty: right_hand_ty,
             } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
-                DataType::Union(
-                    [
-                        DataType::Number,
-                        DataType::Int,
-                        DataType::Text,
-                        DataType::Array(Box::new(DataType::Union(
-                            [DataType::Number, DataType::Int, DataType::Text].to_vec(),
-                        ))),
-                    ]
-                    .to_vec(),
-                ),
+                left_constrain_ty.clone(),
                 files,
                 scoped_generic_types,
                 contexts,
             );
+
+            let right_constrain_ty =
+                get_constrain_ty_for_compare(right_hand_ty, scoped_generic_types);
+
+            if let DataType::Generic(id) = left_hand_ty {
+                scoped_generic_types.constrain_generic_type(id, right_constrain_ty.clone());
+                left_constrain_ty =
+                    get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+            }
+
+            if !matches_type(
+                &right_constrain_ty,
+                &left_constrain_ty,
+                scoped_generic_types,
+            ) {
+                files.report_error(
+                    &file,
+                    &format!(
+                        "Expected type {}, found type {}",
+                        right_constrain_ty.to_string(scoped_generic_types),
+                        left_constrain_ty.to_string(scoped_generic_types),
+                    ),
+                    exp1.1,
+                );
+            }
 
             is_propagating_failure |= prop1 || prop2;
             return_types.extend(return1);
@@ -773,7 +811,7 @@ pub fn analyze_exp(
             let ExpAnalysisResult {
                 return_ty: return1,
                 is_propagating_failure: prop1,
-                ..
+                exp_ty: left_hand_ty,
             } = analyze_exp(
                 file_id,
                 file_version,
@@ -793,29 +831,48 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            let mut left_constrain_ty =
+                get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+
             let ExpAnalysisResult {
                 return_ty: return2,
                 is_propagating_failure: prop2,
-                ..
+                exp_ty: right_hand_ty,
             } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
-                DataType::Union(
-                    [
-                        DataType::Number,
-                        DataType::Int,
-                        DataType::Text,
-                        DataType::Array(Box::new(DataType::Union(
-                            [DataType::Number, DataType::Int, DataType::Text].to_vec(),
-                        ))),
-                    ]
-                    .to_vec(),
-                ),
+                left_constrain_ty.clone(),
                 files,
                 scoped_generic_types,
                 contexts,
             );
+
+            let right_constrain_ty =
+                get_constrain_ty_for_compare(right_hand_ty, scoped_generic_types);
+
+            if let DataType::Generic(id) = left_hand_ty {
+                scoped_generic_types.constrain_generic_type(id, right_constrain_ty.clone());
+                left_constrain_ty =
+                    get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+            }
+
+            if !matches_type(
+                &right_constrain_ty,
+                &left_constrain_ty,
+                scoped_generic_types,
+            ) {
+                files.report_error(
+                    &file,
+                    &format!(
+                        "Expected type {}, found type {}",
+                        right_constrain_ty.to_string(scoped_generic_types),
+                        left_constrain_ty.to_string(scoped_generic_types),
+                    ),
+                    exp1.1,
+                );
+            }
 
             is_propagating_failure |= prop1 || prop2;
             return_types.extend(return1);
@@ -827,7 +884,7 @@ pub fn analyze_exp(
             let ExpAnalysisResult {
                 return_ty: return1,
                 is_propagating_failure: prop1,
-                ..
+                exp_ty: left_hand_ty,
             } = analyze_exp(
                 file_id,
                 file_version,
@@ -847,29 +904,48 @@ pub fn analyze_exp(
                 scoped_generic_types,
                 contexts,
             );
+
+            let mut left_constrain_ty =
+                get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+
             let ExpAnalysisResult {
                 return_ty: return2,
                 is_propagating_failure: prop2,
-                ..
+                exp_ty: right_hand_ty,
             } = analyze_exp(
                 file_id,
                 file_version,
                 exp2,
-                DataType::Union(
-                    [
-                        DataType::Number,
-                        DataType::Int,
-                        DataType::Text,
-                        DataType::Array(Box::new(DataType::Union(
-                            [DataType::Number, DataType::Int, DataType::Text].to_vec(),
-                        ))),
-                    ]
-                    .to_vec(),
-                ),
+                left_constrain_ty.clone(),
                 files,
                 scoped_generic_types,
                 contexts,
             );
+
+            let right_constrain_ty =
+                get_constrain_ty_for_compare(right_hand_ty, scoped_generic_types);
+
+            if let DataType::Generic(id) = left_hand_ty {
+                scoped_generic_types.constrain_generic_type(id, right_constrain_ty.clone());
+                left_constrain_ty =
+                    get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+            }
+
+            if !matches_type(
+                &right_constrain_ty,
+                &left_constrain_ty,
+                scoped_generic_types,
+            ) {
+                files.report_error(
+                    &file,
+                    &format!(
+                        "Expected type {}, found type {}",
+                        right_constrain_ty.to_string(scoped_generic_types),
+                        left_constrain_ty.to_string(scoped_generic_types),
+                    ),
+                    exp1.1,
+                );
+            }
 
             is_propagating_failure |= prop1 || prop2;
             return_types.extend(return1);
@@ -1300,5 +1376,29 @@ pub fn analyze_exp(
         } else {
             Some(make_union_type(return_types))
         },
+    }
+}
+
+fn get_constrain_ty_for_compare(
+    constrain: DataType,
+    scoped_generic_types: &GenericsMap,
+) -> DataType {
+    match constrain.clone() {
+        DataType::Generic(id) => {
+            get_constrain_ty_for_compare(scoped_generic_types.get(id), scoped_generic_types)
+        }
+        DataType::Int => DataType::Union(vec![DataType::Int, DataType::Number]),
+        DataType::Number => DataType::Union(vec![DataType::Int, DataType::Number]),
+        DataType::Array(ty) => DataType::Array(Box::new(get_constrain_ty_for_compare(
+            *ty,
+            scoped_generic_types,
+        ))),
+        DataType::Union(types) => DataType::Union(
+            types
+                .iter()
+                .map(|ty| get_constrain_ty_for_compare(ty.clone(), scoped_generic_types))
+                .collect(),
+        ),
+        ty => ty,
     }
 }

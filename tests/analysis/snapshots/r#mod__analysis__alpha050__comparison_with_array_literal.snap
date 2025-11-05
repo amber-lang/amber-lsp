@@ -1,0 +1,64 @@
+---
+source: tests/analysis/alpha050.rs
+expression: symbol_table.symbols
+---
+{
+    5..=19: SymbolInfo {
+        name: "compare_arrays",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "arr",
+                            data_type: Any,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        20..23,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Bool,
+        is_definition: true,
+        undefined: false,
+        span: 5..19,
+        contexts: [],
+    },
+    20..=23: SymbolInfo {
+        name: "arr",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+        span: 20..23,
+        contexts: [],
+    },
+    38..=41: SymbolInfo {
+        name: "arr",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+        span: 38..41,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+}
