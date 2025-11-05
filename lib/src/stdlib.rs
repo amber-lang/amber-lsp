@@ -10,7 +10,7 @@ use include_dir::{include_dir, Dir, DirEntry};
 use tower_lsp_server::{lsp_types::Uri, UriExt};
 use tracing::warn;
 
-use crate::backend::{AmberVersion, Backend};
+use crate::{amber_version::AmberVersion, backend::Backend};
 
 pub const STDLIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/");
 

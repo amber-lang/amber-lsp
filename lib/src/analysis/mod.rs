@@ -4,7 +4,8 @@ use tower_lsp_server::{lsp_types::Uri, UriExt};
 use types::{DataType, GenericsMap};
 
 use crate::{
-    backend::{AmberVersion, Backend},
+    amber_version::AmberVersion,
+    backend::Backend,
     files::{FileVersion, Files},
     grammar::{CommandModifier, CompilerFlag, Span, Spanned},
     paths::FileId,

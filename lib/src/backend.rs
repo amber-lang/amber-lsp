@@ -10,6 +10,7 @@ use tower_lsp_server::lsp_types::*;
 use tower_lsp_server::UriExt;
 use tower_lsp_server::{Client, LanguageServer};
 
+use crate::amber_version::AmberVersion;
 use crate::analysis::{
     self, get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType,
     VariableSymbol,
@@ -21,13 +22,6 @@ use crate::paths::FileId;
 use crate::stdlib::{find_in_stdlib, save_resources};
 
 type PinnedFuture<'a, T> = Pin<Box<dyn Future<Output = Result<T>> + Send + 'a>>;
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum AmberVersion {
-    Alpha034,
-    Alpha035,
-    Alpha040,
-}
 
 #[derive(Debug)]
 pub struct Backend {
