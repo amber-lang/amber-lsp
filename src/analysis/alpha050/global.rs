@@ -1,15 +1,34 @@
 use crate::{
     analysis::{
-        self, import_symbol, insert_symbol_definition, map_import_path,
-        types::{make_union_type, matches_type, DataType},
-        Context, FunctionContext, FunctionSymbol, ImportContext, SymbolInfo, SymbolType,
+        self,
+        import_symbol,
+        insert_symbol_definition,
+        map_import_path,
+        types::{
+            make_union_type,
+            matches_type,
+            DataType,
+        },
+        Context,
+        FunctionContext,
+        FunctionSymbol,
+        ImportContext,
+        SymbolInfo,
+        SymbolType,
         VariableSymbol,
     },
     backend::Backend,
     files::FileVersion,
     grammar::{
-        alpha050::{Block, FunctionArgument, GlobalStatement, ImportContent, Statement},
-        Span, Spanned,
+        alpha050::{
+            Block,
+            FunctionArgument,
+            GlobalStatement,
+            ImportContent,
+            Statement,
+        },
+        Span,
+        Spanned,
     },
     paths::FileId,
     stdlib::is_builtin_file,
@@ -17,7 +36,10 @@ use crate::{
 
 use super::{
     exp::analyze_exp,
-    stmnts::{analyze_stmnt, StmntAnalysisResult},
+    stmnts::{
+        analyze_stmnt,
+        StmntAnalysisResult,
+    },
 };
 
 #[tracing::instrument(skip_all)]

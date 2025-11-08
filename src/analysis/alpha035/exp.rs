@@ -4,20 +4,43 @@ use chumsky::span::SimpleSpan;
 
 use crate::{
     analysis::{
-        get_symbol_definition_info, insert_symbol_reference,
-        types::{make_union_type, matches_type, DataType, GenericsMap},
-        BlockContext, Context, FunctionArgument, FunctionSymbol, SymbolInfo, SymbolLocation,
-        SymbolType, VariableSymbol,
+        get_symbol_definition_info,
+        insert_symbol_reference,
+        types::{
+            make_union_type,
+            matches_type,
+            DataType,
+            GenericsMap,
+        },
+        BlockContext,
+        Context,
+        FunctionArgument,
+        FunctionSymbol,
+        SymbolInfo,
+        SymbolLocation,
+        SymbolType,
+        VariableSymbol,
     },
-    files::{FileVersion, Files},
+    files::{
+        FileVersion,
+        Files,
+    },
     grammar::{
-        alpha035::{Expression, InterpolatedCommand, InterpolatedText},
-        CommandModifier, Spanned,
+        alpha035::{
+            Expression,
+            InterpolatedCommand,
+            InterpolatedText,
+        },
+        CommandModifier,
+        Spanned,
     },
     paths::FileId,
 };
 
-use super::stmnts::{analyze_failure_handler, StmntAnalysisResult};
+use super::stmnts::{
+    analyze_failure_handler,
+    StmntAnalysisResult,
+};
 
 #[derive(Debug, Clone)]
 pub struct ExpAnalysisResult {

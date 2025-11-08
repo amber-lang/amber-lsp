@@ -1,16 +1,29 @@
 use crate::analysis::types::DataType;
 
 pub use super::Spanned;
-use super::{CommandModifier, CompilerFlag, Grammar, LSPAnalysis, ParserResponse, Span};
+use super::{
+    CommandModifier,
+    CompilerFlag,
+    Grammar,
+    LSPAnalysis,
+    ParserResponse,
+    Span,
+};
 use chumsky::{
     error::Rich,
     extra::Err,
-    input::{Input, SpannedInput},
+    input::{
+        Input,
+        SpannedInput,
+    },
     span::SimpleSpan,
     Parser,
 };
 use heraclitus_compiler::prelude::*;
-use lexer::{get_rules, Token};
+use lexer::{
+    get_rules,
+    Token,
+};
 use prelude::lexer::Lexer;
 use semantic_tokens::semantic_tokens_from_ast;
 

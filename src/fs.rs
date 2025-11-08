@@ -3,12 +3,24 @@ use std::{
     fmt::Debug,
     future::Future,
     io::Result,
-    path::{Path, PathBuf},
+    path::{
+        Path,
+        PathBuf,
+    },
     pin::Pin,
-    sync::{Arc, Mutex},
+    sync::{
+        Arc,
+        Mutex,
+    },
 };
 
-use tokio::fs::{create_dir_all, metadata, read_dir, read_to_string, write};
+use tokio::fs::{
+    create_dir_all,
+    metadata,
+    read_dir,
+    read_to_string,
+    write,
+};
 
 pub trait FS: Sync + Send + Debug {
     fn read<'a>(

@@ -1,7 +1,12 @@
 use crate::{
     grammar::{
         alpha050::parser::default_recovery,
-        alpha050::{lexer::Token, AmberParser, Spanned, Statement},
+        alpha050::{
+            AmberParser,
+            Spanned,
+            Statement,
+            Token,
+        },
     },
     T,
 };
@@ -37,8 +42,8 @@ pub fn atom_parser<'a>(
         text::text_parser(expr.clone()),
         array::array_parser(expr.clone()),
         command::command_parser(stmnts.clone(), expr.clone()),
-        number::number_parser(),
         int::int_parser(),
+        number::number_parser(),
     ))
     .boxed()
 }

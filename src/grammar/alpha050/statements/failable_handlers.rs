@@ -2,10 +2,18 @@ use chumsky::prelude::*;
 
 use crate::{
     grammar::alpha050::{
-        lexer::Token,
-        parser::{default_recovery, ident},
+        parser::{
+            default_recovery,
+            ident,
+        },
         statements::block::block_parser,
-        AmberParser, Block, FailableHandler, FailureHandler, Spanned, Statement,
+        AmberParser,
+        Block,
+        FailableHandler,
+        FailureHandler,
+        Spanned,
+        Statement,
+        Token,
     },
     T,
 };

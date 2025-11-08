@@ -2,7 +2,11 @@ use chumsky::prelude::*;
 
 use crate::grammar::alpha035::lexer::Token;
 use crate::grammar::alpha035::parser::default_recovery;
-use crate::grammar::alpha035::{AmberParser, Spanned, Statement};
+use crate::grammar::alpha035::{
+    AmberParser,
+    Spanned,
+    Statement,
+};
 use crate::T;
 
 use super::range::range_parser;

@@ -4,14 +4,32 @@ use chumsky::span::SimpleSpan;
 
 use crate::{
     analysis::{
-        get_symbol_definition_info, insert_symbol_reference,
-        types::{make_union_type, matches_type, DataType, GenericsMap},
-        Context, FunctionArgument, FunctionSymbol, SymbolInfo, SymbolLocation, SymbolType,
+        get_symbol_definition_info,
+        insert_symbol_reference,
+        types::{
+            make_union_type,
+            matches_type,
+            DataType,
+            GenericsMap,
+        },
+        Context,
+        FunctionArgument,
+        FunctionSymbol,
+        SymbolInfo,
+        SymbolLocation,
+        SymbolType,
         VariableSymbol,
     },
-    files::{FileVersion, Files},
+    files::{
+        FileVersion,
+        Files,
+    },
     grammar::{
-        alpha034::{Expression, InterpolatedCommand, InterpolatedText},
+        alpha034::{
+            Expression,
+            InterpolatedCommand,
+            InterpolatedText,
+        },
         Spanned,
     },
     paths::FileId,

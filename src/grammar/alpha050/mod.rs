@@ -1,22 +1,29 @@
-use crate::analysis::types::DataType;
-
 pub use super::Spanned;
-use super::{CommandModifier, CompilerFlag, Grammar, LSPAnalysis, ParserResponse, Span};
+pub use super::Token;
+
+use super::{
+    CommandModifier,
+    CompilerFlag,
+    Grammar,
+    LSPAnalysis,
+    ParserResponse,
+    Span,
+};
+use crate::analysis::types::DataType;
 use chumsky::{
     error::Rich,
     extra::Err,
-    input::{Input, SpannedInput},
-    span::SimpleSpan,
+    input::{
+        Input,
+        SpannedInput,
+    },
     Parser,
 };
-use heraclitus_compiler::prelude::*;
-use lexer::{get_rules, Token};
-use prelude::lexer::Lexer;
 use semantic_tokens::semantic_tokens_from_ast;
 
 pub mod expressions;
 pub mod global;
-pub mod lexer;
+pub mod lexer_logos_v2;
 pub mod parser;
 pub mod semantic_tokens;
 pub mod statements;
@@ -259,9 +266,7 @@ pub enum GlobalStatement {
 }
 
 #[derive(Debug)]
-pub struct AmberCompiler {
-    lexer: Lexer,
-}
+pub struct AmberCompiler {}
 
 impl Default for AmberCompiler {
     fn default() -> Self {
@@ -271,9 +276,7 @@ impl Default for AmberCompiler {
 
 impl AmberCompiler {
     pub fn new() -> Self {
-        let lexer = Lexer::new(get_rules());
-
-        AmberCompiler { lexer }
+        AmberCompiler {}
     }
 
     pub fn parser<'a>(&self) -> impl AmberParser<'a, Vec<Spanned<GlobalStatement>>> {
@@ -284,22 +287,9 @@ impl AmberCompiler {
 impl LSPAnalysis for AmberCompiler {
     #[tracing::instrument(skip_all)]
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>> {
-        // It should never fail
-        self.lexer
-            .tokenize(&input.replace("\r\n", "\n").replace("\r", "\n"))
-            .expect("Failed to tokenize input")
-            .iter()
-            .filter_map(|t| {
-                if t.word == "\n" {
-                    return None;
-                }
-
-                Some((
-                    Token(t.word.clone()),
-                    SimpleSpan::new(t.start, t.start + t.word.chars().count()),
-                ))
-            })
-            .collect()
+        // Normalize line endings and use Logos v2 lexer with context morphing
+        let normalized = input.replace("\r\n", "\n").replace("\r", "\n");
+        lexer_logos_v2::tokenize(&normalized)
     }
 
     #[tracing::instrument(skip_all)]

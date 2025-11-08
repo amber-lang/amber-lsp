@@ -4,8 +4,14 @@ use crate::{
     grammar::alpha040::{
         expressions::parse_expr,
         lexer::Token,
-        parser::{default_recovery, ident},
-        AmberParser, Expression, Spanned, Statement,
+        parser::{
+            default_recovery,
+            ident,
+        },
+        AmberParser,
+        Expression,
+        Spanned,
+        Statement,
     },
     T,
 };

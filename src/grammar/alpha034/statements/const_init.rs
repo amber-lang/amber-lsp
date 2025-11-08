@@ -6,8 +6,13 @@ use crate::{
         alpha034::{
             expressions::parse_expr,
             lexer::Token,
-            parser::{default_recovery, ident},
-            AmberParser, Spanned, Statement,
+            parser::{
+                default_recovery,
+                ident,
+            },
+            AmberParser,
+            Spanned,
+            Statement,
         },
     },
     T,

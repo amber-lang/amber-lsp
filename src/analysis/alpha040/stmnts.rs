@@ -1,21 +1,47 @@
 use crate::{
     analysis::{
-        get_symbol_definition_info, insert_symbol_definition, insert_symbol_reference,
-        types::{make_union_type, matches_type, GenericsMap},
-        BlockContext, Context, DataType, SymbolInfo, SymbolLocation, SymbolType, VariableSymbol,
+        get_symbol_definition_info,
+        insert_symbol_definition,
+        insert_symbol_reference,
+        types::{
+            make_union_type,
+            matches_type,
+            GenericsMap,
+        },
+        BlockContext,
+        Context,
+        DataType,
+        SymbolInfo,
+        SymbolLocation,
+        SymbolType,
+        VariableSymbol,
     },
-    files::{FileVersion, Files},
+    files::{
+        FileVersion,
+        Files,
+    },
     grammar::{
         alpha040::{
-            Block, Comment, ElseCondition, FailureHandler, IfChainContent, IfCondition,
-            IterLoopVars, Statement, VariableInitType,
+            Block,
+            Comment,
+            ElseCondition,
+            FailureHandler,
+            IfChainContent,
+            IfCondition,
+            IterLoopVars,
+            Statement,
+            VariableInitType,
         },
-        CommandModifier, Spanned,
+        CommandModifier,
+        Spanned,
     },
     paths::FileId,
 };
 
-use super::exp::{analyze_exp, ExpAnalysisResult};
+use super::exp::{
+    analyze_exp,
+    ExpAnalysisResult,
+};
 
 #[derive(Debug, Clone)]
 pub struct StmntAnalysisResult {

@@ -1,5 +1,10 @@
 use crate::{
-    grammar::alpha050::{lexer::Token, parser::default_recovery, AmberParser, Spanned},
+    grammar::alpha050::{
+        parser::default_recovery,
+        AmberParser,
+        Spanned,
+        Token,
+    },
     T,
 };
 

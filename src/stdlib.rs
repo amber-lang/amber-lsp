@@ -1,16 +1,29 @@
 use std::{
     env::current_exe,
     future::Future,
-    path::{Path, PathBuf},
+    path::{
+        Path,
+        PathBuf,
+    },
     pin::Pin,
 };
 
 use clap::builder::OsStr;
-use include_dir::{include_dir, Dir, DirEntry};
-use tower_lsp_server::{lsp_types::Uri, UriExt};
+use include_dir::{
+    include_dir,
+    Dir,
+    DirEntry,
+};
+use tower_lsp_server::{
+    lsp_types::Uri,
+    UriExt,
+};
 use tracing::warn;
 
-use crate::backend::{AmberVersion, Backend};
+use crate::backend::{
+    AmberVersion,
+    Backend,
+};
 
 pub const STDLIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/");
 

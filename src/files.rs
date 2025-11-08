@@ -6,10 +6,20 @@ use tokio::sync::RwLock;
 use tower_lsp_server::lsp_types::Uri;
 
 use crate::{
-    analysis::{types::GenericsMap, SymbolTable},
+    analysis::{
+        types::GenericsMap,
+        SymbolTable,
+    },
     fs::FS,
-    grammar::{Grammar, Spanned, SpannedSemanticToken},
-    paths::{FileId, PathInterner},
+    grammar::{
+        Grammar,
+        Spanned,
+        SpannedSemanticToken,
+    },
+    paths::{
+        FileId,
+        PathInterner,
+    },
     utils::FastDashMap,
 };
 

@@ -4,8 +4,14 @@ use chumsky::error::Rich;
 use insta::assert_debug_snapshot;
 
 use amber_lsp::grammar::{
-    alpha034::{lexer::Token, semantic_tokens::semantic_tokens_from_ast, AmberCompiler, Spanned},
-    LSPAnalysis, ParserResponse,
+    alpha034::{
+        lexer::Token,
+        semantic_tokens::semantic_tokens_from_ast,
+        AmberCompiler,
+        Spanned,
+    },
+    LSPAnalysis,
+    ParserResponse,
 };
 
 fn tokenize(input: &str) -> Vec<Spanned<Token>> {

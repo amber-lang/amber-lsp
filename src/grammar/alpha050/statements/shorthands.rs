@@ -3,9 +3,15 @@ use chumsky::prelude::*;
 use crate::{
     grammar::alpha050::{
         expressions::parse_expr,
-        lexer::Token,
-        parser::{default_recovery, ident},
-        AmberParser, Expression, Spanned, Statement,
+        parser::{
+            default_recovery,
+            ident,
+        },
+        AmberParser,
+        Expression,
+        Spanned,
+        Statement,
+        Token,
     },
     T,
 };

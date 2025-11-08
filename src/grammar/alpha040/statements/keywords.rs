@@ -2,8 +2,13 @@ use chumsky::prelude::*;
 
 use crate::{
     grammar::alpha040::{
-        expressions::parse_expr, lexer::Token, parser::default_recovery, AmberParser, Expression,
-        Spanned, Statement,
+        expressions::parse_expr,
+        lexer::Token,
+        parser::default_recovery,
+        AmberParser,
+        Expression,
+        Spanned,
+        Statement,
     },
     T,
 };

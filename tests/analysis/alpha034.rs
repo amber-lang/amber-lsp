@@ -1,13 +1,26 @@
-use std::{path::Path, sync::Arc};
+use std::{
+    path::Path,
+    sync::Arc,
+};
 
 use amber_lsp::{
-    analysis::{FunctionSymbol, SymbolType},
-    backend::{AmberVersion, Backend},
+    analysis::{
+        FunctionSymbol,
+        SymbolType,
+    },
+    backend::{
+        AmberVersion,
+        Backend,
+    },
     fs::MemoryFS,
 };
 use insta::assert_debug_snapshot;
 use tokio::test;
-use tower_lsp_server::{lsp_types::Uri, LspService, UriExt};
+use tower_lsp_server::{
+    lsp_types::Uri,
+    LspService,
+    UriExt,
+};
 
 #[test]
 async fn test_function_definition() {

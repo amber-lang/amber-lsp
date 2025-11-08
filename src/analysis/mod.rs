@@ -1,12 +1,32 @@
 use rangemap::RangeInclusiveMap;
-use std::{collections::HashMap, ops::RangeInclusive};
-use tower_lsp_server::{lsp_types::Uri, UriExt};
-use types::{DataType, GenericsMap};
+use std::{
+    collections::HashMap,
+    ops::RangeInclusive,
+};
+use tower_lsp_server::{
+    lsp_types::Uri,
+    UriExt,
+};
+use types::{
+    DataType,
+    GenericsMap,
+};
 
 use crate::{
-    backend::{AmberVersion, Backend},
-    files::{FileVersion, Files},
-    grammar::{CommandModifier, CompilerFlag, Span, Spanned},
+    backend::{
+        AmberVersion,
+        Backend,
+    },
+    files::{
+        FileVersion,
+        Files,
+    },
+    grammar::{
+        CommandModifier,
+        CompilerFlag,
+        Span,
+        Spanned,
+    },
     paths::FileId,
     stdlib::resolve,
 };

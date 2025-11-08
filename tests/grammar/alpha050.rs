@@ -4,8 +4,14 @@ use chumsky::error::Rich;
 use insta::assert_debug_snapshot;
 
 use amber_lsp::grammar::{
-    alpha050::{lexer::Token, AmberCompiler, GlobalStatement, Spanned},
-    LSPAnalysis, ParserResponse,
+    alpha050::{
+        AmberCompiler,
+        GlobalStatement,
+        Spanned,
+        Token,
+    },
+    LSPAnalysis,
+    ParserResponse,
 };
 
 fn tokenize(input: &str) -> Vec<Spanned<Token>> {
@@ -35,6 +41,17 @@ fn parse_unwrap(tokens: &[Spanned<Token>]) -> Vec<Spanned<GlobalStatement>> {
         panic!("Errors: {errors:?}");
     }
     ast.unwrap()
+}
+
+#[test]
+fn test_numbers() {
+    let input = r#"
+    2
+    2.4
+    .2
+    "#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
 }
 
 #[test]

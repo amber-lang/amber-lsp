@@ -5,8 +5,14 @@ use crate::{
         expressions::parse_expr,
         global::type_parser,
         lexer::Token,
-        parser::{default_recovery, ident},
-        AmberParser, Spanned, Statement, VariableInitType,
+        parser::{
+            default_recovery,
+            ident,
+        },
+        AmberParser,
+        Spanned,
+        Statement,
+        VariableInitType,
     },
     T,
 };

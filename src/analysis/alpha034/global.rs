@@ -1,15 +1,32 @@
 use crate::{
     analysis::{
-        self, import_symbol, insert_symbol_definition, map_import_path,
-        types::{make_union_type, matches_type, DataType},
-        Context, FunctionContext, FunctionSymbol, ImportContext, SymbolInfo, SymbolType,
+        self,
+        import_symbol,
+        insert_symbol_definition,
+        map_import_path,
+        types::{
+            make_union_type,
+            matches_type,
+            DataType,
+        },
+        Context,
+        FunctionContext,
+        FunctionSymbol,
+        ImportContext,
+        SymbolInfo,
+        SymbolType,
         VariableSymbol,
     },
     backend::Backend,
     files::FileVersion,
     grammar::{
-        alpha034::{FunctionArgument, GlobalStatement, ImportContent},
-        Span, Spanned,
+        alpha034::{
+            FunctionArgument,
+            GlobalStatement,
+            ImportContent,
+        },
+        Span,
+        Spanned,
     },
     paths::FileId,
 };

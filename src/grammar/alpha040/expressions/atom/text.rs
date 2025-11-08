@@ -1,6 +1,11 @@
 use crate::{
     grammar::alpha040::{
-        lexer::Token, parser::default_recovery, AmberParser, Expression, InterpolatedText, Spanned,
+        lexer::Token,
+        parser::default_recovery,
+        AmberParser,
+        Expression,
+        InterpolatedText,
+        Spanned,
     },
     T,
 };

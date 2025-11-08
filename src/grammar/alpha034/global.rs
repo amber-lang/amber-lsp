@@ -1,12 +1,23 @@
 use chumsky::prelude::*;
 
-use crate::{analysis::types::DataType, T};
+use crate::{
+    analysis::types::DataType,
+    T,
+};
 
 use super::{
     lexer::Token,
-    parser::{default_recovery, ident},
+    parser::{
+        default_recovery,
+        ident,
+    },
     statements::statement_parser,
-    AmberParser, CompilerFlag, FunctionArgument, GlobalStatement, ImportContent, Spanned,
+    AmberParser,
+    CompilerFlag,
+    FunctionArgument,
+    GlobalStatement,
+    ImportContent,
+    Spanned,
     Statement,
 };
 

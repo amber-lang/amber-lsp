@@ -2,7 +2,10 @@ use chumsky::prelude::*;
 
 use crate::T;
 
-use super::{lexer::Token, AmberParser};
+use super::{
+    lexer::Token,
+    AmberParser,
+};
 
 const KEYWORDS: &[&str] = &[
     "if", "else", "loop", "in", "return", "break", "continue", "true", "false", "null", "fun",

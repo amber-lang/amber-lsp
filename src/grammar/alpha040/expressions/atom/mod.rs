@@ -1,7 +1,12 @@
 use crate::{
     grammar::{
         alpha040::parser::default_recovery,
-        alpha040::{lexer::Token, AmberParser, Spanned, Statement},
+        alpha040::{
+            lexer::Token,
+            AmberParser,
+            Spanned,
+            Statement,
+        },
     },
     T,
 };

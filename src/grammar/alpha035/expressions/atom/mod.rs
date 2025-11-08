@@ -1,4 +1,8 @@
-use crate::grammar::alpha035::{AmberParser, Spanned, Statement};
+use crate::grammar::alpha035::{
+    AmberParser,
+    Spanned,
+    Statement,
+};
 
 use super::super::Expression;
 use chumsky::prelude::*;

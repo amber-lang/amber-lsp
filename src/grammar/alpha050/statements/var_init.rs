@@ -4,9 +4,15 @@ use crate::{
     grammar::alpha050::{
         expressions::parse_expr,
         global::type_parser,
-        lexer::Token,
-        parser::{default_recovery, ident},
-        AmberParser, Spanned, Statement, VariableInitType,
+        parser::{
+            default_recovery,
+            ident,
+        },
+        AmberParser,
+        Spanned,
+        Statement,
+        Token,
+        VariableInitType,
     },
     T,
 };

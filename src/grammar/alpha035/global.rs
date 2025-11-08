@@ -5,10 +5,20 @@ use crate::T;
 use super::{
     expressions::parse_expr,
     lexer::Token,
-    parser::{default_recovery, ident},
+    parser::{
+        default_recovery,
+        ident,
+    },
     statements::statement_parser,
-    AmberParser, CompilerFlag, DataType, Expression, FunctionArgument, GlobalStatement,
-    ImportContent, Spanned, Statement,
+    AmberParser,
+    CompilerFlag,
+    DataType,
+    Expression,
+    FunctionArgument,
+    GlobalStatement,
+    ImportContent,
+    Spanned,
+    Statement,
 };
 
 pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {

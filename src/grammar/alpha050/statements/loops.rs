@@ -3,9 +3,17 @@ use chumsky::prelude::*;
 use crate::{
     grammar::alpha050::{
         expressions::parse_expr,
-        lexer::Token,
-        parser::{default_recovery, ident},
-        AmberParser, Block, Expression, IterLoopVars, Spanned, Statement,
+        parser::{
+            default_recovery,
+            ident,
+        },
+        AmberParser,
+        Block,
+        Expression,
+        IterLoopVars,
+        Spanned,
+        Statement,
+        Token,
     },
     T,
 };

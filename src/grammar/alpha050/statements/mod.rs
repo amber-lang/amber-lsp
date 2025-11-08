@@ -1,8 +1,16 @@
 use chumsky::prelude::*;
 
-use crate::{grammar::Token, T};
+use crate::{
+    grammar::Token,
+    T,
+};
 
-use super::{expressions::parse_expr, AmberParser, Spanned, Statement};
+use super::{
+    expressions::parse_expr,
+    AmberParser,
+    Spanned,
+    Statement,
+};
 
 pub mod block;
 pub mod comment;

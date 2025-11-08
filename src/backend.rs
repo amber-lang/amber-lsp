@@ -5,20 +5,47 @@ use std::sync::Arc;
 use chumsky::container::Seq;
 use ropey::Rope;
 use tokio::sync::RwLock;
-use tower_lsp_server::jsonrpc::{Error, Result};
+use tower_lsp_server::jsonrpc::{
+    Error,
+    Result,
+};
 use tower_lsp_server::lsp_types::*;
 use tower_lsp_server::UriExt;
-use tower_lsp_server::{Client, LanguageServer};
+use tower_lsp_server::{
+    Client,
+    LanguageServer,
+};
 
 use crate::analysis::{
-    self, get_symbol_definition_info, Context, FunctionSymbol, SymbolInfo, SymbolTable, SymbolType,
+    self,
+    get_symbol_definition_info,
+    Context,
+    FunctionSymbol,
+    SymbolInfo,
+    SymbolTable,
+    SymbolType,
     VariableSymbol,
 };
-use crate::files::{FileVersion, Files, DEFAULT_VERSION};
-use crate::fs::{LocalFs, FS};
-use crate::grammar::{self, Grammar, LSPAnalysis, ParserResponse};
+use crate::files::{
+    FileVersion,
+    Files,
+    DEFAULT_VERSION,
+};
+use crate::fs::{
+    LocalFs,
+    FS,
+};
+use crate::grammar::{
+    self,
+    Grammar,
+    LSPAnalysis,
+    ParserResponse,
+};
 use crate::paths::FileId;
-use crate::stdlib::{find_in_stdlib, save_resources};
+use crate::stdlib::{
+    find_in_stdlib,
+    save_resources,
+};
 
 type PinnedFuture<'a, T> = Pin<Box<dyn Future<Output = Result<T>> + Send + 'a>>;
 

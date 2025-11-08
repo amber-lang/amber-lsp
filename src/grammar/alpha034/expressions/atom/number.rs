@@ -1,7 +1,11 @@
 use chumsky::prelude::*;
 
 use crate::{
-    grammar::alpha034::{lexer::Token, AmberParser, Spanned},
+    grammar::alpha034::{
+        lexer::Token,
+        AmberParser,
+        Spanned,
+    },
     T,
 };
 
