@@ -10,10 +10,10 @@ use tower_lsp_server::jsonrpc::{
     Result,
 };
 use tower_lsp_server::lsp_types::*;
-use tower_lsp_server::UriExt;
 use tower_lsp_server::{
     Client,
     LanguageServer,
+    UriExt,
 };
 
 use crate::analysis::{

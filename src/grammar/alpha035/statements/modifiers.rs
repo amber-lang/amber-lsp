@@ -1,14 +1,12 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha035::{
-        lexer::Token,
-        AmberParser,
-        CommandModifier,
-        Spanned,
-    },
-    T,
+use crate::grammar::alpha035::{
+    AmberParser,
+    CommandModifier,
+    Spanned,
 };
+use crate::grammar::Token;
+use crate::T;
 
 pub fn modifier_parser<'a>() -> impl AmberParser<'a, Spanned<CommandModifier>> {
     choice((

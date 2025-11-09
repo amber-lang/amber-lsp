@@ -126,10 +126,14 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                         ),
                         (
                             Error,
-                            144..149,
+                            144..145,
                         ),
                         (
-                            Expression(
+                            Echo(
+                                (
+                                    "echo",
+                                    145..149,
+                                ),
                                 (
                                     Gt(
                                         (
@@ -138,20 +142,11 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                                     (
                                                         Text(
                                                             (
-                                                                "NOT",
-                                                                151..154,
+                                                                "NOT READY",
+                                                                151..160,
                                                             ),
                                                         ),
-                                                        151..154,
-                                                    ),
-                                                    (
-                                                        Text(
-                                                            (
-                                                                "READY",
-                                                                155..160,
-                                                            ),
-                                                        ),
-                                                        155..160,
+                                                        151..160,
                                                     ),
                                                 ],
                                             ),
@@ -165,7 +160,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                     150..163,
                                 ),
                             ),
-                            150..163,
+                            145..163,
                         ),
                         (
                             Block(
@@ -247,16 +242,16 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                                 (
                                                     Text(
                                                         (
-                                                            "echo",
-                                                            224..228,
+                                                            "echo ",
+                                                            224..229,
                                                         ),
                                                     ),
-                                                    224..228,
+                                                    224..229,
                                                 ),
                                                 (
-                                                    Escape(
+                                                    Text(
                                                         (
-                                                            "\"",
+                                                            "\\\"",
                                                             229..231,
                                                         ),
                                                     ),
@@ -291,9 +286,9 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                                                     231..238,
                                                 ),
                                                 (
-                                                    Escape(
+                                                    Text(
                                                         (
-                                                            "\"",
+                                                            "\\\"",
                                                             238..240,
                                                         ),
                                                     ),
@@ -482,7 +477,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
     [
         found end of input at 74..75 expected something else,
         found "CmdText" at 115..122 expected "type",
-        found end of input at 144..149 expected something else,
+        found end of input at 144..145 expected something else,
         found "{" at 164..165 expected "expression",
         found end of input at 170..171 expected something else,
     ],

@@ -65,21 +65,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "[",
+                                            "[ -d \"",
                                         ),
-                                        61..62,
-                                    ),
-                                    (
-                                        CommandOption(
-                                            "-d",
-                                        ),
-                                        63..65,
-                                    ),
-                                    (
-                                        Text(
-                                            "\"",
-                                        ),
-                                        66..67,
+                                        61..67,
                                     ),
                                     (
                                         Expression(
@@ -97,15 +85,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "\"",
+                                            "\" ]",
                                         ),
-                                        73..74,
-                                    ),
-                                    (
-                                        Text(
-                                            "]",
-                                        ),
-                                        75..76,
+                                        73..76,
                                     ),
                                     (
                                         Text(
@@ -239,21 +221,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "[",
+                                            "[ -f \"",
                                         ),
-                                        190..191,
-                                    ),
-                                    (
-                                        CommandOption(
-                                            "-f",
-                                        ),
-                                        192..194,
-                                    ),
-                                    (
-                                        Text(
-                                            "\"",
-                                        ),
-                                        195..196,
+                                        190..196,
                                     ),
                                     (
                                         Expression(
@@ -271,15 +241,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "\"",
+                                            "\" ]",
                                         ),
-                                        202..203,
-                                    ),
-                                    (
-                                        Text(
-                                            "]",
-                                        ),
-                                        204..205,
+                                        202..205,
                                     ),
                                     (
                                         Text(
@@ -418,15 +382,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "<",
+                                                "< \"",
                                             ),
-                                            325..326,
-                                        ),
-                                        (
-                                            Text(
-                                                "\"",
-                                            ),
-                                            327..328,
+                                            325..328,
                                         ),
                                         (
                                             Expression(
@@ -568,15 +526,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "echo",
+                                                "echo \"",
                                             ),
-                                            459..463,
-                                        ),
-                                        (
-                                            Text(
-                                                "\"",
-                                            ),
-                                            464..465,
+                                            459..465,
                                         ),
                                         (
                                             Expression(
@@ -594,21 +546,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "\"",
+                                                "\" > \"",
                                             ),
-                                            474..475,
-                                        ),
-                                        (
-                                            Text(
-                                                ">",
-                                            ),
-                                            476..477,
-                                        ),
-                                        (
-                                            Text(
-                                                "\"",
-                                            ),
-                                            478..479,
+                                            474..479,
                                         ),
                                         (
                                             Expression(
@@ -750,15 +690,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "echo",
+                                                "echo \"",
                                             ),
-                                            612..616,
-                                        ),
-                                        (
-                                            Text(
-                                                "\"",
-                                            ),
-                                            617..618,
+                                            612..618,
                                         ),
                                         (
                                             Expression(
@@ -776,27 +710,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "\"",
+                                                "\" >> \"",
                                             ),
-                                            627..628,
-                                        ),
-                                        (
-                                            Text(
-                                                ">",
-                                            ),
-                                            629..630,
-                                        ),
-                                        (
-                                            Text(
-                                                ">",
-                                            ),
-                                            630..631,
-                                        ),
-                                        (
-                                            Text(
-                                                "\"",
-                                            ),
-                                            632..633,
+                                            627..633,
                                         ),
                                         (
                                             Expression(
@@ -985,21 +901,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                                 ),
                                                                 (
                                                                     Text(
-                                                                        "ln",
+                                                                        "ln -s \"",
                                                                     ),
-                                                                    854..856,
-                                                                ),
-                                                                (
-                                                                    CommandOption(
-                                                                        "-s",
-                                                                    ),
-                                                                    857..859,
-                                                                ),
-                                                                (
-                                                                    Text(
-                                                                        "\"",
-                                                                    ),
-                                                                    860..861,
+                                                                    854..861,
                                                                 ),
                                                                 (
                                                                     Expression(
@@ -1017,15 +921,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                                 ),
                                                                 (
                                                                     Text(
-                                                                        "\"",
+                                                                        "\" \"",
                                                                     ),
-                                                                    869..870,
-                                                                ),
-                                                                (
-                                                                    Text(
-                                                                        "\"",
-                                                                    ),
-                                                                    871..872,
+                                                                    869..872,
                                                                 ),
                                                                 (
                                                                     Expression(
@@ -1105,20 +1003,11 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     (
                                         Text(
                                             (
-                                                "The",
-                                                925..928,
+                                                "The file ",
+                                                925..934,
                                             ),
                                         ),
-                                        925..928,
-                                    ),
-                                    (
-                                        Text(
-                                            (
-                                                "file",
-                                                929..933,
-                                            ),
-                                        ),
-                                        929..933,
+                                        925..934,
                                     ),
                                     (
                                         Expression(
@@ -1137,29 +1026,11 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     (
                                         Text(
                                             (
-                                                "doesn't",
-                                                943..950,
+                                                " doesn't exist!",
+                                                942..957,
                                             ),
                                         ),
-                                        943..950,
-                                    ),
-                                    (
-                                        Text(
-                                            (
-                                                "exist",
-                                                951..956,
-                                            ),
-                                        ),
-                                        951..956,
-                                    ),
-                                    (
-                                        Text(
-                                            (
-                                                "!",
-                                                956..957,
-                                            ),
-                                        ),
-                                        956..957,
+                                        942..957,
                                     ),
                                 ],
                             ),
@@ -1311,21 +1182,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                                 ),
                                                                 (
                                                                     Text(
-                                                                        "mkdir",
+                                                                        "mkdir -p \"",
                                                                     ),
-                                                                    1132..1137,
-                                                                ),
-                                                                (
-                                                                    CommandOption(
-                                                                        "-p",
-                                                                    ),
-                                                                    1138..1140,
-                                                                ),
-                                                                (
-                                                                    Text(
-                                                                        "\"",
-                                                                    ),
-                                                                    1141..1142,
+                                                                    1132..1142,
                                                                 ),
                                                                 (
                                                                     Expression(
@@ -1503,27 +1362,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                                 ),
                                                                 (
                                                                     Text(
-                                                                        "chmod",
+                                                                        "chmod +x \"",
                                                                     ),
-                                                                    1344..1349,
-                                                                ),
-                                                                (
-                                                                    Text(
-                                                                        "+",
-                                                                    ),
-                                                                    1350..1351,
-                                                                ),
-                                                                (
-                                                                    Text(
-                                                                        "x",
-                                                                    ),
-                                                                    1351..1352,
-                                                                ),
-                                                                (
-                                                                    Text(
-                                                                        "\"",
-                                                                    ),
-                                                                    1353..1354,
+                                                                    1344..1354,
                                                                 ),
                                                                 (
                                                                     Expression(
@@ -1603,20 +1444,11 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     (
                                         Text(
                                             (
-                                                "The",
-                                                1400..1403,
+                                                "The file ",
+                                                1400..1409,
                                             ),
                                         ),
-                                        1400..1403,
-                                    ),
-                                    (
-                                        Text(
-                                            (
-                                                "file",
-                                                1404..1408,
-                                            ),
-                                        ),
-                                        1404..1408,
+                                        1400..1409,
                                     ),
                                     (
                                         Expression(
@@ -1635,29 +1467,11 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     (
                                         Text(
                                             (
-                                                "doesn't",
-                                                1416..1423,
+                                                " doesn't exist!",
+                                                1415..1430,
                                             ),
                                         ),
-                                        1416..1423,
-                                    ),
-                                    (
-                                        Text(
-                                            (
-                                                "exist",
-                                                1424..1429,
-                                            ),
-                                        ),
-                                        1424..1429,
-                                    ),
-                                    (
-                                        Text(
-                                            (
-                                                "!",
-                                                1429..1430,
-                                            ),
-                                        ),
-                                        1429..1430,
+                                        1415..1430,
                                     ),
                                 ],
                             ),
@@ -1864,21 +1678,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                                 ),
                                                                 (
                                                                     Text(
-                                                                        "chown",
+                                                                        "chown -R \"",
                                                                     ),
-                                                                    1642..1647,
-                                                                ),
-                                                                (
-                                                                    CommandOption(
-                                                                        "-R",
-                                                                    ),
-                                                                    1648..1650,
-                                                                ),
-                                                                (
-                                                                    Text(
-                                                                        "\"",
-                                                                    ),
-                                                                    1651..1652,
+                                                                    1642..1652,
                                                                 ),
                                                                 (
                                                                     Expression(
@@ -1896,15 +1698,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                                 ),
                                                                 (
                                                                     Text(
-                                                                        "\"",
+                                                                        "\" \"",
                                                                     ),
-                                                                    1658..1659,
-                                                                ),
-                                                                (
-                                                                    Text(
-                                                                        "\"",
-                                                                    ),
-                                                                    1660..1661,
+                                                                    1658..1661,
                                                                 ),
                                                                 (
                                                                     Expression(

@@ -1,17 +1,15 @@
 use chumsky::prelude::*;
 
-use crate::{
-    analysis::types::DataType,
-    T,
-};
+use crate::analysis::types::DataType;
+use crate::grammar::Token;
+use crate::T;
 
+use super::parser::{
+    default_recovery,
+    ident,
+};
+use super::statements::statement_parser;
 use super::{
-    lexer::Token,
-    parser::{
-        default_recovery,
-        ident,
-    },
-    statements::statement_parser,
     AmberParser,
     CompilerFlag,
     FunctionArgument,
@@ -116,8 +114,7 @@ pub fn type_parser<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
 }
 
 fn compiler_flag_parser<'a>() -> impl AmberParser<'a, Spanned<CompilerFlag>> {
-    just(T!["#"])
-        .ignore_then(just(T!["["]))
+    just(T!["#["])
         .ignore_then(
             choice((
                 just(T!["allow_nested_if_else"]).to(CompilerFlag::AllowNestedIfElse),

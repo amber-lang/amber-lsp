@@ -1,35 +1,29 @@
 use rangemap::RangeInclusiveMap;
-use std::{
-    collections::HashMap,
-    ops::RangeInclusive,
-};
-use tower_lsp_server::{
-    lsp_types::Uri,
-    UriExt,
-};
+use std::collections::HashMap;
+use std::ops::RangeInclusive;
+use tower_lsp_server::lsp_types::Uri;
+use tower_lsp_server::UriExt;
 use types::{
     DataType,
     GenericsMap,
 };
 
-use crate::{
-    backend::{
-        AmberVersion,
-        Backend,
-    },
-    files::{
-        FileVersion,
-        Files,
-    },
-    grammar::{
-        CommandModifier,
-        CompilerFlag,
-        Span,
-        Spanned,
-    },
-    paths::FileId,
-    stdlib::resolve,
+use crate::backend::{
+    AmberVersion,
+    Backend,
 };
+use crate::files::{
+    FileVersion,
+    Files,
+};
+use crate::grammar::{
+    CommandModifier,
+    CompilerFlag,
+    Span,
+    Spanned,
+};
+use crate::paths::FileId;
+use crate::stdlib::resolve;
 
 pub mod alpha034;
 pub mod alpha035;

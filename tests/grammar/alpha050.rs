@@ -3,13 +3,13 @@ use std::fs::read_to_string;
 use chumsky::error::Rich;
 use insta::assert_debug_snapshot;
 
+use amber_lsp::grammar::alpha050::{
+    AmberCompiler,
+    GlobalStatement,
+    Spanned,
+    Token,
+};
 use amber_lsp::grammar::{
-    alpha050::{
-        AmberCompiler,
-        GlobalStatement,
-        Spanned,
-        Token,
-    },
     LSPAnalysis,
     ParserResponse,
 };

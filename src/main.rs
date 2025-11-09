@@ -1,17 +1,15 @@
-use std::{
-    env::temp_dir,
-    process::{
-        Command,
-        Stdio,
-    },
+use std::env::temp_dir;
+use std::process::{
+    Command,
+    Stdio,
 };
 
 use amber_lsp::backend::{
     AmberVersion,
     Backend,
 };
+use clap::builder::PossibleValue;
 use clap::{
-    builder::PossibleValue,
     Parser,
     ValueEnum,
 };

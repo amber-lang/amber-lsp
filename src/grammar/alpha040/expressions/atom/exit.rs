@@ -1,14 +1,12 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha040::{
-        lexer::Token,
-        AmberParser,
-        Expression,
-        Spanned,
-    },
-    T,
+use crate::grammar::alpha040::{
+    AmberParser,
+    Expression,
+    Spanned,
 };
+use crate::grammar::Token;
+use crate::T;
 
 pub fn exit_parser<'a>(
     exp: impl AmberParser<'a, Spanned<Expression>>,

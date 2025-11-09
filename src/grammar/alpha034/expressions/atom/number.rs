@@ -1,40 +1,32 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha034::{
-        lexer::Token,
-        AmberParser,
-        Spanned,
-    },
-    T,
+use crate::grammar::alpha034::{
+    AmberParser,
+    Expression,
+};
+use crate::grammar::{
+    Spanned,
+    Token,
 };
 
-use super::Expression;
-
 pub fn number_parser<'a>() -> impl AmberParser<'a, Spanned<Expression>> {
-    let int = any().try_map(|token: Token, span| {
-        let word = token.to_string();
+    any()
+        .try_map(|token: Token, span| {
+            let word = token.to_string();
 
-        for char in word.chars() {
-            if !char.is_ascii_digit() {
-                return Err(Rich::custom(span, "int must contain only digits"));
-            }
-        }
+            let num_str = if word.starts_with('.') {
+                // For numbers like ".4", prepend "0" to make "0.4"
+                format!("0{}", word)
+            } else {
+                word
+            };
 
-        Ok(word)
-    });
-
-    choice((
-        int.then(just(T!['.']).ignore_then(int))
-            .map(|(int, float)| format!("{int}.{float}")),
-        just(T!['.'])
-            .ignore_then(int)
-            .map(|float| format!("0.{float}")),
-        int.map(|int| format!("{int}.0")),
-    ))
-    .from_str::<f32>()
-    .unwrapped()
-    .map_with(|num, e| (Expression::Number((num, e.span())), e.span()))
-    .boxed()
-    .labelled("number")
+            // Parse as f32
+            num_str
+                .parse::<f32>()
+                .map_err(|_| Rich::custom(span, format!("invalid number format: {}", num_str)))
+        })
+        .map_with(|num, e| (Expression::Number((num, e.span())), e.span()))
+        .boxed()
+        .labelled("number")
 }

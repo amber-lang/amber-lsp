@@ -29,21 +29,15 @@ expression: "compiler.tokenize(r#\"\n        let x = \"my \\\"interpolated\\\" s
     ),
     (
         Token(
-            "my",
+            "my ",
         ),
-        18..20,
+        18..21,
     ),
     (
         Token(
-            "\\",
+            "\\\"",
         ),
-        21..22,
-    ),
-    (
-        Token(
-            "\"",
-        ),
-        22..23,
+        21..23,
     ),
     (
         Token(
@@ -53,21 +47,15 @@ expression: "compiler.tokenize(r#\"\n        let x = \"my \\\"interpolated\\\" s
     ),
     (
         Token(
-            "\\",
+            "\\\"",
         ),
-        35..36,
+        35..37,
     ),
     (
         Token(
-            "\"",
+            " string ",
         ),
-        36..37,
-    ),
-    (
-        Token(
-            "string",
-        ),
-        38..44,
+        37..45,
     ),
     (
         Token(
@@ -89,9 +77,9 @@ expression: "compiler.tokenize(r#\"\n        let x = \"my \\\"interpolated\\\" s
     ),
     (
         Token(
-            "end",
+            " end",
         ),
-        52..55,
+        51..55,
     ),
     (
         Token(
@@ -113,57 +101,15 @@ expression: "compiler.tokenize(r#\"\n        let x = \"my \\\"interpolated\\\" s
     ),
     (
         Token(
-            "this",
+            "this --should be - tokenized ",
         ),
-        68..72,
+        68..97,
     ),
     (
         Token(
-            "-",
+            "\\$",
         ),
-        73..74,
-    ),
-    (
-        Token(
-            "-",
-        ),
-        74..75,
-    ),
-    (
-        Token(
-            "should",
-        ),
-        75..81,
-    ),
-    (
-        Token(
-            "be",
-        ),
-        82..84,
-    ),
-    (
-        Token(
-            "-",
-        ),
-        85..86,
-    ),
-    (
-        Token(
-            "tokenized",
-        ),
-        87..96,
-    ),
-    (
-        Token(
-            "\\",
-        ),
-        97..98,
-    ),
-    (
-        Token(
-            "$",
-        ),
-        98..99,
+        97..99,
     ),
     (
         Token(
@@ -179,21 +125,9 @@ expression: "compiler.tokenize(r#\"\n        let x = \"my \\\"interpolated\\\" s
     ),
     (
         Token(
-            "unclosed",
+            "unclosed string\n\n        abcd ",
         ),
-        110..118,
-    ),
-    (
-        Token(
-            "string",
-        ),
-        119..125,
-    ),
-    (
-        Token(
-            "abcd",
-        ),
-        135..139,
+        110..140,
     ),
     (
         Token(

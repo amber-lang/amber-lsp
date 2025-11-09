@@ -5,23 +5,19 @@ use ropey::Rope;
 use tokio::sync::RwLock;
 use tower_lsp_server::lsp_types::Uri;
 
-use crate::{
-    analysis::{
-        types::GenericsMap,
-        SymbolTable,
-    },
-    fs::FS,
-    grammar::{
-        Grammar,
-        Spanned,
-        SpannedSemanticToken,
-    },
-    paths::{
-        FileId,
-        PathInterner,
-    },
-    utils::FastDashMap,
+use crate::analysis::types::GenericsMap;
+use crate::analysis::SymbolTable;
+use crate::fs::FS;
+use crate::grammar::{
+    Grammar,
+    Spanned,
+    SpannedSemanticToken,
 };
+use crate::paths::{
+    FileId,
+    PathInterner,
+};
+use crate::utils::FastDashMap;
 
 #[derive(Copy, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FileVersion(pub i32);

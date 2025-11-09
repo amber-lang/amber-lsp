@@ -1,21 +1,15 @@
-use std::{
-    path::Path,
-    sync::Arc,
-};
+use std::path::Path;
+use std::sync::Arc;
 
-use amber_lsp::{
-    backend::{
-        AmberVersion,
-        Backend,
-    },
-    fs::MemoryFS,
+use amber_lsp::backend::{
+    AmberVersion,
+    Backend,
 };
+use amber_lsp::fs::MemoryFS;
 use insta::assert_debug_snapshot;
 use tokio::test;
-use tower_lsp_server::{
-    lsp_types::Uri,
-    UriExt,
-};
+use tower_lsp_server::lsp_types::Uri;
+use tower_lsp_server::UriExt;
 
 #[test]
 async fn test_simple_function() {

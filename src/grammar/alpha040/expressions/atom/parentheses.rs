@@ -1,12 +1,10 @@
-use crate::{
-    grammar::alpha040::{
-        lexer::Token,
-        parser::default_recovery,
-        AmberParser,
-        Spanned,
-    },
-    T,
+use crate::grammar::alpha040::parser::default_recovery;
+use crate::grammar::alpha040::{
+    AmberParser,
+    Spanned,
 };
+use crate::grammar::Token;
+use crate::T;
 
 use super::super::Expression;
 use chumsky::prelude::*;

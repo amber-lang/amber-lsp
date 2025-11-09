@@ -2,41 +2,39 @@ use std::vec;
 
 use chumsky::span::SimpleSpan;
 
-use crate::{
-    analysis::{
-        get_symbol_definition_info,
-        insert_symbol_reference,
-        types::{
-            make_union_type,
-            matches_type,
-            DataType,
-            GenericsMap,
-        },
-        BlockContext,
-        Context,
-        FunctionArgument,
-        FunctionSymbol,
-        SymbolInfo,
-        SymbolLocation,
-        SymbolType,
-        VariableSymbol,
-    },
-    files::{
-        FileVersion,
-        Files,
-    },
-    grammar::{
-        alpha050::{
-            Expression,
-            FailableHandler,
-            InterpolatedCommand,
-            InterpolatedText,
-        },
-        CommandModifier,
-        Spanned,
-    },
-    paths::FileId,
+use crate::analysis::types::{
+    make_union_type,
+    matches_type,
+    DataType,
+    GenericsMap,
 };
+use crate::analysis::{
+    get_symbol_definition_info,
+    insert_symbol_reference,
+    BlockContext,
+    Context,
+    FunctionArgument,
+    FunctionSymbol,
+    SymbolInfo,
+    SymbolLocation,
+    SymbolType,
+    VariableSymbol,
+};
+use crate::files::{
+    FileVersion,
+    Files,
+};
+use crate::grammar::alpha050::{
+    Expression,
+    FailableHandler,
+    InterpolatedCommand,
+    InterpolatedText,
+};
+use crate::grammar::{
+    CommandModifier,
+    Spanned,
+};
+use crate::paths::FileId;
 
 use super::stmnts::{
     analyze_failable_handlers,

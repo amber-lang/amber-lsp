@@ -1,31 +1,27 @@
-use crate::{
-    analysis::{
-        get_symbol_definition_info,
-        insert_symbol_definition,
-        insert_symbol_reference,
-        types::{
-            make_union_type,
-            matches_type,
-            GenericsMap,
-        },
-        BlockContext,
-        Context,
-        DataType,
-        SymbolInfo,
-        SymbolLocation,
-        SymbolType,
-        VariableSymbol,
-    },
-    files::{
-        FileVersion,
-        Files,
-    },
-    grammar::{
-        alpha034::*,
-        Spanned,
-    },
-    paths::FileId,
+use crate::analysis::types::{
+    make_union_type,
+    matches_type,
+    GenericsMap,
 };
+use crate::analysis::{
+    get_symbol_definition_info,
+    insert_symbol_definition,
+    insert_symbol_reference,
+    BlockContext,
+    Context,
+    DataType,
+    SymbolInfo,
+    SymbolLocation,
+    SymbolType,
+    VariableSymbol,
+};
+use crate::files::{
+    FileVersion,
+    Files,
+};
+use crate::grammar::alpha034::*;
+use crate::grammar::Spanned;
+use crate::paths::FileId;
 
 use super::exp::analyze_exp;
 

@@ -1,5 +1,5 @@
+use crate::grammar::alpha040::parser::ident;
 use crate::grammar::alpha040::{
-    parser::ident,
     AmberParser,
     Spanned,
 };

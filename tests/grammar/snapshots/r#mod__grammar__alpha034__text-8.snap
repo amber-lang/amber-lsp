@@ -13,9 +13,9 @@ expression: "parse(&tokenize(r#\"\"\\\"\"#))"
                                 Text(
                                     [
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "\"",
+                                                    "\\\"",
                                                     1..3,
                                                 ),
                                             ),

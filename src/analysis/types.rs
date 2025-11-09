@@ -1,20 +1,16 @@
+use std::collections::HashSet;
 use std::fmt::{
     self,
     Display,
 };
+use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::SeqCst;
-use std::{
-    collections::HashSet,
-    sync::atomic::AtomicUsize,
-};
 
-use crate::{
-    files::FileVersion,
-    paths::FileId,
-    utils::{
-        FastDashMap,
-        FastDashSet,
-    },
+use crate::files::FileVersion;
+use crate::paths::FileId;
+use crate::utils::{
+    FastDashMap,
+    FastDashSet,
 };
 
 #[derive(PartialEq, Eq, Clone, Hash)]

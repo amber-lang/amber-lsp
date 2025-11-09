@@ -1,42 +1,38 @@
-use crate::{
-    analysis::{
-        self,
-        import_symbol,
-        insert_symbol_definition,
-        map_import_path,
-        types::{
-            make_union_type,
-            matches_type,
-            DataType,
-        },
-        Context,
-        FunctionContext,
-        FunctionSymbol,
-        ImportContext,
-        SymbolInfo,
-        SymbolType,
-        VariableSymbol,
-    },
-    backend::Backend,
-    files::FileVersion,
-    grammar::{
-        alpha035::{
-            FunctionArgument,
-            GlobalStatement,
-            ImportContent,
-        },
-        Span,
-        Spanned,
-    },
-    paths::FileId,
+use crate::analysis::types::{
+    make_union_type,
+    matches_type,
+    DataType,
 };
+use crate::analysis::{
+    self,
+    import_symbol,
+    insert_symbol_definition,
+    map_import_path,
+    Context,
+    FunctionContext,
+    FunctionSymbol,
+    ImportContext,
+    SymbolInfo,
+    SymbolType,
+    VariableSymbol,
+};
+use crate::backend::Backend;
+use crate::files::FileVersion;
+use crate::grammar::alpha035::{
+    FunctionArgument,
+    GlobalStatement,
+    ImportContent,
+};
+use crate::grammar::{
+    Span,
+    Spanned,
+};
+use crate::paths::FileId;
 
-use super::{
-    exp::analyze_exp,
-    stmnts::{
-        analyze_stmnt,
-        StmntAnalysisResult,
-    },
+use super::exp::analyze_exp;
+use super::stmnts::{
+    analyze_stmnt,
+    StmntAnalysisResult,
 };
 
 #[tracing::instrument(skip_all)]

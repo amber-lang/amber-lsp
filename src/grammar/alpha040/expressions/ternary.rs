@@ -1,12 +1,12 @@
 use chumsky::prelude::*;
 
-use crate::grammar::alpha040::lexer::Token;
 use crate::grammar::alpha040::parser::default_recovery;
 use crate::grammar::alpha040::{
     AmberParser,
     Spanned,
     Statement,
 };
+use crate::grammar::Token;
 use crate::T;
 
 use super::range::range_parser;

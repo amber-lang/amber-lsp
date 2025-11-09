@@ -1,21 +1,17 @@
-use crate::{
-    grammar::alpha040::{
-        lexer::Token,
-        parser::{
-            default_recovery,
-            ident,
-        },
-        statements::{
-            failed::failure_parser,
-            modifiers::modifier_parser,
-        },
-        AmberParser,
-        Expression,
-        Spanned,
-        Statement,
-    },
-    T,
+use crate::grammar::alpha040::parser::{
+    default_recovery,
+    ident,
 };
+use crate::grammar::alpha040::statements::failed::failure_parser;
+use crate::grammar::alpha040::statements::modifiers::modifier_parser;
+use crate::grammar::alpha040::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Statement,
+};
+use crate::grammar::Token;
+use crate::T;
 use chumsky::prelude::*;
 
 pub fn function_call_parser<'a>(

@@ -1,16 +1,14 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha050::{
-        parser::default_recovery,
-        AmberParser,
-        Expression,
-        Spanned,
-        Statement,
-        Token,
-    },
-    T,
+use crate::grammar::alpha050::parser::default_recovery;
+use crate::grammar::alpha050::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Statement,
+    Token,
 };
+use crate::T;
 
 use super::sum::sum_parser;
 

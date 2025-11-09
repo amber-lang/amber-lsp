@@ -1,15 +1,13 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha050::{
-        AmberParser,
-        Expression,
-        Spanned,
-        Statement,
-        Token,
-    },
-    T,
+use crate::grammar::alpha050::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Statement,
+    Token,
 };
+use crate::T;
 
 use super::atom::array_index_parser;
 

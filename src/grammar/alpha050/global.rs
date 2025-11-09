@@ -1,23 +1,17 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::{
-        alpha050::{
-            statements::block::block_parser,
-            Block,
-        },
-        Token,
-    },
-    T,
-};
+use crate::grammar::alpha050::statements::block::block_parser;
+use crate::grammar::alpha050::Block;
+use crate::grammar::Token;
+use crate::T;
 
+use super::expressions::parse_expr;
+use super::parser::{
+    default_recovery,
+    ident,
+};
+use super::statements::statement_parser;
 use super::{
-    expressions::parse_expr,
-    parser::{
-        default_recovery,
-        ident,
-    },
-    statements::statement_parser,
     AmberParser,
     CompilerFlag,
     DataType,

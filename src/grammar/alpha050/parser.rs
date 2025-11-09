@@ -1,9 +1,7 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::Token,
-    T,
-};
+use crate::grammar::Token;
+use crate::T;
 
 use super::AmberParser;
 

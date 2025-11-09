@@ -124,20 +124,11 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     (
                                         Text(
                                             (
-                                                ".",
-                                                202..203,
+                                                ".env",
+                                                202..206,
                                             ),
                                         ),
-                                        202..203,
-                                    ),
-                                    (
-                                        Text(
-                                            (
-                                                "env",
-                                                203..206,
-                                            ),
-                                        ),
-                                        203..206,
+                                        202..206,
                                     ),
                                 ],
                             ),
@@ -183,51 +174,27 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                             ),
                                             (
                                                 Text(
-                                                    "echo",
+                                                    "echo \"",
                                                 ),
-                                                240..244,
+                                                239..246,
                                             ),
                                             (
                                                 Text(
-                                                    "\"",
-                                                ),
-                                                245..246,
-                                            ),
-                                            (
-                                                Escape(
-                                                    "$",
+                                                    "\\$",
                                                 ),
                                                 246..248,
                                             ),
                                             (
-                                                Escape(
-                                                    "{",
+                                                Text(
+                                                    "\\{",
                                                 ),
                                                 248..250,
                                             ),
                                             (
                                                 Text(
-                                                    "!",
+                                                    "!var}\" ",
                                                 ),
-                                                250..251,
-                                            ),
-                                            (
-                                                Text(
-                                                    "var",
-                                                ),
-                                                251..254,
-                                            ),
-                                            (
-                                                Text(
-                                                    "}",
-                                                ),
-                                                254..255,
-                                            ),
-                                            (
-                                                Text(
-                                                    "\"",
-                                                ),
-                                                255..256,
+                                                250..257,
                                             ),
                                             (
                                                 Text(
@@ -363,15 +330,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                                 ),
                                                                 (
                                                                     Text(
-                                                                        "source",
+                                                                        "source \"",
                                                                     ),
-                                                                    349..355,
-                                                                ),
-                                                                (
-                                                                    Text(
-                                                                        "\"",
-                                                                    ),
-                                                                    356..357,
+                                                                    348..357,
                                                                 ),
                                                                 (
                                                                     Expression(
@@ -389,9 +350,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                                 ),
                                                                 (
                                                                     Text(
-                                                                        "\"",
+                                                                        "\" ",
                                                                     ),
-                                                                    363..364,
+                                                                    363..365,
                                                                 ),
                                                                 (
                                                                     Text(
@@ -431,51 +392,27 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                                     ),
                                                                     (
                                                                         Text(
-                                                                            "echo",
+                                                                            "echo \"",
                                                                         ),
-                                                                        390..394,
+                                                                        389..396,
                                                                     ),
                                                                     (
                                                                         Text(
-                                                                            "\"",
-                                                                        ),
-                                                                        395..396,
-                                                                    ),
-                                                                    (
-                                                                        Escape(
-                                                                            "$",
+                                                                            "\\$",
                                                                         ),
                                                                         396..398,
                                                                     ),
                                                                     (
-                                                                        Escape(
-                                                                            "{",
+                                                                        Text(
+                                                                            "\\{",
                                                                         ),
                                                                         398..400,
                                                                     ),
                                                                     (
                                                                         Text(
-                                                                            "!",
+                                                                            "!var}\" ",
                                                                         ),
-                                                                        400..401,
-                                                                    ),
-                                                                    (
-                                                                        Text(
-                                                                            "var",
-                                                                        ),
-                                                                        401..404,
-                                                                    ),
-                                                                    (
-                                                                        Text(
-                                                                            "}",
-                                                                        ),
-                                                                        404..405,
-                                                                    ),
-                                                                    (
-                                                                        Text(
-                                                                            "\"",
-                                                                        ),
-                                                                        405..406,
+                                                                        400..407,
                                                                     ),
                                                                     (
                                                                         Text(
@@ -579,20 +516,11 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     (
                                         Text(
                                             (
-                                                ".",
-                                                527..528,
+                                                ".env",
+                                                527..531,
                                             ),
                                         ),
-                                        527..528,
-                                    ),
-                                    (
-                                        Text(
-                                            (
-                                                "env",
-                                                528..531,
-                                            ),
-                                        ),
-                                        528..531,
+                                        527..531,
                                     ),
                                 ],
                             ),
@@ -628,39 +556,21 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "export",
+                                            "export \"",
                                         ),
-                                        554..560,
+                                        553..562,
                                     ),
                                     (
                                         Text(
-                                            "\"",
-                                        ),
-                                        561..562,
-                                    ),
-                                    (
-                                        Escape(
-                                            "$",
+                                            "\\$",
                                         ),
                                         562..564,
                                     ),
                                     (
                                         Text(
-                                            "(",
+                                            "(xargs < ",
                                         ),
-                                        564..565,
-                                    ),
-                                    (
-                                        Text(
-                                            "xargs",
-                                        ),
-                                        565..570,
-                                    ),
-                                    (
-                                        Text(
-                                            "<",
-                                        ),
-                                        571..572,
+                                        564..573,
                                     ),
                                     (
                                         Expression(
@@ -678,45 +588,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            ")",
+                                            ")\" > /dev/null ",
                                         ),
-                                        579..580,
-                                    ),
-                                    (
-                                        Text(
-                                            "\"",
-                                        ),
-                                        580..581,
-                                    ),
-                                    (
-                                        Text(
-                                            ">",
-                                        ),
-                                        582..583,
-                                    ),
-                                    (
-                                        Text(
-                                            "/",
-                                        ),
-                                        584..585,
-                                    ),
-                                    (
-                                        Text(
-                                            "dev",
-                                        ),
-                                        585..588,
-                                    ),
-                                    (
-                                        Text(
-                                            "/",
-                                        ),
-                                        588..589,
-                                    ),
-                                    (
-                                        Text(
-                                            "null",
-                                        ),
-                                        589..593,
+                                        579..594,
                                     ),
                                     (
                                         Text(
@@ -807,37 +681,19 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "[",
+                                            "[[ ! -z ",
                                         ),
-                                        704..705,
+                                        703..712,
                                     ),
                                     (
                                         Text(
-                                            "[",
-                                        ),
-                                        705..706,
-                                    ),
-                                    (
-                                        Text(
-                                            "!",
-                                        ),
-                                        707..708,
-                                    ),
-                                    (
-                                        CommandOption(
-                                            "-z",
-                                        ),
-                                        709..711,
-                                    ),
-                                    (
-                                        Escape(
-                                            "$",
+                                            "\\$",
                                         ),
                                         712..714,
                                     ),
                                     (
-                                        Escape(
-                                            "{",
+                                        Text(
+                                            "\\{",
                                         ),
                                         714..716,
                                     ),
@@ -872,33 +728,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "+",
+                                            "+z} ]] ",
                                         ),
-                                        730..731,
-                                    ),
-                                    (
-                                        Text(
-                                            "z",
-                                        ),
-                                        731..732,
-                                    ),
-                                    (
-                                        Text(
-                                            "}",
-                                        ),
-                                        732..733,
-                                    ),
-                                    (
-                                        Text(
-                                            "]",
-                                        ),
-                                        734..735,
-                                    ),
-                                    (
-                                        Text(
-                                            "]",
-                                        ),
-                                        735..736,
+                                        730..737,
                                     ),
                                     (
                                         Text(
@@ -1058,13 +890,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "readonly",
+                                            "readonly ",
                                         ),
-                                        900..908,
+                                        899..909,
                                     ),
                                     (
-                                        Escape(
-                                            "$",
+                                        Text(
+                                            "\\$",
                                         ),
                                         909..911,
                                     ),
@@ -1093,19 +925,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "=",
+                                            "=\"",
                                         ),
-                                        924..925,
+                                        924..926,
                                     ),
                                     (
                                         Text(
-                                            "\"",
-                                        ),
-                                        925..926,
-                                    ),
-                                    (
-                                        Escape(
-                                            "$",
+                                            "\\$",
                                         ),
                                         926..928,
                                     ),
@@ -1134,45 +960,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "\"",
+                                            "\" 2> /dev/null ",
                                         ),
-                                        940..941,
-                                    ),
-                                    (
-                                        Text(
-                                            "2",
-                                        ),
-                                        942..943,
-                                    ),
-                                    (
-                                        Text(
-                                            ">",
-                                        ),
-                                        943..944,
-                                    ),
-                                    (
-                                        Text(
-                                            "/",
-                                        ),
-                                        945..946,
-                                    ),
-                                    (
-                                        Text(
-                                            "dev",
-                                        ),
-                                        946..949,
-                                    ),
-                                    (
-                                        Text(
-                                            "/",
-                                        ),
-                                        949..950,
-                                    ),
-                                    (
-                                        Text(
-                                            "null",
-                                        ),
-                                        950..954,
+                                        940..955,
                                     ),
                                     (
                                         Text(
@@ -1273,19 +1063,19 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "echo",
+                                                "echo ",
                                             ),
-                                            1063..1067,
+                                            1062..1068,
                                         ),
                                         (
-                                            Escape(
-                                                "$",
+                                            Text(
+                                                "\\$",
                                             ),
                                             1068..1070,
                                         ),
                                         (
-                                            Escape(
-                                                "{",
+                                            Text(
+                                                "\\{",
                                             ),
                                             1070..1072,
                                         ),
@@ -1320,9 +1110,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "}",
+                                                "} ",
                                             ),
-                                            1086..1087,
+                                            1086..1088,
                                         ),
                                         (
                                             Text(
@@ -1436,13 +1226,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "export",
+                                            "export ",
                                         ),
-                                        1198..1204,
+                                        1197..1205,
                                     ),
                                     (
-                                        Escape(
-                                            "$",
+                                        Text(
+                                            "\\$",
                                         ),
                                         1205..1207,
                                     ),
@@ -1471,19 +1261,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "=",
+                                            "=\"",
                                         ),
-                                        1220..1221,
+                                        1220..1222,
                                     ),
                                     (
                                         Text(
-                                            "\"",
-                                        ),
-                                        1221..1222,
-                                    ),
-                                    (
-                                        Escape(
-                                            "$",
+                                            "\\$",
                                         ),
                                         1222..1224,
                                     ),
@@ -1512,45 +1296,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "\"",
+                                            "\" 2> /dev/null ",
                                         ),
-                                        1236..1237,
-                                    ),
-                                    (
-                                        Text(
-                                            "2",
-                                        ),
-                                        1238..1239,
-                                    ),
-                                    (
-                                        Text(
-                                            ">",
-                                        ),
-                                        1239..1240,
-                                    ),
-                                    (
-                                        Text(
-                                            "/",
-                                        ),
-                                        1241..1242,
-                                    ),
-                                    (
-                                        Text(
-                                            "dev",
-                                        ),
-                                        1242..1245,
-                                    ),
-                                    (
-                                        Text(
-                                            "/",
-                                        ),
-                                        1245..1246,
-                                    ),
-                                    (
-                                        Text(
-                                            "null",
-                                        ),
-                                        1246..1250,
+                                        1236..1251,
                                     ),
                                     (
                                         Text(
@@ -1651,19 +1399,19 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "echo",
+                                                "echo ",
                                             ),
-                                            1357..1361,
+                                            1356..1362,
                                         ),
                                         (
-                                            Escape(
-                                                "$",
+                                            Text(
+                                                "\\$",
                                             ),
                                             1362..1364,
                                         ),
                                         (
-                                            Escape(
-                                                "{",
+                                            Text(
+                                                "\\{",
                                             ),
                                             1364..1366,
                                         ),
@@ -1698,9 +1446,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "}",
+                                                "} ",
                                             ),
-                                            1380..1381,
+                                            1380..1382,
                                         ),
                                         (
                                             Text(
@@ -1797,9 +1545,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "unset",
+                                            "unset ",
                                         ),
-                                        1486..1491,
+                                        1485..1492,
                                     ),
                                     (
                                         Expression(
@@ -1814,6 +1562,12 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                             ),
                                         ),
                                         1492..1498,
+                                    ),
+                                    (
+                                        Text(
+                                            " ",
+                                        ),
+                                        1498..1499,
                                     ),
                                     (
                                         Text(
@@ -1909,45 +1663,21 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "[",
+                                            "[ -x \"",
                                         ),
-                                        1585..1586,
-                                    ),
-                                    (
-                                        CommandOption(
-                                            "-x",
-                                        ),
-                                        1587..1589,
+                                        1584..1591,
                                     ),
                                     (
                                         Text(
-                                            "\"",
-                                        ),
-                                        1590..1591,
-                                    ),
-                                    (
-                                        Escape(
-                                            "$",
+                                            "\\$",
                                         ),
                                         1591..1593,
                                     ),
                                     (
                                         Text(
-                                            "(",
+                                            "(command -v ",
                                         ),
-                                        1593..1594,
-                                    ),
-                                    (
-                                        Text(
-                                            "command",
-                                        ),
-                                        1594..1601,
-                                    ),
-                                    (
-                                        CommandOption(
-                                            "-v",
-                                        ),
-                                        1602..1604,
+                                        1593..1605,
                                     ),
                                     (
                                         Expression(
@@ -1965,21 +1695,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            ")",
+                                            ")\" ] ",
                                         ),
-                                        1614..1615,
-                                    ),
-                                    (
-                                        Text(
-                                            "\"",
-                                        ),
-                                        1615..1616,
-                                    ),
-                                    (
-                                        Text(
-                                            "]",
-                                        ),
-                                        1617..1618,
+                                        1614..1619,
                                     ),
                                     (
                                         Text(
@@ -2127,25 +1845,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "read",
+                                            "read -p \"",
                                         ),
-                                        1775..1779,
-                                    ),
-                                    (
-                                        CommandOption(
-                                            "-p",
-                                        ),
-                                        1780..1782,
+                                        1774..1784,
                                     ),
                                     (
                                         Text(
-                                            "\"",
-                                        ),
-                                        1783..1784,
-                                    ),
-                                    (
-                                        Escape(
-                                            "$",
+                                            "\\$",
                                         ),
                                         1784..1786,
                                     ),
@@ -2174,9 +1880,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "\"",
+                                            "\" ",
                                         ),
-                                        1801..1802,
+                                        1801..1803,
                                     ),
                                     (
                                         Text(
@@ -2203,9 +1909,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                 Text(
                                     [
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "$",
+                                                    "\\$",
                                                     1817..1819,
                                                 ),
                                             ),
@@ -2314,31 +2020,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                         ),
                                                         (
                                                             Text(
-                                                                "read",
+                                                                "read -s -p \"",
                                                             ),
-                                                            1960..1964,
-                                                        ),
-                                                        (
-                                                            CommandOption(
-                                                                "-s",
-                                                            ),
-                                                            1965..1967,
-                                                        ),
-                                                        (
-                                                            CommandOption(
-                                                                "-p",
-                                                            ),
-                                                            1968..1970,
+                                                            1959..1972,
                                                         ),
                                                         (
                                                             Text(
-                                                                "\"",
-                                                            ),
-                                                            1971..1972,
-                                                        ),
-                                                        (
-                                                            Escape(
-                                                                "$",
+                                                                "\\$",
                                                             ),
                                                             1972..1974,
                                                         ),
@@ -2367,9 +2055,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                         ),
                                                         (
                                                             Text(
-                                                                "\"",
+                                                                "\" ",
                                                             ),
-                                                            1989..1990,
+                                                            1989..1991,
                                                         ),
                                                         (
                                                             Text(
@@ -2399,33 +2087,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                         ),
                                                         (
                                                             Text(
-                                                                "echo",
+                                                                "echo \"\" >&2 ",
                                                             ),
-                                                            2003..2007,
-                                                        ),
-                                                        (
-                                                            Text(
-                                                                "\"",
-                                                            ),
-                                                            2008..2009,
-                                                        ),
-                                                        (
-                                                            Text(
-                                                                "\"",
-                                                            ),
-                                                            2009..2010,
-                                                        ),
-                                                        (
-                                                            Text(
-                                                                ">",
-                                                            ),
-                                                            2011..2012,
-                                                        ),
-                                                        (
-                                                            Text(
-                                                                "&2",
-                                                            ),
-                                                            2012..2014,
+                                                            2002..2015,
                                                         ),
                                                         (
                                                             Text(
@@ -2459,9 +2123,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                 Text(
                                     [
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "$",
+                                                    "\\$",
                                                     2035..2037,
                                                 ),
                                             ),
@@ -2638,83 +2302,47 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                     (
                                                         Text(
                                                             (
-                                                                "[",
-                                                                2329..2330,
+                                                                " [",
+                                                                2328..2330,
                                                             ),
                                                         ),
-                                                        2329..2330,
-                                                    ),
-                                                    (
-                                                        Escape(
-                                                            (
-                                                                "x1b",
-                                                                2330..2334,
-                                                            ),
-                                                        ),
-                                                        2330..2334,
+                                                        2328..2330,
                                                     ),
                                                     (
                                                         Text(
                                                             (
-                                                                "[",
-                                                                2334..2335,
+                                                                "\\x",
+                                                                2330..2332,
                                                             ),
                                                         ),
-                                                        2334..2335,
+                                                        2330..2332,
                                                     ),
                                                     (
                                                         Text(
                                                             (
-                                                                "1mY",
-                                                                2335..2338,
+                                                                "1b[1mY/",
+                                                                2332..2339,
                                                             ),
                                                         ),
-                                                        2335..2338,
+                                                        2332..2339,
                                                     ),
                                                     (
                                                         Text(
                                                             (
-                                                                "/",
-                                                                2338..2339,
+                                                                "\\x",
+                                                                2339..2341,
                                                             ),
                                                         ),
-                                                        2338..2339,
-                                                    ),
-                                                    (
-                                                        Escape(
-                                                            (
-                                                                "x1b",
-                                                                2339..2343,
-                                                            ),
-                                                        ),
-                                                        2339..2343,
+                                                        2339..2341,
                                                     ),
                                                     (
                                                         Text(
                                                             (
-                                                                "[",
-                                                                2343..2344,
+                                                                "1b[0mn]",
+                                                                2341..2348,
                                                             ),
                                                         ),
-                                                        2343..2344,
-                                                    ),
-                                                    (
-                                                        Text(
-                                                            (
-                                                                "0mn",
-                                                                2344..2347,
-                                                            ),
-                                                        ),
-                                                        2344..2347,
-                                                    ),
-                                                    (
-                                                        Text(
-                                                            (
-                                                                "]",
-                                                                2347..2348,
-                                                            ),
-                                                        ),
-                                                        2347..2348,
+                                                        2341..2348,
                                                     ),
                                                 ],
                                             ),
@@ -2730,92 +2358,47 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                     (
                                                         Text(
                                                             (
-                                                                "[",
-                                                                2357..2358,
+                                                                " [y/",
+                                                                2356..2360,
                                                             ),
                                                         ),
-                                                        2357..2358,
+                                                        2356..2360,
                                                     ),
                                                     (
                                                         Text(
                                                             (
-                                                                "y",
-                                                                2358..2359,
+                                                                "\\x",
+                                                                2360..2362,
                                                             ),
                                                         ),
-                                                        2358..2359,
+                                                        2360..2362,
                                                     ),
                                                     (
                                                         Text(
                                                             (
-                                                                "/",
-                                                                2359..2360,
+                                                                "1b[1mN",
+                                                                2362..2368,
                                                             ),
                                                         ),
-                                                        2359..2360,
-                                                    ),
-                                                    (
-                                                        Escape(
-                                                            (
-                                                                "x1b",
-                                                                2360..2364,
-                                                            ),
-                                                        ),
-                                                        2360..2364,
+                                                        2362..2368,
                                                     ),
                                                     (
                                                         Text(
                                                             (
-                                                                "[",
-                                                                2364..2365,
+                                                                "\\x",
+                                                                2368..2370,
                                                             ),
                                                         ),
-                                                        2364..2365,
+                                                        2368..2370,
                                                     ),
                                                     (
                                                         Text(
                                                             (
-                                                                "1mN",
-                                                                2365..2368,
+                                                                "1b[0m]",
+                                                                2370..2376,
                                                             ),
                                                         ),
-                                                        2365..2368,
-                                                    ),
-                                                    (
-                                                        Escape(
-                                                            (
-                                                                "x1b",
-                                                                2368..2372,
-                                                            ),
-                                                        ),
-                                                        2368..2372,
-                                                    ),
-                                                    (
-                                                        Text(
-                                                            (
-                                                                "[",
-                                                                2372..2373,
-                                                            ),
-                                                        ),
-                                                        2372..2373,
-                                                    ),
-                                                    (
-                                                        Text(
-                                                            (
-                                                                "0m",
-                                                                2373..2375,
-                                                            ),
-                                                        ),
-                                                        2373..2375,
-                                                    ),
-                                                    (
-                                                        Text(
-                                                            (
-                                                                "]",
-                                                                2375..2376,
-                                                            ),
-                                                        ),
-                                                        2375..2376,
+                                                        2370..2376,
                                                     ),
                                                 ],
                                             ),
@@ -2855,33 +2438,21 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                         ),
                                                         (
                                                             Text(
-                                                                "printf",
+                                                                "printf \"",
                                                             ),
-                                                            2400..2406,
+                                                            2399..2408,
                                                         ),
                                                         (
                                                             Text(
-                                                                "\"",
+                                                                "\\x",
                                                             ),
-                                                            2407..2408,
-                                                        ),
-                                                        (
-                                                            Escape(
-                                                                "x1b",
-                                                            ),
-                                                            2408..2412,
+                                                            2408..2410,
                                                         ),
                                                         (
                                                             Text(
-                                                                "[",
+                                                                "1b[1m",
                                                             ),
-                                                            2412..2413,
-                                                        ),
-                                                        (
-                                                            Text(
-                                                                "1m",
-                                                            ),
-                                                            2413..2415,
+                                                            2410..2415,
                                                         ),
                                                         (
                                                             Expression(
@@ -2898,22 +2469,16 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                             2415..2423,
                                                         ),
                                                         (
-                                                            Escape(
-                                                                "x1b",
+                                                            Text(
+                                                                "\\x",
                                                             ),
-                                                            2423..2427,
+                                                            2423..2425,
                                                         ),
                                                         (
                                                             Text(
-                                                                "[",
+                                                                "1b[0m",
                                                             ),
-                                                            2427..2428,
-                                                        ),
-                                                        (
-                                                            Text(
-                                                                "0m",
-                                                            ),
-                                                            2428..2430,
+                                                            2425..2430,
                                                         ),
                                                         (
                                                             Expression(
@@ -2931,9 +2496,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                         ),
                                                         (
                                                             Text(
-                                                                "\"",
+                                                                "\" ",
                                                             ),
-                                                            2446..2447,
+                                                            2446..2448,
                                                         ),
                                                         (
                                                             Text(
@@ -2963,27 +2528,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                         ),
                                                         (
                                                             Text(
-                                                                "read",
+                                                                "read -s -n 1 ",
                                                             ),
-                                                            2460..2464,
-                                                        ),
-                                                        (
-                                                            CommandOption(
-                                                                "-s",
-                                                            ),
-                                                            2465..2467,
-                                                        ),
-                                                        (
-                                                            CommandOption(
-                                                                "-n",
-                                                            ),
-                                                            2468..2470,
-                                                        ),
-                                                        (
-                                                            Text(
-                                                                "1",
-                                                            ),
-                                                            2471..2472,
+                                                            2459..2473,
                                                         ),
                                                         (
                                                             Text(
@@ -3013,27 +2560,21 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                         ),
                                                         (
                                                             Text(
-                                                                "printf",
+                                                                "printf \"",
                                                             ),
-                                                            2485..2491,
+                                                            2484..2493,
                                                         ),
                                                         (
                                                             Text(
-                                                                "\"",
-                                                            ),
-                                                            2492..2493,
-                                                        ),
-                                                        (
-                                                            Escape(
-                                                                "n",
+                                                                "\\n",
                                                             ),
                                                             2493..2495,
                                                         ),
                                                         (
                                                             Text(
-                                                                "\"",
+                                                                "\" ",
                                                             ),
-                                                            2495..2496,
+                                                            2495..2497,
                                                         ),
                                                         (
                                                             Text(
@@ -3093,21 +2634,21 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                         ),
                                                         (
                                                             Text(
-                                                                "echo",
+                                                                "echo ",
                                                             ),
-                                                            2540..2544,
+                                                            2539..2545,
                                                         ),
                                                         (
-                                                            Escape(
-                                                                "$",
+                                                            Text(
+                                                                "\\$",
                                                             ),
                                                             2545..2547,
                                                         ),
                                                         (
                                                             Text(
-                                                                "REPLY",
+                                                                "REPLY ",
                                                             ),
-                                                            2547..2552,
+                                                            2547..2553,
                                                         ),
                                                         (
                                                             Text(
@@ -3308,9 +2849,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "eval",
+                                            "eval ",
                                         ),
-                                        2717..2721,
+                                        2716..2722,
                                     ),
                                     (
                                         Expression(
@@ -3325,6 +2866,12 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                             ),
                                         ),
                                         2722..2731,
+                                    ),
+                                    (
+                                        Text(
+                                            " ",
+                                        ),
+                                        2731..2732,
                                     ),
                                     (
                                         Text(
@@ -3439,15 +2986,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                     ),
                                                     (
                                                         Text(
-                                                            "id",
+                                                            "id -u ",
                                                         ),
-                                                        2871..2873,
-                                                    ),
-                                                    (
-                                                        CommandOption(
-                                                            "-u",
-                                                        ),
-                                                        2874..2876,
+                                                        2870..2877,
                                                     ),
                                                     (
                                                         Text(
@@ -3646,6 +3187,12 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         3050..3051,
                                     ),
                                     (
+                                        Text(
+                                            "",
+                                        ),
+                                        3051..3052,
+                                    ),
+                                    (
                                         Expression(
                                             (
                                                 Nameof(
@@ -3670,21 +3217,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "=",
+                                            "=(\"",
                                         ),
-                                        3065..3066,
-                                    ),
-                                    (
-                                        Text(
-                                            "(",
-                                        ),
-                                        3066..3067,
-                                    ),
-                                    (
-                                        Text(
-                                            "\"",
-                                        ),
-                                        3067..3068,
+                                        3065..3068,
                                     ),
                                     (
                                         Expression(
@@ -3702,25 +3237,19 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "\"",
+                                            "\" \"",
                                         ),
-                                        3076..3077,
+                                        3076..3079,
                                     ),
                                     (
                                         Text(
-                                            "\"",
-                                        ),
-                                        3078..3079,
-                                    ),
-                                    (
-                                        Escape(
-                                            "$",
+                                            "\\$",
                                         ),
                                         3079..3081,
                                     ),
                                     (
-                                        Escape(
-                                            "{",
+                                        Text(
+                                            "\\{",
                                         ),
                                         3081..3083,
                                     ),
@@ -3749,39 +3278,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "[",
+                                            "[@]}\") ",
                                         ),
-                                        3096..3097,
-                                    ),
-                                    (
-                                        Text(
-                                            "@",
-                                        ),
-                                        3097..3098,
-                                    ),
-                                    (
-                                        Text(
-                                            "]",
-                                        ),
-                                        3098..3099,
-                                    ),
-                                    (
-                                        Text(
-                                            "}",
-                                        ),
-                                        3099..3100,
-                                    ),
-                                    (
-                                        Text(
-                                            "\"",
-                                        ),
-                                        3100..3101,
-                                    ),
-                                    (
-                                        Text(
-                                            ")",
-                                        ),
-                                        3101..3102,
+                                        3096..3103,
                                     ),
                                     (
                                         Text(
@@ -3816,25 +3315,19 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "printf",
+                                            "printf \"",
                                         ),
-                                        3117..3123,
+                                        3116..3125,
                                     ),
                                     (
                                         Text(
-                                            "\"",
-                                        ),
-                                        3124..3125,
-                                    ),
-                                    (
-                                        Escape(
-                                            "$",
+                                            "\\$",
                                         ),
                                         3125..3127,
                                     ),
                                     (
-                                        Escape(
-                                            "{",
+                                        Text(
+                                            "\\{",
                                         ),
                                         3127..3129,
                                     ),
@@ -3863,33 +3356,9 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                     ),
                                     (
                                         Text(
-                                            "[",
+                                            "[@]}\" ",
                                         ),
-                                        3142..3143,
-                                    ),
-                                    (
-                                        Text(
-                                            "@",
-                                        ),
-                                        3143..3144,
-                                    ),
-                                    (
-                                        Text(
-                                            "]",
-                                        ),
-                                        3144..3145,
-                                    ),
-                                    (
-                                        Text(
-                                            "}",
-                                        ),
-                                        3145..3146,
-                                    ),
-                                    (
-                                        Text(
-                                            "\"",
-                                        ),
-                                        3146..3147,
+                                        3142..3148,
                                     ),
                                     (
                                         Text(
@@ -3990,13 +3459,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "echo",
+                                                "echo ",
                                             ),
-                                            3255..3259,
+                                            3254..3260,
                                         ),
                                         (
-                                            Escape(
-                                                "$",
+                                            Text(
+                                                "\\$",
                                             ),
                                             3260..3262,
                                         ),
@@ -4025,43 +3494,19 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         ),
                                         (
                                             Text(
-                                                "|",
+                                                " | sed -e 's/",
                                             ),
-                                            3276..3277,
+                                            3275..3288,
                                         ),
                                         (
                                             Text(
-                                                "sed",
-                                            ),
-                                            3278..3281,
-                                        ),
-                                        (
-                                            CommandOption(
-                                                "-e",
-                                            ),
-                                            3282..3284,
-                                        ),
-                                        (
-                                            Text(
-                                                "'s",
-                                            ),
-                                            3285..3287,
-                                        ),
-                                        (
-                                            Text(
-                                                "/",
-                                            ),
-                                            3287..3288,
-                                        ),
-                                        (
-                                            Escape(
-                                                "\\",
+                                                "\\\\",
                                             ),
                                             3288..3290,
                                         ),
                                         (
-                                            Escape(
-                                                "\\",
+                                            Text(
+                                                "\\\\",
                                             ),
                                             3290..3292,
                                         ),
@@ -4072,106 +3517,34 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                             3292..3293,
                                         ),
                                         (
-                                            Escape(
-                                                "\\",
+                                            Text(
+                                                "\\\\",
                                             ),
                                             3293..3295,
                                         ),
                                         (
-                                            Escape(
-                                                "\\",
+                                            Text(
+                                                "\\\\",
                                             ),
                                             3295..3297,
                                         ),
                                         (
-                                            Escape(
-                                                "\\",
+                                            Text(
+                                                "\\\\",
                                             ),
                                             3297..3299,
                                         ),
                                         (
-                                            Escape(
-                                                "\\",
+                                            Text(
+                                                "\\\\",
                                             ),
                                             3299..3301,
                                         ),
                                         (
                                             Text(
-                                                "/",
+                                                "/g' -e \"s/%/%%/g\" ",
                                             ),
-                                            3301..3302,
-                                        ),
-                                        (
-                                            Text(
-                                                "g'",
-                                            ),
-                                            3302..3304,
-                                        ),
-                                        (
-                                            CommandOption(
-                                                "-e",
-                                            ),
-                                            3305..3307,
-                                        ),
-                                        (
-                                            Text(
-                                                "\"",
-                                            ),
-                                            3308..3309,
-                                        ),
-                                        (
-                                            Text(
-                                                "s",
-                                            ),
-                                            3309..3310,
-                                        ),
-                                        (
-                                            Text(
-                                                "/",
-                                            ),
-                                            3310..3311,
-                                        ),
-                                        (
-                                            Text(
-                                                "%",
-                                            ),
-                                            3311..3312,
-                                        ),
-                                        (
-                                            Text(
-                                                "/",
-                                            ),
-                                            3312..3313,
-                                        ),
-                                        (
-                                            Text(
-                                                "%",
-                                            ),
-                                            3313..3314,
-                                        ),
-                                        (
-                                            Text(
-                                                "%",
-                                            ),
-                                            3314..3315,
-                                        ),
-                                        (
-                                            Text(
-                                                "/",
-                                            ),
-                                            3315..3316,
-                                        ),
-                                        (
-                                            Text(
-                                                "g",
-                                            ),
-                                            3316..3317,
-                                        ),
-                                        (
-                                            Text(
-                                                "\"",
-                                            ),
-                                            3317..3318,
+                                            3301..3319,
                                         ),
                                         (
                                             Text(
@@ -4311,22 +3684,22 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                 Text(
                                     [
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "x1b",
-                                                    3462..3466,
+                                                    "\\x",
+                                                    3462..3464,
                                                 ),
                                             ),
-                                            3462..3466,
+                                            3462..3464,
                                         ),
                                         (
                                             Text(
                                                 (
-                                                    "[",
-                                                    3466..3467,
+                                                    "1b[",
+                                                    3464..3467,
                                                 ),
                                             ),
-                                            3466..3467,
+                                            3464..3467,
                                         ),
                                         (
                                             Expression(
@@ -4425,31 +3798,22 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                             3485..3503,
                                         ),
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "x1b",
-                                                    3503..3507,
+                                                    "\\x",
+                                                    3503..3505,
                                                 ),
                                             ),
-                                            3503..3507,
+                                            3503..3505,
                                         ),
                                         (
                                             Text(
                                                 (
-                                                    "[",
-                                                    3507..3508,
+                                                    "1b[0m",
+                                                    3505..3510,
                                                 ),
                                             ),
-                                            3507..3508,
-                                        ),
-                                        (
-                                            Text(
-                                                (
-                                                    "0m",
-                                                    3508..3510,
-                                                ),
-                                            ),
-                                            3508..3510,
+                                            3505..3510,
                                         ),
                                     ],
                                 ),
@@ -4531,31 +3895,22 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                 Text(
                                     [
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "x1b",
-                                                    3591..3595,
+                                                    "\\x",
+                                                    3591..3593,
                                                 ),
                                             ),
-                                            3591..3595,
+                                            3591..3593,
                                         ),
                                         (
                                             Text(
                                                 (
-                                                    "[",
-                                                    3595..3596,
+                                                    "1b[1m",
+                                                    3593..3598,
                                                 ),
                                             ),
-                                            3595..3596,
-                                        ),
-                                        (
-                                            Text(
-                                                (
-                                                    "1m",
-                                                    3596..3598,
-                                                ),
-                                            ),
-                                            3596..3598,
+                                            3593..3598,
                                         ),
                                         (
                                             Expression(
@@ -4585,31 +3940,22 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                             3598..3616,
                                         ),
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "x1b",
-                                                    3616..3620,
+                                                    "\\x",
+                                                    3616..3618,
                                                 ),
                                             ),
-                                            3616..3620,
+                                            3616..3618,
                                         ),
                                         (
                                             Text(
                                                 (
-                                                    "[",
-                                                    3620..3621,
+                                                    "1b[0m",
+                                                    3618..3623,
                                                 ),
                                             ),
-                                            3620..3621,
-                                        ),
-                                        (
-                                            Text(
-                                                (
-                                                    "0m",
-                                                    3621..3623,
-                                                ),
-                                            ),
-                                            3621..3623,
+                                            3618..3623,
                                         ),
                                     ],
                                 ),
@@ -4691,31 +4037,22 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                 Text(
                                     [
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "x1b",
-                                                    3708..3712,
+                                                    "\\x",
+                                                    3708..3710,
                                                 ),
                                             ),
-                                            3708..3712,
+                                            3708..3710,
                                         ),
                                         (
                                             Text(
                                                 (
-                                                    "[",
-                                                    3712..3713,
+                                                    "1b[3m",
+                                                    3710..3715,
                                                 ),
                                             ),
-                                            3712..3713,
-                                        ),
-                                        (
-                                            Text(
-                                                (
-                                                    "3m",
-                                                    3713..3715,
-                                                ),
-                                            ),
-                                            3713..3715,
+                                            3710..3715,
                                         ),
                                         (
                                             Expression(
@@ -4745,31 +4082,22 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                             3715..3733,
                                         ),
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "x1b",
-                                                    3733..3737,
+                                                    "\\x",
+                                                    3733..3735,
                                                 ),
                                             ),
-                                            3733..3737,
+                                            3733..3735,
                                         ),
                                         (
                                             Text(
                                                 (
-                                                    "[",
-                                                    3737..3738,
+                                                    "1b[0m",
+                                                    3735..3740,
                                                 ),
                                             ),
-                                            3737..3738,
-                                        ),
-                                        (
-                                            Text(
-                                                (
-                                                    "0m",
-                                                    3738..3740,
-                                                ),
-                                            ),
-                                            3738..3740,
+                                            3735..3740,
                                         ),
                                     ],
                                 ),
@@ -4851,31 +4179,22 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                 Text(
                                     [
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "x1b",
-                                                    3833..3837,
+                                                    "\\x",
+                                                    3833..3835,
                                                 ),
                                             ),
-                                            3833..3837,
+                                            3833..3835,
                                         ),
                                         (
                                             Text(
                                                 (
-                                                    "[",
-                                                    3837..3838,
+                                                    "1b[4m",
+                                                    3835..3840,
                                                 ),
                                             ),
-                                            3837..3838,
-                                        ),
-                                        (
-                                            Text(
-                                                (
-                                                    "4m",
-                                                    3838..3840,
-                                                ),
-                                            ),
-                                            3838..3840,
+                                            3835..3840,
                                         ),
                                         (
                                             Expression(
@@ -4905,31 +4224,22 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                             3840..3858,
                                         ),
                                         (
-                                            Escape(
+                                            Text(
                                                 (
-                                                    "x1b",
-                                                    3858..3862,
+                                                    "\\x",
+                                                    3858..3860,
                                                 ),
                                             ),
-                                            3858..3862,
+                                            3858..3860,
                                         ),
                                         (
                                             Text(
                                                 (
-                                                    "[",
-                                                    3862..3863,
+                                                    "1b[0m",
+                                                    3860..3865,
                                                 ),
                                             ),
-                                            3862..3863,
-                                        ),
-                                        (
-                                            Text(
-                                                (
-                                                    "0m",
-                                                    3863..3865,
-                                                ),
-                                            ),
-                                            3863..3865,
+                                            3860..3865,
                                         ),
                                     ],
                                 ),
@@ -5031,22 +4341,22 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         Text(
                                             [
                                                 (
-                                                    Escape(
+                                                    Text(
                                                         (
-                                                            "x1b",
-                                                            3980..3984,
+                                                            "\\x",
+                                                            3980..3982,
                                                         ),
                                                     ),
-                                                    3980..3984,
+                                                    3980..3982,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "[",
-                                                            3984..3985,
+                                                            "1b[",
+                                                            3982..3985,
                                                         ),
                                                     ),
-                                                    3984..3985,
+                                                    3982..3985,
                                                 ),
                                                 (
                                                     Expression(
@@ -5078,61 +4388,34 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                 (
                                                     Text(
                                                         (
-                                                            "m",
-                                                            4000..4001,
+                                                            "m%s",
+                                                            4000..4003,
                                                         ),
                                                     ),
-                                                    4000..4001,
+                                                    4000..4003,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "%",
-                                                            4001..4002,
+                                                            "\\x",
+                                                            4003..4005,
                                                         ),
                                                     ),
-                                                    4001..4002,
+                                                    4003..4005,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "s",
-                                                            4002..4003,
+                                                            "1b[0m",
+                                                            4005..4010,
                                                         ),
                                                     ),
-                                                    4002..4003,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "x1b",
-                                                            4003..4007,
-                                                        ),
-                                                    ),
-                                                    4003..4007,
+                                                    4005..4010,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "[",
-                                                            4007..4008,
-                                                        ),
-                                                    ),
-                                                    4007..4008,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "0m",
-                                                            4008..4010,
-                                                        ),
-                                                    ),
-                                                    4008..4010,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "n",
+                                                            "\\n",
                                                             4010..4012,
                                                         ),
                                                     ),
@@ -5241,135 +4524,45 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         Text(
                                             [
                                                 (
-                                                    Escape(
+                                                    Text(
                                                         (
-                                                            "x1b",
-                                                            4119..4123,
+                                                            "\\x",
+                                                            4119..4121,
                                                         ),
                                                     ),
-                                                    4119..4123,
+                                                    4119..4121,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "[",
-                                                            4123..4124,
+                                                            "1b[1;3;97;44m%s",
+                                                            4121..4136,
                                                         ),
                                                     ),
-                                                    4123..4124,
+                                                    4121..4136,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "1",
-                                                            4124..4125,
+                                                            "\\x",
+                                                            4136..4138,
                                                         ),
                                                     ),
-                                                    4124..4125,
+                                                    4136..4138,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            ";",
-                                                            4125..4126,
+                                                            "1b[0m",
+                                                            4138..4143,
                                                         ),
                                                     ),
-                                                    4125..4126,
+                                                    4138..4143,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "3",
-                                                            4126..4127,
-                                                        ),
-                                                    ),
-                                                    4126..4127,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            ";",
-                                                            4127..4128,
-                                                        ),
-                                                    ),
-                                                    4127..4128,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "97",
-                                                            4128..4130,
-                                                        ),
-                                                    ),
-                                                    4128..4130,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            ";",
-                                                            4130..4131,
-                                                        ),
-                                                    ),
-                                                    4130..4131,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "44m",
-                                                            4131..4134,
-                                                        ),
-                                                    ),
-                                                    4131..4134,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "%",
-                                                            4134..4135,
-                                                        ),
-                                                    ),
-                                                    4134..4135,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "s",
-                                                            4135..4136,
-                                                        ),
-                                                    ),
-                                                    4135..4136,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "x1b",
-                                                            4136..4140,
-                                                        ),
-                                                    ),
-                                                    4136..4140,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "[",
-                                                            4140..4141,
-                                                        ),
-                                                    ),
-                                                    4140..4141,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "0m",
-                                                            4141..4143,
-                                                        ),
-                                                    ),
-                                                    4141..4143,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "n",
+                                                            "\\n",
                                                             4143..4145,
                                                         ),
                                                     ),
@@ -5478,135 +4671,45 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         Text(
                                             [
                                                 (
-                                                    Escape(
+                                                    Text(
                                                         (
-                                                            "x1b",
-                                                            4258..4262,
+                                                            "\\x",
+                                                            4258..4260,
                                                         ),
                                                     ),
-                                                    4258..4262,
+                                                    4258..4260,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "[",
-                                                            4262..4263,
+                                                            "1b[1;3;97;42m%s",
+                                                            4260..4275,
                                                         ),
                                                     ),
-                                                    4262..4263,
+                                                    4260..4275,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "1",
-                                                            4263..4264,
+                                                            "\\x",
+                                                            4275..4277,
                                                         ),
                                                     ),
-                                                    4263..4264,
+                                                    4275..4277,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            ";",
-                                                            4264..4265,
+                                                            "1b[0m",
+                                                            4277..4282,
                                                         ),
                                                     ),
-                                                    4264..4265,
+                                                    4277..4282,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "3",
-                                                            4265..4266,
-                                                        ),
-                                                    ),
-                                                    4265..4266,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            ";",
-                                                            4266..4267,
-                                                        ),
-                                                    ),
-                                                    4266..4267,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "97",
-                                                            4267..4269,
-                                                        ),
-                                                    ),
-                                                    4267..4269,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            ";",
-                                                            4269..4270,
-                                                        ),
-                                                    ),
-                                                    4269..4270,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "42m",
-                                                            4270..4273,
-                                                        ),
-                                                    ),
-                                                    4270..4273,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "%",
-                                                            4273..4274,
-                                                        ),
-                                                    ),
-                                                    4273..4274,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "s",
-                                                            4274..4275,
-                                                        ),
-                                                    ),
-                                                    4274..4275,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "x1b",
-                                                            4275..4279,
-                                                        ),
-                                                    ),
-                                                    4275..4279,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "[",
-                                                            4279..4280,
-                                                        ),
-                                                    ),
-                                                    4279..4280,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "0m",
-                                                            4280..4282,
-                                                        ),
-                                                    ),
-                                                    4280..4282,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "n",
+                                                            "\\n",
                                                             4282..4284,
                                                         ),
                                                     ),
@@ -5715,135 +4818,45 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         Text(
                                             [
                                                 (
-                                                    Escape(
+                                                    Text(
                                                         (
-                                                            "x1b",
-                                                            4397..4401,
+                                                            "\\x",
+                                                            4397..4399,
                                                         ),
                                                     ),
-                                                    4397..4401,
+                                                    4397..4399,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "[",
-                                                            4401..4402,
+                                                            "1b[1;3;97;43m%s",
+                                                            4399..4414,
                                                         ),
                                                     ),
-                                                    4401..4402,
+                                                    4399..4414,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "1",
-                                                            4402..4403,
+                                                            "\\x",
+                                                            4414..4416,
                                                         ),
                                                     ),
-                                                    4402..4403,
+                                                    4414..4416,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            ";",
-                                                            4403..4404,
+                                                            "1b[0m",
+                                                            4416..4421,
                                                         ),
                                                     ),
-                                                    4403..4404,
+                                                    4416..4421,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "3",
-                                                            4404..4405,
-                                                        ),
-                                                    ),
-                                                    4404..4405,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            ";",
-                                                            4405..4406,
-                                                        ),
-                                                    ),
-                                                    4405..4406,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "97",
-                                                            4406..4408,
-                                                        ),
-                                                    ),
-                                                    4406..4408,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            ";",
-                                                            4408..4409,
-                                                        ),
-                                                    ),
-                                                    4408..4409,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "43m",
-                                                            4409..4412,
-                                                        ),
-                                                    ),
-                                                    4409..4412,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "%",
-                                                            4412..4413,
-                                                        ),
-                                                    ),
-                                                    4412..4413,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "s",
-                                                            4413..4414,
-                                                        ),
-                                                    ),
-                                                    4413..4414,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "x1b",
-                                                            4414..4418,
-                                                        ),
-                                                    ),
-                                                    4414..4418,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "[",
-                                                            4418..4419,
-                                                        ),
-                                                    ),
-                                                    4418..4419,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "0m",
-                                                            4419..4421,
-                                                        ),
-                                                    ),
-                                                    4419..4421,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "n",
+                                                            "\\n",
                                                             4421..4423,
                                                         ),
                                                     ),
@@ -5980,135 +4993,45 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                         Text(
                                             [
                                                 (
-                                                    Escape(
+                                                    Text(
                                                         (
-                                                            "x1b",
-                                                            4591..4595,
+                                                            "\\x",
+                                                            4591..4593,
                                                         ),
                                                     ),
-                                                    4591..4595,
+                                                    4591..4593,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "[",
-                                                            4595..4596,
+                                                            "1b[1;3;97;41m%s",
+                                                            4593..4608,
                                                         ),
                                                     ),
-                                                    4595..4596,
+                                                    4593..4608,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "1",
-                                                            4596..4597,
+                                                            "\\x",
+                                                            4608..4610,
                                                         ),
                                                     ),
-                                                    4596..4597,
+                                                    4608..4610,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            ";",
-                                                            4597..4598,
+                                                            "1b[0m",
+                                                            4610..4615,
                                                         ),
                                                     ),
-                                                    4597..4598,
+                                                    4610..4615,
                                                 ),
                                                 (
                                                     Text(
                                                         (
-                                                            "3",
-                                                            4598..4599,
-                                                        ),
-                                                    ),
-                                                    4598..4599,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            ";",
-                                                            4599..4600,
-                                                        ),
-                                                    ),
-                                                    4599..4600,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "97",
-                                                            4600..4602,
-                                                        ),
-                                                    ),
-                                                    4600..4602,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            ";",
-                                                            4602..4603,
-                                                        ),
-                                                    ),
-                                                    4602..4603,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "41m",
-                                                            4603..4606,
-                                                        ),
-                                                    ),
-                                                    4603..4606,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "%",
-                                                            4606..4607,
-                                                        ),
-                                                    ),
-                                                    4606..4607,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "s",
-                                                            4607..4608,
-                                                        ),
-                                                    ),
-                                                    4607..4608,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "x1b",
-                                                            4608..4612,
-                                                        ),
-                                                    ),
-                                                    4608..4612,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "[",
-                                                            4612..4613,
-                                                        ),
-                                                    ),
-                                                    4612..4613,
-                                                ),
-                                                (
-                                                    Text(
-                                                        (
-                                                            "0m",
-                                                            4613..4615,
-                                                        ),
-                                                    ),
-                                                    4613..4615,
-                                                ),
-                                                (
-                                                    Escape(
-                                                        (
-                                                            "n",
+                                                            "\\n",
                                                             4615..4617,
                                                         ),
                                                     ),

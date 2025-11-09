@@ -1,5 +1,7 @@
-pub use super::Spanned;
-pub use super::Token;
+pub use super::{
+    Spanned,
+    Token,
+};
 
 use super::{
     CommandModifier,
@@ -10,20 +12,18 @@ use super::{
     Span,
 };
 use crate::analysis::types::DataType;
-use chumsky::{
-    error::Rich,
-    extra::Err,
-    input::{
-        Input,
-        SpannedInput,
-    },
-    Parser,
+use chumsky::error::Rich;
+use chumsky::extra::Err;
+use chumsky::input::{
+    Input,
+    SpannedInput,
 };
+use chumsky::Parser;
 use semantic_tokens::semantic_tokens_from_ast;
 
 pub mod expressions;
 pub mod global;
-pub mod lexer_logos_v2;
+pub mod lexer;
 pub mod parser;
 pub mod semantic_tokens;
 pub mod statements;
@@ -289,7 +289,7 @@ impl LSPAnalysis for AmberCompiler {
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>> {
         // Normalize line endings and use Logos v2 lexer with context morphing
         let normalized = input.replace("\r\n", "\n").replace("\r", "\n");
-        lexer_logos_v2::tokenize(&normalized)
+        lexer::tokenize(&normalized)
     }
 
     #[tracing::instrument(skip_all)]

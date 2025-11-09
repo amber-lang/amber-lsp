@@ -1,12 +1,10 @@
-use std::{
-    env::current_exe,
-    future::Future,
-    path::{
-        Path,
-        PathBuf,
-    },
-    pin::Pin,
+use std::env::current_exe;
+use std::future::Future;
+use std::path::{
+    Path,
+    PathBuf,
 };
+use std::pin::Pin;
 
 use clap::builder::OsStr;
 use include_dir::{
@@ -14,10 +12,8 @@ use include_dir::{
     Dir,
     DirEntry,
 };
-use tower_lsp_server::{
-    lsp_types::Uri,
-    UriExt,
-};
+use tower_lsp_server::lsp_types::Uri;
+use tower_lsp_server::UriExt;
 use tracing::warn;
 
 use crate::backend::{

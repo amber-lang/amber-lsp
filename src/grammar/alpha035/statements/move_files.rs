@@ -1,22 +1,18 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha035::{
-        expressions::parse_expr,
-        lexer::Token,
-        parser::default_recovery,
-        AmberParser,
-        Expression,
-        Spanned,
-        Statement,
-    },
-    T,
+use crate::grammar::alpha035::expressions::parse_expr;
+use crate::grammar::alpha035::parser::default_recovery;
+use crate::grammar::alpha035::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Statement,
 };
+use crate::grammar::Token;
+use crate::T;
 
-use super::{
-    failed::failure_parser,
-    modifiers::modifier_parser,
-};
+use super::failed::failure_parser;
+use super::modifiers::modifier_parser;
 
 pub fn move_files_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,

@@ -151,25 +151,12 @@ pub enum CommandContext {
     Escape,
 }
 
-/// Compiler flag context - inside #[...]
-#[derive(Logos, Debug, Clone, PartialEq)]
-pub enum CompilerFlagContext {
-    // Compiler flag end
-    #[token("]")]
-    CloseBracket,
-
-    // Content inside the flag
-    #[regex(r"[^\]]+")]
-    Content,
-}
-
 /// Context stack to track where we are in parsing
 #[derive(Debug, Clone, PartialEq)]
 enum LexerContext {
     Main,
     String,
     Command,
-    CompilerFlag,
 }
 
 /// Stateful tokenizer that manages context switching
@@ -221,7 +208,6 @@ impl<'source> StatefulTokenizer<'source> {
             LexerContext::Main => self.lex_main_context(remaining),
             LexerContext::String => self.lex_string_context(remaining),
             LexerContext::Command => self.lex_command_context(remaining),
-            LexerContext::CompilerFlag => self.lex_compiler_flag_context(remaining),
         }
     }
 
@@ -276,11 +262,6 @@ impl<'source> StatefulTokenizer<'source> {
                     self.context_stack.push(LexerContext::Command);
                 }
                 Some((Token("$".to_string()), SimpleSpan::new(start, end)))
-            }
-            Ok(TokenKind::CompilerFlagStart) => {
-                // Entering compiler flag context
-                self.context_stack.push(LexerContext::CompilerFlag);
-                Some((Token("#[".to_string()), SimpleSpan::new(start, end)))
             }
             Ok(TokenKind::OpenBrace) => {
                 // Only track brace depth if we're inside an interpolation (context stack > 1)
@@ -384,30 +365,6 @@ impl<'source> StatefulTokenizer<'source> {
                 );
                 Some((Token(slice.to_string()), SimpleSpan::new(start, end)))
             }
-        }
-    }
-
-    fn lex_compiler_flag_context(&mut self, remaining: &str) -> Option<(Token, SimpleSpan)> {
-        let mut lex = CompilerFlagContext::lexer(remaining);
-        let token_result = lex.next()?;
-        let span = lex.span();
-        let slice = lex.slice();
-
-        // span is relative to `remaining`, so add current position to get absolute
-        let start = self.position + span.start;
-        let end = self.position + span.end;
-        self.position = end;
-
-        match token_result {
-            Ok(CompilerFlagContext::CloseBracket) => {
-                // Exiting compiler flag context
-                self.context_stack.pop();
-                Some((Token("]".to_string()), SimpleSpan::new(start, end)))
-            }
-            Ok(CompilerFlagContext::Content) => {
-                Some((Token(slice.to_string()), SimpleSpan::new(start, end)))
-            }
-            Err(_) => Some((Token(slice.to_string()), SimpleSpan::new(start, end))),
         }
     }
 }

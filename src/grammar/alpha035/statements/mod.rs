@@ -1,12 +1,10 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::Token,
-    T,
-};
+use crate::grammar::Token;
+use crate::T;
 
+use super::expressions::parse_expr;
 use super::{
-    expressions::parse_expr,
     AmberParser,
     Spanned,
     Statement,

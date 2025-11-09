@@ -3,15 +3,15 @@ use std::fs::read_to_string;
 use chumsky::error::Rich;
 use insta::assert_debug_snapshot;
 
+use amber_lsp::grammar::alpha034::semantic_tokens::semantic_tokens_from_ast;
+use amber_lsp::grammar::alpha034::{
+    AmberCompiler,
+    Spanned,
+};
 use amber_lsp::grammar::{
-    alpha034::{
-        lexer::Token,
-        semantic_tokens::semantic_tokens_from_ast,
-        AmberCompiler,
-        Spanned,
-    },
     LSPAnalysis,
     ParserResponse,
+    Token,
 };
 
 fn tokenize(input: &str) -> Vec<Spanned<Token>> {

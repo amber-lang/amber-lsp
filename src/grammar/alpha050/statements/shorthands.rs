@@ -1,20 +1,18 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha050::{
-        expressions::parse_expr,
-        parser::{
-            default_recovery,
-            ident,
-        },
-        AmberParser,
-        Expression,
-        Spanned,
-        Statement,
-        Token,
-    },
-    T,
+use crate::grammar::alpha050::expressions::parse_expr;
+use crate::grammar::alpha050::parser::{
+    default_recovery,
+    ident,
 };
+use crate::grammar::alpha050::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Statement,
+    Token,
+};
+use crate::T;
 
 pub fn shorthand_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,

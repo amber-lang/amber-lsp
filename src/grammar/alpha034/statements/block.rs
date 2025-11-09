@@ -1,16 +1,14 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha034::{
-        lexer::Token,
-        parser::default_recovery,
-        AmberParser,
-        Block,
-        Spanned,
-        Statement,
-    },
-    T,
+use crate::grammar::alpha034::parser::default_recovery;
+use crate::grammar::alpha034::{
+    AmberParser,
+    Block,
+    Spanned,
+    Statement,
 };
+use crate::grammar::Token;
+use crate::T;
 
 use super::modifiers::modifier_parser;
 
