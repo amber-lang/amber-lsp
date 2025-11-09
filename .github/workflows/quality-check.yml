@@ -12,6 +12,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install minimal nightly (for fmt)
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@1.90.0
         with:
