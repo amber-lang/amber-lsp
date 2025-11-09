@@ -66,6 +66,9 @@ jobs:
           args: |
             build ./run_coverage.ab ./run_coverage.sh
 
+      - name: Build project
+        run: cargo build --tests
+
       - name: Test coverage
         run: ./run_coverage.sh xml
 
