@@ -60,17 +60,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build script
-        uses: docker://ghcr.io/amber-lang/amber:alpine-0.4.0-alpha
-        with:
-          args: |
-            build ./run_coverage.ab ./run_coverage.sh
-
-      - name: Build project
-        run: cargo build --tests
-
       - name: Test coverage
-        run: ./run_coverage.sh xml
+        run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
