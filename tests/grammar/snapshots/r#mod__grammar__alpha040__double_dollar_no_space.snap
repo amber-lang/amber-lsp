@@ -1,0 +1,24 @@
+---
+source: tests/grammar/alpha040.rs
+expression: "compiler.tokenize(\"$$failed\")"
+---
+[
+    (
+        Token(
+            "$",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        1..2,
+    ),
+    (
+        Token(
+            "failed",
+        ),
+        2..8,
+    ),
+]

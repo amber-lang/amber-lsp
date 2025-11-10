@@ -671,6 +671,217 @@ fn test_lexer() {
 }
 
 #[test]
+fn test_lexer_double_dollar_edge_cases() {
+    let compiler = AmberCompiler::new();
+
+    // Test $$ followed by whitespace
+    assert_debug_snapshot!("double_dollar_whitespace", compiler.tokenize("$$ \n"));
+
+    // Test $$ at end of input
+    assert_debug_snapshot!("double_dollar_end", compiler.tokenize("$$"));
+
+    // Test $$ followed by identifier without space
+    assert_debug_snapshot!("double_dollar_no_space", compiler.tokenize("$$failed"));
+
+    // Test $$ followed by {
+    assert_debug_snapshot!("double_dollar_brace", compiler.tokenize("$$ {var}$"));
+}
+
+#[test]
+fn test_lexer_string_escapes() {
+    let compiler = AmberCompiler::new();
+
+    // Test string with various escape sequences
+    assert_debug_snapshot!(
+        "string_escapes",
+        compiler.tokenize(r#""hello\nworld\t\"quote\"""#)
+    );
+
+    // Test string with backslash at end
+    assert_debug_snapshot!("string_trailing_backslash", compiler.tokenize(r#""test\""#));
+
+    // Test empty string
+    assert_debug_snapshot!("empty_string", compiler.tokenize(r#""""#));
+}
+
+#[test]
+fn test_lexer_command_escapes() {
+    let compiler = AmberCompiler::new();
+
+    // Test command with escaped spaces
+    assert_debug_snapshot!(
+        "command_escapes",
+        compiler.tokenize(r#"$echo\ with\ spaces$"#)
+    );
+
+    // Test command with backslash
+    assert_debug_snapshot!("command_backslash", compiler.tokenize(r#"$test\n$"#));
+}
+
+#[test]
+fn test_lexer_command_context_whitespace() {
+    let compiler = AmberCompiler::new();
+
+    // Test $$ command with leading whitespace after $$
+    assert_debug_snapshot!("double_dollar_cmd_space", compiler.tokenize("$$ cmd$"));
+}
+
+#[test]
+fn test_lexer_dollar_at_end() {
+    let compiler = AmberCompiler::new();
+
+    // Test single $ at end of input (line 226 - None case)
+    assert_debug_snapshot!("dollar_at_end", compiler.tokenize("text$"));
+
+    // Test $ followed by end of string
+    assert_debug_snapshot!("just_dollar", compiler.tokenize("$"));
+}
+
+#[test]
+fn test_lexer_dollar_followed_by_dollar() {
+    let compiler = AmberCompiler::new();
+
+    // Test first $ of $$ (line 217-218 - next_ch == '$' false branch)
+    assert_debug_snapshot!("dollar_dollar", compiler.tokenize("$$"));
+
+    // Test $$$ (triple dollar)
+    assert_debug_snapshot!("triple_dollar", compiler.tokenize("$$$"));
+}
+
+#[test]
+fn test_lexer_dollar_prev_is_dollar() {
+    let compiler = AmberCompiler::new();
+
+    // Test second $ with whitespace after (lines 221-223)
+    assert_debug_snapshot!("dollar_dollar_space", compiler.tokenize("$$ "));
+
+    // Test second $ with non-whitespace after (line 222 - !next_ch.is_whitespace())
+    assert_debug_snapshot!("dollar_dollar_char", compiler.tokenize("$$x"));
+}
+
+#[test]
+fn test_lexer_string_interpolation_edge_cases() {
+    let compiler = AmberCompiler::new();
+
+    // Test nested braces in string interpolation
+    assert_debug_snapshot!(
+        "string_nested_braces",
+        compiler.tokenize(r#""text {if true { "inner" } else { "other" }} end""#)
+    );
+
+    // Test multiple interpolations
+    assert_debug_snapshot!(
+        "string_multi_interpolation",
+        compiler.tokenize(r#""{a} and {b} and {c}""#)
+    );
+
+    // Test empty interpolation
+    assert_debug_snapshot!(
+        "string_empty_interpolation",
+        compiler.tokenize(r#""test {} end""#)
+    );
+}
+
+#[test]
+fn test_lexer_command_interpolation_edge_cases() {
+    let compiler = AmberCompiler::new();
+
+    // Test nested braces in command interpolation
+    assert_debug_snapshot!(
+        "command_nested_braces",
+        compiler.tokenize(r#"$echo {if true { 1 } else { 0 }}$"#)
+    );
+
+    // Test command with multiple interpolations
+    assert_debug_snapshot!(
+        "command_multi_interpolation",
+        compiler.tokenize("$echo {a} {b} {c}$")
+    );
+}
+
+#[test]
+fn test_lexer_context_transitions() {
+    let compiler = AmberCompiler::new();
+
+    // Test transitioning between contexts
+    assert_debug_snapshot!(
+        "context_string_to_main",
+        compiler.tokenize(r#""start {expr} end""#)
+    );
+
+    // Test command to main context
+    assert_debug_snapshot!("context_command_to_main", compiler.tokenize("$cmd {expr}$"));
+
+    // Test multiple context switches
+    assert_debug_snapshot!(
+        "context_multiple_switches",
+        compiler.tokenize(r#""a {$b$} c""#)
+    );
+}
+
+#[test]
+fn test_lexer_brace_depth_tracking() {
+    let compiler = AmberCompiler::new();
+
+    // Test brace depth increases and decreases correctly
+    assert_debug_snapshot!("brace_depth_simple", compiler.tokenize(r#""{{}}" "#));
+
+    // Test brace depth with nested interpolations
+    assert_debug_snapshot!(
+        "brace_depth_nested",
+        compiler.tokenize(r#""outer { "inner {x}" }""#)
+    );
+
+    // Test braces outside interpolation context
+    assert_debug_snapshot!(
+        "brace_no_interpolation",
+        compiler.tokenize("{ let x = {} }")
+    );
+}
+
+#[test]
+fn test_lexer_error_recovery() {
+    let compiler = AmberCompiler::new();
+
+    // Test with various malformed inputs
+    assert_debug_snapshot!("unclosed_string", compiler.tokenize(r#""unclosed"#));
+
+    // Test with unclosed command
+    assert_debug_snapshot!("unclosed_command", compiler.tokenize("$echo test"));
+
+    // Test with mismatched braces
+    assert_debug_snapshot!("mismatched_braces", compiler.tokenize(r#""{{{""#));
+}
+
+#[test]
+fn test_lexer_single_dollar_variations() {
+    let compiler = AmberCompiler::new();
+
+    // Test single $ starting command
+    assert_debug_snapshot!("single_dollar_cmd", compiler.tokenize("$echo$"));
+
+    // Test $ not starting command (followed by whitespace in $$ case)
+    assert_debug_snapshot!("dollar_no_cmd", compiler.tokenize("$ "));
+
+    // Test $ followed by another $
+    assert_debug_snapshot!("dollar_followed_by_dollar", compiler.tokenize("$$$"));
+}
+
+#[test]
+fn test_lexer_edge_case_positions() {
+    let compiler = AmberCompiler::new();
+
+    // Test token at very end of input
+    assert_debug_snapshot!("token_at_end", compiler.tokenize("let x"));
+
+    // Test empty input
+    assert_debug_snapshot!("empty_input", compiler.tokenize(""));
+
+    // Test single character
+    assert_debug_snapshot!("single_char", compiler.tokenize("x"));
+}
+
+#[test]
 fn test_stdlib() {
     let stdlib = read_to_string("resources/alpha034/std/main.ab").unwrap();
 

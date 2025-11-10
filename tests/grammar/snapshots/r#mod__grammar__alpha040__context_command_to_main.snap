@@ -1,0 +1,42 @@
+---
+source: tests/grammar/alpha040.rs
+expression: "compiler.tokenize(\"$cmd {expr}$\")"
+---
+[
+    (
+        Token(
+            "$",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "cmd ",
+        ),
+        1..5,
+    ),
+    (
+        Token(
+            "{",
+        ),
+        5..6,
+    ),
+    (
+        Token(
+            "expr",
+        ),
+        6..10,
+    ),
+    (
+        Token(
+            "}",
+        ),
+        10..11,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        11..12,
+    ),
+]

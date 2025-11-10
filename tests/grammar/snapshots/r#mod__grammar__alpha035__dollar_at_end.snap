@@ -1,0 +1,18 @@
+---
+source: tests/grammar/alpha035.rs
+expression: "compiler.tokenize(\"text$\")"
+---
+[
+    (
+        Token(
+            "text",
+        ),
+        0..4,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        4..5,
+    ),
+]

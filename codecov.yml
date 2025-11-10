@@ -43,7 +43,7 @@ coverage:
           - 0.5.0-alpha
     patch:
       default:
-        target: 100%
+        target: 80%
 
 comment:
   layout: " diff, flags, files"

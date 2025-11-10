@@ -1,0 +1,42 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "compiler.tokenize(\"$$ {var}$\")"
+---
+[
+    (
+        Token(
+            "$",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        1..2,
+    ),
+    (
+        Token(
+            "{",
+        ),
+        3..4,
+    ),
+    (
+        Token(
+            "var",
+        ),
+        4..7,
+    ),
+    (
+        Token(
+            "}",
+        ),
+        7..8,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        8..9,
+    ),
+]

@@ -1,0 +1,48 @@
+---
+source: tests/grammar/alpha035.rs
+expression: "compiler.tokenize(r#\"$echo\\ with\\ spaces$\"#)"
+---
+[
+    (
+        Token(
+            "$",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "echo",
+        ),
+        1..5,
+    ),
+    (
+        Token(
+            "\\ ",
+        ),
+        5..7,
+    ),
+    (
+        Token(
+            "with",
+        ),
+        7..11,
+    ),
+    (
+        Token(
+            "\\ ",
+        ),
+        11..13,
+    ),
+    (
+        Token(
+            "spaces",
+        ),
+        13..19,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        19..20,
+    ),
+]
