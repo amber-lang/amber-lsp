@@ -12,6 +12,7 @@ use crate::{
 pub enum DataType {
     Any,
     Number,
+    Int,
     Boolean,
     Text,
     Null,
@@ -27,6 +28,7 @@ impl DataType {
         match self {
             DataType::Any => "Any".to_string(),
             DataType::Number => "Num".to_string(),
+            DataType::Int => "Int".to_string(),
             DataType::Boolean => "Bool".to_string(),
             DataType::Text => "Text".to_string(),
             DataType::Null => "Null".to_string(),
@@ -209,6 +211,7 @@ impl GenericsMap {
                 .iter()
                 .any(|current| self.is_more_or_equally_specific(current, new)),
             (_, DataType::Error) => false,
+            (DataType::Number, DataType::Int) => true,
             (t1, t2) => *t1 == *t2,
         }
     }

@@ -27,6 +27,7 @@ pub enum AmberVersion {
     Alpha034,
     Alpha035,
     Alpha040,
+    Alpha050,
 }
 
 #[derive(Debug)]
@@ -58,11 +59,13 @@ impl Backend {
                 AmberVersion::Alpha034 => Box::new(grammar::alpha034::AmberCompiler::new()),
                 AmberVersion::Alpha035 => Box::new(grammar::alpha035::AmberCompiler::new()),
                 AmberVersion::Alpha040 => Box::new(grammar::alpha040::AmberCompiler::new()),
+                AmberVersion::Alpha050 => Box::new(grammar::alpha050::AmberCompiler::new()),
             },
             token_types: match amber_version {
                 AmberVersion::Alpha034 => Box::new(grammar::alpha034::semantic_tokens::LEGEND_TYPE),
                 AmberVersion::Alpha035 => Box::new(grammar::alpha035::semantic_tokens::LEGEND_TYPE),
                 AmberVersion::Alpha040 => Box::new(grammar::alpha040::semantic_tokens::LEGEND_TYPE),
+                AmberVersion::Alpha050 => Box::new(grammar::alpha050::semantic_tokens::LEGEND_TYPE),
             },
             amber_version,
         }
@@ -223,6 +226,10 @@ impl Backend {
             }
             Grammar::Alpha040(Some(ast)) => {
                 analysis::alpha040::global::analyze_global_stmnt(file_id, version, &ast, self)
+                    .await;
+            }
+            Grammar::Alpha050(Some(ast)) => {
+                analysis::alpha050::global::analyze_global_stmnt(file_id, version, &ast, self)
                     .await;
             }
             _ => {}

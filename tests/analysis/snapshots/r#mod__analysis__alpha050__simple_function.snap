@@ -1,0 +1,105 @@
+---
+source: tests/analysis/alpha050.rs
+expression: symbol_table.symbols
+---
+{
+    5..=8: SymbolInfo {
+        name: "add",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "a",
+                            data_type: Any,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        9..10,
+                    ),
+                    (
+                        FunctionArgument {
+                            name: "b",
+                            data_type: Any,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        12..13,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+        span: 5..8,
+        contexts: [],
+    },
+    9..=10: SymbolInfo {
+        name: "a",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+        span: 9..10,
+        contexts: [],
+    },
+    12..=13: SymbolInfo {
+        name: "b",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+        span: 12..13,
+        contexts: [],
+    },
+    28..=29: SymbolInfo {
+        name: "a",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+        span: 28..29,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    32..=33: SymbolInfo {
+        name: "b",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+        span: 32..33,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+}

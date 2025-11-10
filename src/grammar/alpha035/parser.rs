@@ -7,7 +7,7 @@ use super::{lexer::Token, AmberParser};
 const KEYWORDS: &[&str] = &[
     "if", "else", "loop", "in", "return", "break", "continue", "true", "false", "null", "fun",
     "as", "is", "or", "and", "not", "nameof", "status", "fail", "echo", "let", "unsafe", "silent",
-    "main", "import", "from", "pub", "then", "Text", "Num", "Bool", "Null", "ref",
+    "main", "import", "from", "pub", "then", "Text", "Num", "Bool", "Null", "ref", "failed",
 ];
 
 #[inline]

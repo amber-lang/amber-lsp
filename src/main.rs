@@ -15,6 +15,7 @@ enum CliAmberVersion {
     Alpha034,
     Alpha035,
     Alpha040,
+    Alpha050,
 }
 
 impl From<CliAmberVersion> for AmberVersion {
@@ -24,6 +25,7 @@ impl From<CliAmberVersion> for AmberVersion {
             CliAmberVersion::Alpha034 => AmberVersion::Alpha034,
             CliAmberVersion::Alpha035 => AmberVersion::Alpha035,
             CliAmberVersion::Alpha040 => AmberVersion::Alpha040,
+            CliAmberVersion::Alpha050 => AmberVersion::Alpha050,
         }
     }
 }
@@ -35,6 +37,7 @@ impl ValueEnum for CliAmberVersion {
             CliAmberVersion::Alpha034,
             CliAmberVersion::Alpha035,
             CliAmberVersion::Alpha040,
+            CliAmberVersion::Alpha050,
         ]
     }
 
@@ -44,6 +47,7 @@ impl ValueEnum for CliAmberVersion {
             CliAmberVersion::Alpha034 => Some(PossibleValue::new("0.3.4-alpha")),
             CliAmberVersion::Alpha035 => Some(PossibleValue::new("0.3.5-alpha")),
             CliAmberVersion::Alpha040 => Some(PossibleValue::new("0.4.0-alpha")),
+            CliAmberVersion::Alpha050 => Some(PossibleValue::new("0.5.0-alpha")),
         }
     }
 }
@@ -112,7 +116,7 @@ fn detect_amber_version() -> AmberVersion {
         Ok(output) => String::from_utf8_lossy(&output.stdout).to_string(),
         Err(e) => {
             tracing::error!("Failed to execute amber command: {}", e);
-            return AmberVersion::Alpha040; // Default to the latest version if detection fails
+            return AmberVersion::Alpha050; // Default to the latest version if detection fails
         }
     };
 
@@ -120,6 +124,7 @@ fn detect_amber_version() -> AmberVersion {
         Some("0.3.4-alpha") => AmberVersion::Alpha034,
         Some("0.3.5-alpha") => AmberVersion::Alpha035,
         Some("0.4.0-alpha") => AmberVersion::Alpha040,
-        _ => AmberVersion::Alpha040,
+        Some("0.5.0-alpha") => AmberVersion::Alpha050,
+        _ => AmberVersion::Alpha050,
     }
 }

@@ -113,6 +113,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@1.90.0
       - uses: swatinem/rust-cache@v2
         with:
           key: ${{ join(matrix.targets, '-') }}
@@ -167,6 +169,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@1.90.0
       - name: Install cargo-dist
         shell: bash
         run: "curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.20.0/cargo-dist-installer.sh | sh"
@@ -341,6 +345,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@1.90.0
       - name: Install cargo-dist
         run: "curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.20.0/cargo-dist-installer.sh | sh"
       # Fetch artifacts from scratch-storage

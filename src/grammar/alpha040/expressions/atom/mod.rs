@@ -1,6 +1,6 @@
 use crate::{
     grammar::{
-        alpha034::parser::default_recovery,
+        alpha040::parser::default_recovery,
         alpha040::{lexer::Token, AmberParser, Spanned, Statement},
     },
     T,
