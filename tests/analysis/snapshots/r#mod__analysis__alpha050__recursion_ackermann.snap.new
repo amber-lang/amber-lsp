@@ -1,0 +1,419 @@
+---
+source: tests/analysis/alpha050.rs
+assertion_line: 320
+expression: symbol_table.symbols
+---
+{
+    5..=14: SymbolInfo {
+        name: "ackermann",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "m",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        15..21,
+                    ),
+                    (
+                        FunctionArgument {
+                            name: "n",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        23..29,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Num,
+        is_definition: true,
+        undefined: false,
+        span: 5..14,
+        contexts: [],
+    },
+    15..=16: SymbolInfo {
+        name: "m",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: true,
+        undefined: false,
+        span: 15..16,
+        contexts: [],
+    },
+    23..=24: SymbolInfo {
+        name: "n",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: true,
+        undefined: false,
+        span: 23..24,
+        contexts: [],
+    },
+    45..=46: SymbolInfo {
+        name: "m",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 45..46,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    69..=70: SymbolInfo {
+        name: "n",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 69..70,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+    88..=89: SymbolInfo {
+        name: "m",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 88..89,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    98..=99: SymbolInfo {
+        name: "n",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 98..99,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    122..=131: SymbolInfo {
+        name: "ackermann",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "m",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        132..137,
+                    ),
+                    (
+                        FunctionArgument {
+                            name: "n",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        139..140,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 122..131,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+    132..=133: SymbolInfo {
+        name: "m",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 132..133,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+    159..=168: SymbolInfo {
+        name: "ackermann",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "m",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        169..174,
+                    ),
+                    (
+                        FunctionArgument {
+                            name: "n",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        176..195,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 159..168,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    169..=170: SymbolInfo {
+        name: "m",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 169..170,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    176..=185: SymbolInfo {
+        name: "ackermann",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "m",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        186..187,
+                    ),
+                    (
+                        FunctionArgument {
+                            name: "n",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        189..194,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 176..185,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    186..=187: SymbolInfo {
+        name: "m",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 186..187,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    189..=190: SymbolInfo {
+        name: "n",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 189..190,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    204..=209: SymbolInfo {
+        name: "ack22",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: true,
+        undefined: false,
+        span: 204..209,
+        contexts: [],
+    },
+    212..=221: SymbolInfo {
+        name: "ackermann",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "m",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        222..223,
+                    ),
+                    (
+                        FunctionArgument {
+                            name: "n",
+                            data_type: Num,
+                            is_optional: false,
+                            is_ref: false,
+                        },
+                        225..226,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 212..221,
+        contexts: [],
+    },
+    233..=238: SymbolInfo {
+        name: "ack22",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Num,
+        is_definition: false,
+        undefined: false,
+        span: 233..238,
+        contexts: [],
+    },
+}

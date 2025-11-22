@@ -297,6 +297,7 @@ pub fn matches_type(expected: &DataType, given: &DataType, generics_map: &Generi
         (DataType::Error, _) | (_, DataType::Error) => false,
         (expected, DataType::Failable(given)) => matches_type(expected, given, generics_map),
         (DataType::Failable(expected), given) => matches_type(expected, given, generics_map),
+        (DataType::Number, DataType::Int) => true,
         (t1, t2) => *t1 == *t2,
     }
 }
