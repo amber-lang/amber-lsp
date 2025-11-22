@@ -69,7 +69,7 @@ fn succeeded_parser<'a>(
 fn then_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,
 ) -> impl AmberParser<'a, Spanned<FailableHandler>> {
-    just(T!["then"])
+    just(T!["exited"])
         .map_with(|t, e| (t.to_string(), e.span()))
         .then(
             just(T!['('])
@@ -88,7 +88,7 @@ fn then_parser<'a>(
         )))
         .map_with(|((succeeded_keyword, status_code), block), e| {
             (
-                FailableHandler::Then(succeeded_keyword, status_code, Box::new(block)),
+                FailableHandler::Exited(succeeded_keyword, status_code, Box::new(block)),
                 e.span(),
             )
         })

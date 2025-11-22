@@ -924,10 +924,10 @@ fn semantic_tokens_from_failable_handlers(
                         block.1,
                     )]));
                 }
-                FailableHandler::Then((_, failed_span), (_, exit_code_span), block) => {
+                FailableHandler::Exited((_, exited_span), (_, exit_code_span), block) => {
                     tokens.push((
                         hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                        *failed_span,
+                        *exited_span,
                     ));
 
                     tokens.push((

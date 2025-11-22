@@ -56,7 +56,7 @@ pub enum FailureHandler {
 pub enum FailableHandler {
     Failure(Spanned<FailureHandler>),
     Succeeded(Spanned<String>, Box<Spanned<Block>>),
-    Then(Spanned<String>, Spanned<String>, Box<Spanned<Block>>),
+    Exited(Spanned<String>, Spanned<String>, Box<Spanned<Block>>),
 }
 
 #[derive(PartialEq, Debug, Clone)]

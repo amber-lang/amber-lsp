@@ -952,9 +952,10 @@ pub fn analyze_stmnt(
                 contexts,
             );
 
-            let has_failure_handler = failable_handlers
-                .iter()
-                .any(|(modifier, _)| matches!(modifier, FailableHandler::Failure(_)));
+            let has_failure_handler = failable_handlers.iter().any(|(modifier, _)| {
+                matches!(modifier, FailableHandler::Failure(_))
+                    || matches!(modifier, FailableHandler::Exited(_, _, _))
+            });
 
             if !has_failure_handler
                 && !modifiers.iter().any(|(modifier, _)| {
@@ -1169,7 +1170,7 @@ pub fn analyze_failable_handlers(
                 types.extend(return_ty);
                 is_propagating |= is_propagating_failure;
             }
-            FailableHandler::Then(_, (code_var, code_var_span), block) => {
+            FailableHandler::Exited(_, (code_var, code_var_span), block) => {
                 let mut symbol_table = files
                     .symbol_table
                     .entry((file_id, file_version))

@@ -411,14 +411,14 @@ expression: parse(&tokenize(input))
                                     ],
                                     [
                                         (
-                                            Then(
+                                            Exited(
                                                 (
-                                                    "then",
-                                                    206..210,
+                                                    "exited",
+                                                    206..212,
                                                 ),
                                                 (
                                                     "code",
-                                                    211..215,
+                                                    213..217,
                                                 ),
                                                 (
                                                     Singleline(
@@ -426,35 +426,35 @@ expression: parse(&tokenize(input))
                                                             Echo(
                                                                 (
                                                                     "echo",
-                                                                    218..222,
+                                                                    220..224,
                                                                 ),
                                                                 (
                                                                     Var(
                                                                         (
                                                                             "code",
-                                                                            223..227,
+                                                                            225..229,
                                                                         ),
                                                                     ),
-                                                                    223..227,
+                                                                    225..229,
                                                                 ),
                                                             ),
-                                                            218..227,
+                                                            220..229,
                                                         ),
                                                     ),
-                                                    216..227,
+                                                    218..229,
                                                 ),
                                             ),
-                                            206..227,
+                                            206..229,
                                         ),
                                     ],
                                 ),
-                                203..227,
+                                203..229,
                             ),
                         ),
-                        203..227,
+                        203..229,
                     ),
                 ),
-                203..227,
+                203..229,
             ),
             (
                 Statement(
@@ -464,65 +464,72 @@ expression: parse(&tokenize(input))
                                 Comment(
                                     "should succeed",
                                 ),
-                                228..246,
+                                230..248,
                             ),
                         ),
-                        228..246,
+                        230..248,
                     ),
                 ),
-                228..246,
+                230..248,
             ),
             (
                 Statement(
                     (
                         Expression(
                             (
-                                Ternary(
-                                    (
-                                        Command(
-                                            [],
-                                            [
-                                                (
-                                                    Text(
-                                                        "$",
-                                                    ),
-                                                    250..251,
-                                                ),
-                                                (
-                                                    Text(
-                                                        "$",
-                                                    ),
-                                                    251..252,
-                                                ),
-                                            ],
-                                            [],
+                                Command(
+                                    [],
+                                    [
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            252..253,
                                         ),
-                                        250..252,
-                                    ),
-                                    (
-                                        "then",
-                                        253..257,
-                                    ),
-                                    (
-                                        Error,
-                                        257..258,
-                                    ),
-                                    (
-                                        "",
-                                        259..258,
-                                    ),
-                                    (
-                                        Error,
-                                        259..258,
-                                    ),
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            253..254,
+                                        ),
+                                    ],
+                                    [],
                                 ),
-                                250..258,
+                                252..254,
                             ),
                         ),
-                        250..258,
+                        252..254,
                     ),
                 ),
-                250..258,
+                252..254,
+            ),
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Var(
+                                    (
+                                        "exited",
+                                        255..261,
+                                    ),
+                                ),
+                                255..261,
+                            ),
+                        ),
+                        255..261,
+                    ),
+                ),
+                255..261,
+            ),
+            (
+                Statement(
+                    (
+                        Error,
+                        261..262,
+                    ),
+                ),
+                261..262,
             ),
             (
                 Statement(
@@ -530,7 +537,7 @@ expression: parse(&tokenize(input))
                         Echo(
                             (
                                 "echo",
-                                259..263,
+                                263..267,
                             ),
                             (
                                 Text(
@@ -539,20 +546,20 @@ expression: parse(&tokenize(input))
                                             Text(
                                                 (
                                                     "then",
-                                                    265..269,
+                                                    269..273,
                                                 ),
                                             ),
-                                            265..269,
+                                            269..273,
                                         ),
                                     ],
                                 ),
-                                264..270,
+                                268..274,
                             ),
                         ),
-                        259..270,
+                        263..274,
                     ),
                 ),
-                259..270,
+                263..274,
             ),
             (
                 Statement(
@@ -562,21 +569,19 @@ expression: parse(&tokenize(input))
                                 Comment(
                                     "should fail",
                                 ),
-                                271..286,
+                                275..290,
                             ),
                         ),
-                        271..286,
+                        275..290,
                     ),
                 ),
-                271..286,
+                275..290,
             ),
         ],
     ),
     [
         found "(" at 17..18 expected '":"', or '"{"',
         found end of input at 23..24 expected something else,
-        keyword used as status code argument name at 259..263,
-        found "echo" at 259..263 expected '"else"',
-        found "echo" at 259..263 expected something else,
+        multiple errors found at 263..267,
     ],
 )

@@ -194,8 +194,8 @@ fn test_failable_handlers() {
     $$ failed(code): echo code // should succeed
     $$ failed: echo "failed" // should succeed
 
-    $$ then(code): echo code // should succeed
-    $$ then: echo "then" // should fail
+    $$ exited(code): echo code // should succeed
+    $$ exited: echo "then" // should fail
 
 "#;
 

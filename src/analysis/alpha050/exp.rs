@@ -330,9 +330,10 @@ pub fn analyze_exp(
                     .insert(name_span.end..=function_call_scope_end, fun_symbol);
             }
 
-            let has_failure_handler = failable_handlers
-                .iter()
-                .any(|(modifier, _)| matches!(modifier, FailableHandler::Failure(_)));
+            let has_failure_handler = failable_handlers.iter().any(|(modifier, _)| {
+                matches!(modifier, FailableHandler::Failure(_))
+                    || matches!(modifier, FailableHandler::Exited(_, _, _))
+            });
 
             if matches!(
                 scoped_generic_types.deref_type(&exp_ty),
@@ -568,9 +569,10 @@ pub fn analyze_exp(
             is_propagating_failure |= is_prop;
             return_types.extend(failure_return_ty);
 
-            let has_failure_handler = failable_handlers
-                .iter()
-                .any(|(modifier, _)| matches!(modifier, FailableHandler::Failure(_)));
+            let has_failure_handler = failable_handlers.iter().any(|(modifier, _)| {
+                matches!(modifier, FailableHandler::Failure(_))
+                    || matches!(modifier, FailableHandler::Exited(_, _, _))
+            });
 
             if !has_failure_handler
                 && !modifiers.iter().any(|(modifier, _)| {
