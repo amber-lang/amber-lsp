@@ -1,0 +1,16 @@
+---
+source: tests/analysis/alpha050.rs
+expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_string(&generic_types)).collect::<Vec<String>>()"
+---
+[
+    "fun foo(a?: Any): Any",
+    "a: Any",
+    "a: Any",
+    "a: Any",
+    "x: Int",
+    "fun foo(a?: Int): Int",
+    "code: [Text]",
+    "y: Text",
+    "fun foo(a?: Text): Text",
+    "code: [Text]",
+]

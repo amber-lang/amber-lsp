@@ -1,3 +1,4 @@
+use crate::analysis::alpha050::exp::ExpAnalysisResult;
 use crate::analysis::types::{
     make_union_type,
     matches_type,
@@ -271,6 +272,7 @@ pub async fn analyze_global_stmnt(
                                                 new_generic_types.remove(0),
                                             ),
                                             is_optional: false,
+                                            default_value_type: None,
                                             is_ref: *is_ref,
                                         },
                                         *span,
@@ -281,12 +283,13 @@ pub async fn analyze_global_stmnt(
                                                 name: name.clone(),
                                                 data_type: ty.clone(),
                                                 is_optional: false,
+                                                default_value_type: None,
                                                 is_ref: *is_ref,
                                             },
                                             *span,
                                         ))
                                     }
-                                    FunctionArgument::Optional((is_ref, _), (name, _), ty, _) => {
+                                    FunctionArgument::Optional((is_ref, _), (name, _), ty, exp) => {
                                         Some((
                                             analysis::FunctionArgument {
                                                 name: name.clone(),
@@ -297,6 +300,20 @@ pub async fn analyze_global_stmnt(
                                                     ),
                                                 },
                                                 is_optional: true,
+                                                default_value_type: {
+                                                    let ExpAnalysisResult { exp_ty, .. } =
+                                                        analyze_exp(
+                                                            file_id,
+                                                            file_version,
+                                                            exp,
+                                                            DataType::Any,
+                                                            &backend.files,
+                                                            &scoped_generics_map,
+                                                            &function_contexts,
+                                                        );
+
+                                                    Some(exp_ty)
+                                                },
                                                 is_ref: *is_ref,
                                             },
                                             *span,

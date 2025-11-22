@@ -159,8 +159,15 @@ pub fn analyze_exp(
                 }) => fun_symbol
                     .arguments
                     .iter()
-                    .map(|(arg, _)| (arg.data_type.clone(), arg.is_optional, arg.is_ref))
-                    .collect::<Vec<(DataType, bool, bool)>>(),
+                    .map(|(arg, _)| {
+                        (
+                            arg.data_type.clone(),
+                            arg.is_optional,
+                            arg.is_ref,
+                            arg.default_value_type.clone(),
+                        )
+                    })
+                    .collect::<Vec<(DataType, bool, bool, Option<DataType>)>>(),
                 Some(_) => {
                     files.report_error(&file, &format!("{name} is not a function"), *exp_span);
 
@@ -174,7 +181,7 @@ pub fn analyze_exp(
             };
 
             args.iter().enumerate().for_each(|(idx, arg)| {
-                if let Some((ty, _, is_ref)) = expected_types.get(idx) {
+                if let Some((ty, _, is_ref, _)) = expected_types.get(idx) {
                     let ExpAnalysisResult {
                         is_propagating_failure: propagates_failure,
                         return_ty,
@@ -232,7 +239,7 @@ pub fn analyze_exp(
 
             if expected_types
                 .iter()
-                .filter(|(_, is_optional, _)| !*is_optional)
+                .filter(|(_, is_optional, ..)| !*is_optional)
                 .count()
                 > args.len()
                 && fun_symbol.is_some()
@@ -242,7 +249,18 @@ pub fn analyze_exp(
                     &format!("Function takes {} arguments", expected_types.len()),
                     *name_span,
                 );
-            };
+            } else {
+                expected_types
+                    .iter()
+                    .skip(args.len())
+                    .filter(|(_, is_optional, ..)| *is_optional)
+                    .for_each(|(ty, _, _, default_type)| {
+                        if let DataType::Generic(id) = ty {
+                            scoped_generic_types
+                                .constrain_generic_type(*id, default_type.clone().unwrap());
+                        }
+                    });
+            }
 
             let exp_ty = fun_symbol
                 .clone()
@@ -306,6 +324,7 @@ pub fn analyze_exp(
                                         name: arg.name.clone(),
                                         data_type: scoped_generic_types.deref_type(&arg.data_type),
                                         is_optional: arg.is_optional,
+                                        default_value_type: arg.default_value_type.clone(),
                                         is_ref: arg.is_ref,
                                     },
                                     arg_span,
@@ -330,9 +349,10 @@ pub fn analyze_exp(
                     .insert(name_span.end..=function_call_scope_end, fun_symbol);
             }
 
-            let has_failure_handler = failable_handlers
-                .iter()
-                .any(|(modifier, _)| matches!(modifier, FailableHandler::Failure(_)));
+            let has_failure_handler = failable_handlers.iter().any(|(modifier, _)| {
+                matches!(modifier, FailableHandler::Failure(_))
+                    || matches!(modifier, FailableHandler::Exited(_, _, _))
+            });
 
             if matches!(
                 scoped_generic_types.deref_type(&exp_ty),
@@ -568,9 +588,10 @@ pub fn analyze_exp(
             is_propagating_failure |= is_prop;
             return_types.extend(failure_return_ty);
 
-            let has_failure_handler = failable_handlers
-                .iter()
-                .any(|(modifier, _)| matches!(modifier, FailableHandler::Failure(_)));
+            let has_failure_handler = failable_handlers.iter().any(|(modifier, _)| {
+                matches!(modifier, FailableHandler::Failure(_))
+                    || matches!(modifier, FailableHandler::Exited(_, _, _))
+            });
 
             if !has_failure_handler
                 && !modifiers.iter().any(|(modifier, _)| {
