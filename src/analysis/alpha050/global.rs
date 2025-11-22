@@ -190,6 +190,95 @@ pub async fn analyze_global_stmnt(
                     compiler_flags: vec![],
                 })];
 
+                let data_type = match declared_return_ty {
+                    Some((ty, _)) => ty.clone(),
+                    None => {
+                        let generic_id = scoped_generics_map.new_generic_id();
+                        scoped_generics_map.constrain_generic_type(generic_id, DataType::Any);
+                        new_generic_types.push(generic_id);
+
+                        DataType::Generic(generic_id)
+                    }
+                };
+
+                let mut symbol_table = backend
+                    .files
+                    .symbol_table
+                    .entry((file_id, file_version))
+                    .or_default();
+
+                insert_symbol_definition(
+                    &mut symbol_table,
+                    &SymbolInfo {
+                        name: name.to_string(),
+                        symbol_type: SymbolType::Function(FunctionSymbol {
+                            arguments: args
+                                .iter()
+                                .enumerate()
+                                .filter_map(|(idx, (arg, span))| match arg {
+                                    FunctionArgument::Generic((is_ref, _), (name, _)) => Some((
+                                        analysis::FunctionArgument {
+                                            name: name.clone(),
+                                            data_type: DataType::Generic(new_generic_types[idx]),
+                                            is_optional: false,
+                                            is_ref: *is_ref,
+                                        },
+                                        *span,
+                                    )),
+                                    FunctionArgument::Typed((is_ref, _), (name, _), (ty, _)) => {
+                                        Some((
+                                            analysis::FunctionArgument {
+                                                name: name.clone(),
+                                                data_type: ty.clone(),
+                                                is_optional: false,
+                                                is_ref: *is_ref,
+                                            },
+                                            *span,
+                                        ))
+                                    }
+                                    FunctionArgument::Optional((is_ref, _), (name, _), ty, _) => {
+                                        Some((
+                                            analysis::FunctionArgument {
+                                                name: name.clone(),
+                                                data_type: match ty {
+                                                    Some((ty, _)) => ty.clone(),
+                                                    None => {
+                                                        DataType::Generic(new_generic_types[idx])
+                                                    }
+                                                },
+                                                is_optional: true,
+                                                is_ref: *is_ref,
+                                            },
+                                            *span,
+                                        ))
+                                    }
+                                    FunctionArgument::Error => None,
+                                })
+                                .collect::<Vec<_>>(),
+                            is_public: *is_pub,
+                            compiler_flags: compiler_flags
+                                .iter()
+                                .map(|(flag, _)| flag.clone())
+                                .collect(),
+                            docs: match contexts.clone().last() {
+                                Some(Context::DocString(doc)) => {
+                                    contexts.pop();
+                                    Some(doc.clone())
+                                }
+                                _ => None,
+                            },
+                        }),
+                        data_type: data_type.clone(),
+                        is_definition: true,
+                        undefined: false,
+                        span: *name_span,
+                        contexts: vec![],
+                    },
+                    (file_id, file_version),
+                    (body.first().map(|(_, span)| span.start).unwrap_or(span.end))..=usize::MAX,
+                    *is_pub,
+                );
+
                 body.iter().for_each(|stmnt| {
                     let StmntAnalysisResult {
                         return_ty,
@@ -225,109 +314,25 @@ pub async fn analyze_global_stmnt(
                     inferred_return_type = DataType::Failable(Box::new(inferred_return_type));
                 }
 
-                let data_type = match declared_return_ty {
-                    Some((ty, ty_span)) => {
-                        if !matches_type(ty, &inferred_return_type, &backend.files.generic_types) {
-                            backend.files.report_error(
-                                &(file_id, file_version),
-                                &format!(
-                                    "Function returns type {inferred_return_type:?}, but expected {ty:?}",
-                                ),
-                                *ty_span,
-                            );
-                        }
-
-                        if is_propagating && !matches!(ty, DataType::Failable(_)) {
-                            backend.files.report_error(
-                                &(file_id, file_version),
-                                "Function is propagating an error, but return type is not failable",
-                                *ty_span,
-                            );
-                        }
-
-                        ty.clone()
+                if let Some((ty, ty_span)) = declared_return_ty {
+                    if !matches_type(ty, &inferred_return_type, &backend.files.generic_types) {
+                        backend.files.report_error(
+                            &(file_id, file_version),
+                            &format!(
+                                "Function returns type {inferred_return_type:?}, but expected {ty:?}",
+                            ),
+                            *ty_span,
+                        );
                     }
-                    None => inferred_return_type,
+
+                    if is_propagating && !matches!(ty, DataType::Failable(_)) {
+                        backend.files.report_error(
+                            &(file_id, file_version),
+                            "Function is propagating an error, but return type is not failable",
+                            *ty_span,
+                        );
+                    }
                 };
-
-                let mut symbol_table = backend
-                    .files
-                    .symbol_table
-                    .entry((file_id, file_version))
-                    .or_default();
-
-                insert_symbol_definition(
-                    &mut symbol_table,
-                    &SymbolInfo {
-                        name: name.to_string(),
-                        symbol_type: SymbolType::Function(FunctionSymbol {
-                            arguments: args
-                                .iter()
-                                .filter_map(|(arg, span)| match arg {
-                                    FunctionArgument::Generic((is_ref, _), (name, _)) => Some((
-                                        analysis::FunctionArgument {
-                                            name: name.clone(),
-                                            data_type: DataType::Generic(
-                                                new_generic_types.remove(0),
-                                            ),
-                                            is_optional: false,
-                                            is_ref: *is_ref,
-                                        },
-                                        *span,
-                                    )),
-                                    FunctionArgument::Typed((is_ref, _), (name, _), (ty, _)) => {
-                                        Some((
-                                            analysis::FunctionArgument {
-                                                name: name.clone(),
-                                                data_type: ty.clone(),
-                                                is_optional: false,
-                                                is_ref: *is_ref,
-                                            },
-                                            *span,
-                                        ))
-                                    }
-                                    FunctionArgument::Optional((is_ref, _), (name, _), ty, _) => {
-                                        Some((
-                                            analysis::FunctionArgument {
-                                                name: name.clone(),
-                                                data_type: match ty {
-                                                    Some((ty, _)) => ty.clone(),
-                                                    None => DataType::Generic(
-                                                        new_generic_types.remove(0),
-                                                    ),
-                                                },
-                                                is_optional: true,
-                                                is_ref: *is_ref,
-                                            },
-                                            *span,
-                                        ))
-                                    }
-                                    FunctionArgument::Error => None,
-                                })
-                                .collect::<Vec<_>>(),
-                            is_public: *is_pub,
-                            compiler_flags: compiler_flags
-                                .iter()
-                                .map(|(flag, _)| flag.clone())
-                                .collect(),
-                            docs: match contexts.clone().last() {
-                                Some(Context::DocString(doc)) => {
-                                    contexts.pop();
-                                    Some(doc.clone())
-                                }
-                                _ => None,
-                            },
-                        }),
-                        data_type: data_type.clone(),
-                        is_definition: true,
-                        undefined: false,
-                        span: *name_span,
-                        contexts: vec![],
-                    },
-                    (file_id, file_version),
-                    span.end..=usize::MAX,
-                    *is_pub,
-                );
             }
             GlobalStatement::Import(
                 (is_public_import, _),
