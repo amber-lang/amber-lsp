@@ -1,17 +1,22 @@
 use crate::analysis::types::DataType;
 
 pub use super::Spanned;
-use super::{CommandModifier, CompilerFlag, Grammar, LSPAnalysis, ParserResponse, Span};
-use chumsky::{
-    error::Rich,
-    extra::Err,
-    input::{Input, SpannedInput},
-    span::SimpleSpan,
-    Parser,
+use super::{
+    CommandModifier,
+    CompilerFlag,
+    Grammar,
+    LSPAnalysis,
+    ParserResponse,
+    Span,
 };
-use heraclitus_compiler::prelude::*;
-use lexer::{get_rules, Token};
-use prelude::lexer::Lexer;
+use crate::grammar::Token;
+use chumsky::error::Rich;
+use chumsky::extra::Err;
+use chumsky::input::{
+    Input,
+    SpannedInput,
+};
+use chumsky::Parser;
 use semantic_tokens::semantic_tokens_from_ast;
 
 pub mod expressions;
@@ -244,9 +249,7 @@ pub enum GlobalStatement {
 }
 
 #[derive(Debug)]
-pub struct AmberCompiler {
-    lexer: Lexer,
-}
+pub struct AmberCompiler {}
 
 impl Default for AmberCompiler {
     fn default() -> Self {
@@ -256,9 +259,7 @@ impl Default for AmberCompiler {
 
 impl AmberCompiler {
     pub fn new() -> Self {
-        let lexer = Lexer::new(get_rules());
-
-        AmberCompiler { lexer }
+        AmberCompiler {}
     }
 
     pub fn parser<'a>(&self) -> impl AmberParser<'a, Vec<Spanned<GlobalStatement>>> {
@@ -269,22 +270,8 @@ impl AmberCompiler {
 impl LSPAnalysis for AmberCompiler {
     #[tracing::instrument(skip_all)]
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>> {
-        // It should never fail
-        self.lexer
-            .tokenize(&input.replace("\r\n", "\n").replace("\r", "\n"))
-            .expect("Failed to tokenize input")
-            .iter()
-            .filter_map(|t| {
-                if t.word == "\n" {
-                    return None;
-                }
-
-                Some((
-                    Token(t.word.clone()),
-                    SimpleSpan::new(t.start, t.start + t.word.chars().count()),
-                ))
-            })
-            .collect()
+        // Use Logos lexer instead of Heraclitus
+        lexer::tokenize(&input.replace("\r\n", "\n").replace("\r", "\n"))
     }
 
     #[tracing::instrument(skip_all)]

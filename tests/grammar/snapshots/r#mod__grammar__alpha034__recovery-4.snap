@@ -50,16 +50,16 @@ expression: "parse(&tokenize(r#\"\n        fun foo(a) {\n\n            return \"
                                                 (
                                                     Text(
                                                         (
-                                                            "echo",
-                                                            43..47,
+                                                            "echo ",
+                                                            43..48,
                                                         ),
                                                     ),
-                                                    43..47,
+                                                    43..48,
                                                 ),
                                                 (
-                                                    Escape(
+                                                    Text(
                                                         (
-                                                            "\"",
+                                                            "\\\"",
                                                             48..50,
                                                         ),
                                                     ),
@@ -94,9 +94,9 @@ expression: "parse(&tokenize(r#\"\n        fun foo(a) {\n\n            return \"
                                                     50..57,
                                                 ),
                                                 (
-                                                    Escape(
+                                                    Text(
                                                         (
-                                                            "\"",
+                                                            "\\\"",
                                                             57..59,
                                                         ),
                                                     ),

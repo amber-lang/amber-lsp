@@ -1,9 +1,13 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha050::{lexer::Token, parser::default_recovery, AmberParser, Expression, Spanned},
-    T,
+use crate::grammar::alpha050::parser::default_recovery;
+use crate::grammar::alpha050::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Token,
 };
+use crate::T;
 
 pub fn array_parser<'a>(
     expr: impl AmberParser<'a, Spanned<Expression>>,

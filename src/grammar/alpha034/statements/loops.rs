@@ -1,14 +1,20 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha034::{
-        expressions::parse_expr,
-        lexer::Token,
-        parser::{default_recovery, ident},
-        AmberParser, Block, Expression, IterLoopVars, Spanned, Statement,
-    },
-    T,
+use crate::grammar::alpha034::expressions::parse_expr;
+use crate::grammar::alpha034::parser::{
+    default_recovery,
+    ident,
 };
+use crate::grammar::alpha034::{
+    AmberParser,
+    Block,
+    Expression,
+    IterLoopVars,
+    Spanned,
+    Statement,
+};
+use crate::grammar::Token;
+use crate::T;
 
 use super::block::block_parser;
 

@@ -1,14 +1,20 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha050::{
-        lexer::Token,
-        parser::{default_recovery, ident},
-        statements::block::block_parser,
-        AmberParser, Block, FailableHandler, FailureHandler, Spanned, Statement,
-    },
-    T,
+use crate::grammar::alpha050::parser::{
+    default_recovery,
+    ident,
 };
+use crate::grammar::alpha050::statements::block::block_parser;
+use crate::grammar::alpha050::{
+    AmberParser,
+    Block,
+    FailableHandler,
+    FailureHandler,
+    Spanned,
+    Statement,
+    Token,
+};
+use crate::T;
 
 fn failure_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,

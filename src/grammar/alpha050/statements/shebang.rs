@@ -1,6 +1,11 @@
 use chumsky::prelude::*;
 
-use crate::grammar::alpha050::{lexer::Token, AmberParser, Spanned, Statement};
+use crate::grammar::alpha050::{
+    AmberParser,
+    Spanned,
+    Statement,
+    Token,
+};
 
 pub fn shebang_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
     any()

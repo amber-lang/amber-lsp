@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    Arc,
+    Mutex,
+};
 
 use indexmap::IndexSet;
 use tower_lsp_server::lsp_types::Uri;

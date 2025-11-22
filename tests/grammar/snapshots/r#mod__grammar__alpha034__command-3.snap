@@ -21,21 +21,9 @@ expression: "parse(&tokenize(\"$command --arg1 -v$\"))"
                                         ),
                                         (
                                             Text(
-                                                "command",
+                                                "command --arg1 -v",
                                             ),
-                                            1..8,
-                                        ),
-                                        (
-                                            CommandOption(
-                                                "--arg1",
-                                            ),
-                                            9..15,
-                                        ),
-                                        (
-                                            CommandOption(
-                                                "-v",
-                                            ),
-                                            16..18,
+                                            1..18,
                                         ),
                                         (
                                             Text(

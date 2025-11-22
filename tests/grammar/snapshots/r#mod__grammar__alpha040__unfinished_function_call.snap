@@ -41,21 +41,9 @@ expression: tokens
     ),
     (
         Token(
-            "std",
+            "std/array",
         ),
-        37..40,
-    ),
-    (
-        Token(
-            "/",
-        ),
-        40..41,
-    ),
-    (
-        Token(
-            "array",
-        ),
-        41..46,
+        37..46,
     ),
     (
         Token(
@@ -263,21 +251,9 @@ expression: tokens
     ),
     (
         Token(
-            "text",
+            "text.txt",
         ),
-        165..169,
-    ),
-    (
-        Token(
-            ".",
-        ),
-        169..170,
-    ),
-    (
-        Token(
-            "txt",
-        ),
-        170..173,
+        165..173,
     ),
     (
         Token(

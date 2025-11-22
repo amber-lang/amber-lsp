@@ -1,11 +1,22 @@
-use std::{
-    env::temp_dir,
-    process::{Command, Stdio},
+use std::env::temp_dir;
+use std::process::{
+    Command,
+    Stdio,
 };
 
-use amber_lsp::backend::{AmberVersion, Backend};
-use clap::{builder::PossibleValue, Parser, ValueEnum};
-use tower_lsp_server::{LspService, Server};
+use amber_lsp::backend::{
+    AmberVersion,
+    Backend,
+};
+use clap::builder::PossibleValue;
+use clap::{
+    Parser,
+    ValueEnum,
+};
+use tower_lsp_server::{
+    LspService,
+    Server,
+};
 use tracing::subscriber;
 use tracing_subscriber::fmt::format::FmtSpan;
 

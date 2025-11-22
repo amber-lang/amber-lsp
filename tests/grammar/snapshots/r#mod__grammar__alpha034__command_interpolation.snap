@@ -1,0 +1,42 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "compiler.tokenize(\"$echo {var}$\")"
+---
+[
+    (
+        Token(
+            "$",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "echo ",
+        ),
+        1..6,
+    ),
+    (
+        Token(
+            "{",
+        ),
+        6..7,
+    ),
+    (
+        Token(
+            "var",
+        ),
+        7..10,
+    ),
+    (
+        Token(
+            "}",
+        ),
+        10..11,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        11..12,
+    ),
+]

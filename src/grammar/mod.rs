@@ -1,5 +1,10 @@
-use chumsky::{error::Rich, span::SimpleSpan};
-use std::fmt::{self, Debug, Display};
+use chumsky::error::Rich;
+use chumsky::span::SimpleSpan;
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+};
 
 pub mod alpha034;
 pub mod alpha035;

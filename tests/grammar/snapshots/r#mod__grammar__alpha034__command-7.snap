@@ -21,9 +21,9 @@ expression: "parse(&tokenize(\"$command {unclosed interpolation$ let x = 10\"))"
                                         ),
                                         (
                                             Text(
-                                                "command",
+                                                "command ",
                                             ),
-                                            1..8,
+                                            1..9,
                                         ),
                                         (
                                             Expression(
@@ -65,38 +65,16 @@ expression: "parse(&tokenize(\"$command {unclosed interpolation$ let x = 10\"))"
             (
                 Statement(
                     (
-                        VariableInit(
-                            (
-                                "let",
-                                34..37,
-                            ),
-                            (
-                                "x",
-                                38..39,
-                            ),
-                            (
-                                Expression(
-                                    (
-                                        Number(
-                                            (
-                                                10.0,
-                                                42..44,
-                                            ),
-                                        ),
-                                        42..44,
-                                    ),
-                                ),
-                                42..44,
-                            ),
-                        ),
-                        34..44,
+                        Error,
+                        33..44,
                     ),
                 ),
-                34..44,
+                33..44,
             ),
         ],
     ),
     [
         found "interpolation" at 19..32 expected '"("', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
+        found end of input at 33..44 expected something else,
     ],
 )

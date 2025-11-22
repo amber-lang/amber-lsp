@@ -1,9 +1,12 @@
-use crate::{
-    grammar::alpha040::{
-        lexer::Token, parser::default_recovery, AmberParser, Expression, InterpolatedText, Spanned,
-    },
-    T,
+use crate::grammar::alpha040::parser::default_recovery;
+use crate::grammar::alpha040::{
+    AmberParser,
+    Expression,
+    InterpolatedText,
+    Spanned,
 };
+use crate::grammar::Token;
+use crate::T;
 use chumsky::prelude::*;
 
 pub fn text_parser<'a>(

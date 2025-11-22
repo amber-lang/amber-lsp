@@ -1,12 +1,16 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha034::{
-        global::type_parser, lexer::Token, parser::default_recovery, AmberParser, DataType,
-        Expression, Spanned, Statement,
-    },
-    T,
+use crate::grammar::alpha034::global::type_parser;
+use crate::grammar::alpha034::parser::default_recovery;
+use crate::grammar::alpha034::{
+    AmberParser,
+    DataType,
+    Expression,
+    Spanned,
+    Statement,
 };
+use crate::grammar::Token;
+use crate::T;
 
 use super::cast::cast_parser;
 

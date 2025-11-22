@@ -16,6 +16,7 @@ chumsky = { git = "https://github.com/KrosFire/chumsky", rev = "406ea80", featur
   "label",
 ] }
 heraclitus-compiler = "1.8.2"
+logos = "0.14"
 serde_json = "1.0.128"
 rangemap = "1.5.1"
 indexmap = "2.6.0"
@@ -47,7 +48,13 @@ ci = "github"
 # The installers to generate for each app
 installers = []
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "x86_64-unknown-linux-gnu",
+  "x86_64-unknown-linux-musl",
+  "x86_64-pc-windows-msvc",
+]
 # Publish jobs to run in CI
 pr-run-mode = "plan"
 # Skip checking whether the specified configuration files are up to date

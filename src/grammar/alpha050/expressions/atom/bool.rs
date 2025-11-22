@@ -1,7 +1,10 @@
-use crate::{
-    grammar::alpha050::{lexer::Token, AmberParser, Expression, Spanned},
-    T,
+use crate::grammar::alpha050::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Token,
 };
+use crate::T;
 use chumsky::prelude::*;
 
 pub fn bool_parser<'a>() -> impl AmberParser<'a, Spanned<Expression>> {

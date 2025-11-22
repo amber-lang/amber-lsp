@@ -1,0 +1,18 @@
+---
+source: tests/grammar/alpha050.rs
+expression: "compiler.tokenize(r#\"\"unclosed\"#)"
+---
+[
+    (
+        Token(
+            "\"",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "unclosed",
+        ),
+        1..9,
+    ),
+]

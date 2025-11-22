@@ -1,8 +1,9 @@
 use chumsky::prelude::*;
 
+use crate::grammar::Token;
 use crate::T;
 
-use super::{lexer::Token, AmberParser};
+use super::AmberParser;
 
 const KEYWORDS: &[&str] = &[
     "if",

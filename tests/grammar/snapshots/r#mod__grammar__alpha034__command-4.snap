@@ -21,15 +21,9 @@ expression: "parse(&tokenize(\"$command -$\"))"
                                         ),
                                         (
                                             Text(
-                                                "command",
+                                                "command -",
                                             ),
-                                            1..8,
-                                        ),
-                                        (
-                                            CommandOption(
-                                                "-",
-                                            ),
-                                            9..10,
+                                            1..10,
                                         ),
                                         (
                                             Text(

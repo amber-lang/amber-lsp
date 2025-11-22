@@ -1,0 +1,48 @@
+---
+source: tests/grammar/alpha050.rs
+expression: "compiler.tokenize(r#\"\"start {expr} end\"\"#)"
+---
+[
+    (
+        Token(
+            "\"",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "start ",
+        ),
+        1..7,
+    ),
+    (
+        Token(
+            "{",
+        ),
+        7..8,
+    ),
+    (
+        Token(
+            "expr",
+        ),
+        8..12,
+    ),
+    (
+        Token(
+            "}",
+        ),
+        12..13,
+    ),
+    (
+        Token(
+            " end",
+        ),
+        13..17,
+    ),
+    (
+        Token(
+            "\"",
+        ),
+        17..18,
+    ),
+]

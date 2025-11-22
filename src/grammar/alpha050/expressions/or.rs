@@ -1,11 +1,16 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha050::{lexer::Token, parser::default_recovery, AmberParser, Spanned, Statement},
-    T,
+use crate::grammar::alpha050::parser::default_recovery;
+use crate::grammar::alpha050::{
+    AmberParser,
+    Spanned,
+    Statement,
+    Token,
 };
+use crate::T;
 
-use super::{and::and_parser, Expression};
+use super::and::and_parser;
+use super::Expression;
 
 pub fn or_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,

@@ -1,11 +1,14 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha035::{
-        lexer::Token, parser::default_recovery, AmberParser, Expression, Spanned, Statement,
-    },
-    T,
+use crate::grammar::alpha035::parser::default_recovery;
+use crate::grammar::alpha035::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Statement,
 };
+use crate::grammar::Token;
+use crate::T;
 
 use super::sum::sum_parser;
 

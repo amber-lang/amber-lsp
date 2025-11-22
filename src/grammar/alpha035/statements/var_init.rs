@@ -1,15 +1,19 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha035::{
-        expressions::parse_expr,
-        global::type_parser,
-        lexer::Token,
-        parser::{default_recovery, ident},
-        AmberParser, Spanned, Statement, VariableInitType,
-    },
-    T,
+use crate::grammar::alpha035::expressions::parse_expr;
+use crate::grammar::alpha035::global::type_parser;
+use crate::grammar::alpha035::parser::{
+    default_recovery,
+    ident,
 };
+use crate::grammar::alpha035::{
+    AmberParser,
+    Spanned,
+    Statement,
+    VariableInitType,
+};
+use crate::grammar::Token;
+use crate::T;
 
 pub fn var_init_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,

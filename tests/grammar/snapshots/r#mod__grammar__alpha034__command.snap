@@ -19,43 +19,25 @@ expression: "parse_unwrap(&tokenize(r#\"$echo \\\"Hello, world!\\\"$\"#))"
                                 ),
                                 (
                                     Text(
-                                        "echo",
+                                        "echo ",
                                     ),
-                                    1..5,
+                                    1..6,
                                 ),
                                 (
-                                    Escape(
-                                        "\"",
+                                    Text(
+                                        "\\\"",
                                     ),
                                     6..8,
                                 ),
                                 (
                                     Text(
-                                        "Hello",
+                                        "Hello, world!",
                                     ),
-                                    8..13,
+                                    8..21,
                                 ),
                                 (
                                     Text(
-                                        ",",
-                                    ),
-                                    13..14,
-                                ),
-                                (
-                                    Text(
-                                        "world",
-                                    ),
-                                    15..20,
-                                ),
-                                (
-                                    Text(
-                                        "!",
-                                    ),
-                                    20..21,
-                                ),
-                                (
-                                    Escape(
-                                        "\"",
+                                        "\\\"",
                                     ),
                                     21..23,
                                 ),

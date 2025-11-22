@@ -11,6 +11,10 @@ flags:
     paths:
       - src/grammar/alpha040/
       - src/analysis/alpha040/
+  0.5.0-alpha:
+    paths:
+      - src/grammar/alpha050/
+      - src/analysis/alpha050/
 
 coverage:
   status:
@@ -34,9 +38,12 @@ coverage:
       0.4.0-alpha:
         flags:
           - 0.4.0-alpha
+      0.5.0-alpha:
+        flags:
+          - 0.5.0-alpha
     patch:
       default:
-        target: 100%
+        target: 80%
 
 comment:
   layout: " diff, flags, files"

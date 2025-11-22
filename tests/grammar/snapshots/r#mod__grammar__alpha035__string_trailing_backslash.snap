@@ -1,0 +1,24 @@
+---
+source: tests/grammar/alpha035.rs
+expression: "compiler.tokenize(r#\"\"test\\\"\"#)"
+---
+[
+    (
+        Token(
+            "\"",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "test",
+        ),
+        1..5,
+    ),
+    (
+        Token(
+            "\\\"",
+        ),
+        5..7,
+    ),
+]

@@ -1,6 +1,11 @@
 use chumsky::prelude::*;
 
-use super::{AmberParser, Expression, Spanned, Statement};
+use super::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Statement,
+};
 
 mod and;
 mod atom;

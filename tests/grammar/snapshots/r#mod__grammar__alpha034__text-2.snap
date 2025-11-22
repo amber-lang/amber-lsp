@@ -1,6 +1,6 @@
 ---
 source: tests/grammar/alpha034.rs
-expression: "parse_unwrap(\"\\\"Hello, {name}!\\\"\")"
+expression: "parse_unwrap(&tokenize(\"\\\"Hello, {name}!\\\"\"))"
 ---
 [
     (
@@ -13,20 +13,11 @@ expression: "parse_unwrap(\"\\\"Hello, {name}!\\\"\")"
                                 (
                                     Text(
                                         (
-                                            "Hello",
-                                            1..6,
+                                            "Hello, ",
+                                            1..8,
                                         ),
                                     ),
-                                    1..6,
-                                ),
-                                (
-                                    Text(
-                                        (
-                                            ",",
-                                            6..7,
-                                        ),
-                                    ),
-                                    6..7,
+                                    1..8,
                                 ),
                                 (
                                     Expression(

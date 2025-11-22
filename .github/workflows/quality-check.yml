@@ -12,6 +12,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install minimal nightly (for fmt)
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@1.90.0
         with:
@@ -21,7 +26,7 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Format check
-        run: cargo fmt --all -- --check
+        run: cargo +nightly fmt --all -- --check
 
   test:
     needs:
@@ -55,17 +60,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build script
-        uses: docker://ghcr.io/amber-lang/amber:alpine-0.4.0-alpha
-        with:
-          args: |
-            build ./run_coverage.ab ./run_coverage.sh
-
       - name: Test coverage
-        run: ./run_coverage.sh xml
+        run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
 
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v5
         with:
           token: ${{secrets.CODECOV_TOKEN}}
           fail_ci_if_error: true
+          files: ./coverage_output/cobertura.xml
+          verbose: true

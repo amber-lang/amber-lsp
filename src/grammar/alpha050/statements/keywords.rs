@@ -1,12 +1,15 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha050::{
-        expressions::parse_expr, lexer::Token, parser::default_recovery, AmberParser, Expression,
-        Spanned, Statement,
-    },
-    T,
+use crate::grammar::alpha050::expressions::parse_expr;
+use crate::grammar::alpha050::parser::default_recovery;
+use crate::grammar::alpha050::{
+    AmberParser,
+    Expression,
+    Spanned,
+    Statement,
+    Token,
 };
+use crate::T;
 
 pub fn keywords_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,

@@ -1,17 +1,26 @@
 use chumsky::prelude::*;
 
-use crate::{
-    grammar::alpha050::{statements::block::block_parser, Block},
-    T,
-};
+use crate::grammar::alpha050::statements::block::block_parser;
+use crate::grammar::alpha050::Block;
+use crate::grammar::Token;
+use crate::T;
 
+use super::expressions::parse_expr;
+use super::parser::{
+    default_recovery,
+    ident,
+};
+use super::statements::statement_parser;
 use super::{
-    expressions::parse_expr,
-    lexer::Token,
-    parser::{default_recovery, ident},
-    statements::statement_parser,
-    AmberParser, CompilerFlag, DataType, Expression, FunctionArgument, GlobalStatement,
-    ImportContent, Spanned, Statement,
+    AmberParser,
+    CompilerFlag,
+    DataType,
+    Expression,
+    FunctionArgument,
+    GlobalStatement,
+    ImportContent,
+    Spanned,
+    Statement,
 };
 
 pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
@@ -125,8 +134,7 @@ pub fn type_parser<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
 }
 
 fn compiler_flag_parser<'a>() -> impl AmberParser<'a, Spanned<CompilerFlag>> {
-    just(T!["#"])
-        .ignore_then(just(T!["["]))
+    just(T!["#["])
         .ignore_then(
             choice((
                 just(T!["allow_nested_if_else"]).to(CompilerFlag::AllowNestedIfElse),

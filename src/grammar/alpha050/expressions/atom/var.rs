@@ -1,4 +1,8 @@
-use crate::grammar::alpha050::{parser::ident, AmberParser, Spanned};
+use crate::grammar::alpha050::parser::ident;
+use crate::grammar::alpha050::{
+    AmberParser,
+    Spanned,
+};
 
 use super::Expression;
 use chumsky::prelude::*;

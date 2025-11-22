@@ -1,10 +1,11 @@
-use crate::{
-    grammar::{
-        alpha050::parser::default_recovery,
-        alpha050::{lexer::Token, AmberParser, Spanned, Statement},
-    },
-    T,
+use crate::grammar::alpha050::parser::default_recovery;
+use crate::grammar::alpha050::{
+    AmberParser,
+    Spanned,
+    Statement,
+    Token,
 };
+use crate::T;
 
 use super::super::Expression;
 use chumsky::prelude::*;
@@ -37,8 +38,8 @@ pub fn atom_parser<'a>(
         text::text_parser(expr.clone()),
         array::array_parser(expr.clone()),
         command::command_parser(stmnts.clone(), expr.clone()),
-        number::number_parser(),
         int::int_parser(),
+        number::number_parser(),
     ))
     .boxed()
 }
