@@ -44,6 +44,7 @@ pub struct FunctionArgument {
     pub name: String,
     pub data_type: DataType,
     pub is_optional: bool,
+    pub default_value_type: Option<DataType>,
     pub is_ref: bool,
 }
 
@@ -130,6 +131,7 @@ impl SymbolInfo {
                                     data_type,
                                     is_optional,
                                     is_ref,
+                                    ..
                                 },
                                 _,
                             )| format!(
@@ -358,6 +360,7 @@ pub fn insert_symbol_reference(
                                     name: arg.name.clone(),
                                     data_type: scoped_generics.deref_type(&arg.data_type),
                                     is_optional: arg.is_optional,
+                                    default_value_type: arg.default_value_type.clone(),
                                     is_ref: arg.is_ref,
                                 },
                                 *span,

@@ -182,6 +182,7 @@ pub fn analyze_exp(
                                             data_type: scoped_generic_types
                                                 .deref_type(&arg.data_type),
                                             is_optional: false,
+                                            default_value_type: None,
                                             is_ref: arg.is_ref,
                                         },
                                         arg_span,

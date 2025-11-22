@@ -96,7 +96,7 @@ pub fun array_filled(size, value = 0) {
     if size <= 0 or not (size is Int):
         return array
 
-    for _ in 0..size:
+    for _ in 0..(size as Int):
         array += [value]
 
     return array
