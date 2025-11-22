@@ -13,6 +13,7 @@ expression: symbol_table.symbols
                             name: "word",
                             data_type: Any,
                             is_optional: false,
+                            default_value_type: None,
                             is_ref: false,
                         },
                         19..23,

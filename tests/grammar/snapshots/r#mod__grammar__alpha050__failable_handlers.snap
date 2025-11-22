@@ -506,17 +506,7 @@ expression: parse(&tokenize(input))
             (
                 Statement(
                     (
-                        Expression(
-                            (
-                                Var(
-                                    (
-                                        "exited",
-                                        255..261,
-                                    ),
-                                ),
-                                255..261,
-                            ),
-                        ),
+                        Error,
                         255..261,
                     ),
                 ),
@@ -582,6 +572,7 @@ expression: parse(&tokenize(input))
     [
         found "(" at 17..18 expected '":"', or '"{"',
         found end of input at 23..24 expected something else,
-        multiple errors found at 263..267,
+        keyword used as status code argument name at 263..267,
+        found end of input at 261..262 expected something else,
     ],
 )

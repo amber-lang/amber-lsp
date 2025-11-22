@@ -13,6 +13,7 @@ expression: symbol_table.symbols
                             name: "num",
                             data_type: Any,
                             is_optional: false,
+                            default_value_type: None,
                             is_ref: false,
                         },
                         14..17,
