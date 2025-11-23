@@ -58,7 +58,8 @@ fn main() {
     // stdin.read_to_string(&mut data).unwrap();
 
     // For temporary testing
-    let data = include_str!("../../lib/resources/alpha040/std/array.ab");
+    // let data = include_str!("../../lib/resources/alpha040/std/array.ab");
+    let data = include_str!("../../run_coverage.ab");
 
     let amber_compiler = AmberCompiler::new();
     let tokenize = amber_compiler.tokenize(data);
