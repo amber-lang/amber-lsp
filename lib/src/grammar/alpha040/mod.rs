@@ -116,13 +116,17 @@ pub enum ImportContent {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum FunctionArgument {
+    /// First arg is whether this is a reference.
+    /// The second is generic variable text.
     Generic(Spanned<bool>, Spanned<String>),
+    /// First arg is whether this is a reference.
     Optional(
         Spanned<bool>,
         Spanned<String>,
         Option<Spanned<DataType>>,
         Spanned<Expression>,
     ),
+    /// First arg is whether this is a reference.
     Typed(Spanned<bool>, Spanned<String>, Spanned<DataType>),
     Error,
 }

@@ -63,6 +63,16 @@ pub enum CommandModifier {
     Silent,
 }
 
+impl fmt::Display for CommandModifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CommandModifier::Unsafe => write!(f, "unsafe"),
+            CommandModifier::Trust => write!(f, "trust"),
+            CommandModifier::Silent => write!(f, "silent"),
+        }
+    }
+}
+
 #[derive(PartialEq, Debug, Clone, Eq)]
 pub enum CompilerFlag {
     AllowNestedIfElse,
