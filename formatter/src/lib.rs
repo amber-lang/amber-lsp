@@ -4,11 +4,44 @@ use std::{panic::Location, string::FromUtf8Error};
 mod alpha040;
 
 /// The content of an indentation.
-const INDENT: &str = "  ";
+const INDENT: &str = "    ";
 
 #[derive(Default)]
 pub struct Output {
     buffer: Vec<Fragment>,
+}
+
+pub struct FragmentSpan {
+    /// Start byte offset into source file.
+    start_offset: usize,
+    /// End byte offset into source file.
+    end_offset: usize,
+}
+
+impl FragmentSpan {
+    pub fn new(start_offset: usize, end_offset: usize) -> Self {
+        Self {
+            start_offset: start_offset.min(end_offset),
+            end_offset: start_offset.max(end_offset),
+        }
+    }
+
+    pub fn end_offset(&self) -> usize {
+        self.end_offset
+    }
+
+    pub fn start_offset(&self) -> usize {
+        self.start_offset
+    }
+}
+
+impl From<&Span> for FragmentSpan {
+    fn from(value: &Span) -> Self {
+        FragmentSpan {
+            start_offset: value.start,
+            end_offset: value.end.saturating_sub(1),
+        }
+    }
 }
 
 pub enum Fragment {
@@ -18,15 +51,11 @@ pub enum Fragment {
     /// This has no output in its current position, but will change the indentation after every newline.
     IndentationChange(Indentation),
     Text(Box<str>),
-    Span {
-        /// Start byte offset into source file.
-        start_offset: usize,
-        /// End byte offset into source file.
-        end_offset: usize,
-    },
+    Span(FragmentSpan),
+    ParseError(FragmentSpan),
 }
 
-enum Indentation {
+pub enum Indentation {
     Increase,
     Decrease,
 }
@@ -80,6 +109,10 @@ impl Output {
         ))
     }
 
+    fn error(&mut self, span: &Span) {
+        self.span(span);
+    }
+
     fn space(&mut self) -> &mut Self {
         self.buffer.push(Fragment::Space);
         self
@@ -110,10 +143,7 @@ impl Output {
     }
 
     fn span(&mut self, span: &Span) -> &mut Self {
-        self.buffer.push(Fragment::Span {
-            start_offset: span.start,
-            end_offset: span.end,
-        });
+        self.buffer.push(Fragment::Span(span.into()));
         self
     }
 
@@ -142,10 +172,7 @@ impl Output {
     }
 
     fn end_span(&mut self, span: &Span) {
-        self.buffer.push(Fragment::Span {
-            start_offset: span.start,
-            end_offset: span.end,
-        });
+        self.span(span);
     }
 
     fn increase_indentation(&mut self) -> &mut Self {
@@ -191,19 +218,29 @@ impl Output {
                     }
                 },
                 Fragment::Text(frag_text) => text.push_str(&frag_text),
-                Fragment::Span {
-                    start_offset,
-                    end_offset,
-                } => {
-                    let start = start_offset.min(end_offset);
-                    let end = start_offset.max(end_offset);
-
+                Fragment::Span(span) => {
                     let span = file_content
                         .as_bytes()
-                        .get(start..=end)
-                        .ok_or_else(|| FormattingError::SpanDoesntExist { start, end })?;
+                        .get(span.start_offset()..=span.end_offset())
+                        .ok_or_else(|| FormattingError::SpanDoesntExist {
+                            start: span.start_offset(),
+                            end: span.end_offset(),
+                        })?;
 
                     let span_text = String::from_utf8(span.to_vec())?;
+                    text.push_str(&span_text);
+                }
+                Fragment::ParseError(span) => {
+                    let span = file_content
+                        .as_bytes()
+                        .get(span.start_offset()..=span.end_offset())
+                        .ok_or_else(|| FormattingError::SpanDoesntExist {
+                            start: span.start_offset(),
+                            end: span.end_offset(),
+                        })?;
+
+                    let span_text = String::from_utf8(span.to_vec())?;
+                    eprintln!("Unable to parse '{span_text}'. Failing back to sourcefile content");
                     text.push_str(&span_text);
                 }
             }

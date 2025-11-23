@@ -39,6 +39,8 @@ impl TextOutput for GlobalStatement {
                 return_type,
                 contents,
             ) => {
+                output.newline();
+
                 for flag in compiler_flags {
                     output.output(flag);
                     output.newline();
@@ -78,9 +80,10 @@ impl TextOutput for GlobalStatement {
                     dbg!(content);
                     output.newline().end_output(content);
                 }
-                output.char('}').newline().decrease_indentation();
+                output.decrease_indentation().newline().char('}');
             }
             GlobalStatement::Main(main, args, statements) => {
+                output.newline();
                 output.output(main);
 
                 output.char('(');
@@ -131,7 +134,7 @@ impl TextOutput for FunctionArgument {
             FunctionArgument::Optional(is_ref, text, _, _) => push_arg(output, is_ref.0, text),
             FunctionArgument::Typed(is_ref, text, _) => push_arg(output, is_ref.0, text),
             FunctionArgument::Error => {
-                output.span(span);
+                output.error(span);
             }
         }
     }
@@ -216,10 +219,17 @@ impl TextOutput for Statement {
                 }
             }
             Statement::IfChain(r#if, items) => {
-                output.output(r#if);
+                output.output(r#if).space().char('{').increase_indentation();
+
                 for ele in items {
-                    output.output(ele);
+                    output.newline().output(ele);
                 }
+
+                output.decrease_indentation();
+                if items.len() > 0 {
+                    output.newline();
+                }
+                output.char('}');
             }
             Statement::ShorthandAdd(variable, expr) => shorthand(output, variable, "+=", expr),
             Statement::ShorthandSub(variable, expr) => shorthand(output, variable, "-=", expr),
@@ -278,7 +288,7 @@ impl TextOutput for Statement {
             Statement::Block(block) => output.end_output(block),
             Statement::Comment(comment) => output.end_output(comment),
             Statement::Shebang(shebang) => output.end_text(shebang.as_str()),
-            Statement::Error => output.end_span(span),
+            Statement::Error => output.error(span),
         }
     }
 }
@@ -324,13 +334,27 @@ impl TextOutput for ElseCondition {
 
 impl TextOutput for Comment {
     fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
-        output.span(span);
+        match self {
+            Comment::Comment(comment) => output.text("//").space().end_text(comment.as_str()),
+            Comment::DocString(doc_comment) => {
+                output.text("///").space().end_text(doc_comment.as_str())
+            }
+        }
     }
 }
 
 impl TextOutput for IfCondition {
     fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
-        output.span(span);
+        match self {
+            IfCondition::IfCondition(condition, block) => {
+                output.output(condition).space().end_output(block);
+            }
+            IfCondition::InlineIfCondition(condition, statement) => {
+                output.output(condition).char(':').space().output(statement);
+            }
+            IfCondition::Comment(comment) => output.end_output(comment),
+            IfCondition::Error => output.error(span),
+        }
     }
 }
 
@@ -339,7 +363,7 @@ impl TextOutput for VariableInitType {
         match self {
             VariableInitType::Expression(expr) => output.end_output(expr),
             VariableInitType::DataType(r#type) => output.end_output(r#type),
-            VariableInitType::Error => output.end_span(span),
+            VariableInitType::Error => output.error(span),
         }
     }
 }
@@ -393,15 +417,21 @@ impl TextOutput for Expression {
                 output.output(boolean);
             }
             Expression::Text(texts) => {
+                if texts.len() > 0 {
+                    output.char('"');
+                }
                 for text in texts {
                     output.output(text);
+                }
+                if texts.len() > 0 {
+                    output.char('"');
                 }
             }
             Expression::Parentheses(parentheses) => {
                 output.output(parentheses);
             }
             Expression::Var(var) => {
-                output.output(var);
+                output.char('{').output(var).end_char('}');
             }
             Expression::Add(rhs, lhs) => char_separated(output, rhs, '+', lhs),
             Expression::Subtract(rhs, lhs) => char_separated(output, rhs, '-', lhs),
@@ -516,7 +546,7 @@ impl TextOutput for Expression {
                 }
             }
             Expression::Error => {
-                output.span(span);
+                output.error(span);
             }
         }
     }
@@ -550,17 +580,36 @@ impl TextOutput for FailureHandler {
     }
 }
 
-impl TextOutput for CommandModifier {}
+impl TextOutput for CommandModifier {
+    fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
+        output.text(format!("{}", self));
+    }
+}
 
 impl TextOutput for InterpolatedText {
     fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
-        output.span(span);
+        match self {
+            InterpolatedText::Escape(escape) => output
+                .debug_point("InterpolatedText escape")
+                .end_output(escape),
+            InterpolatedText::Expression(expr) => output.end_output(expr),
+            InterpolatedText::Text(text) => output.output(text).end_space(),
+        }
     }
 }
 
 impl TextOutput for InterpolatedCommand {
     fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
-        output.span(span);
+        match self {
+            InterpolatedCommand::Escape(escape) => output
+                .debug_point("InterpolatedCommand escape")
+                .end_text(escape.as_str()),
+            InterpolatedCommand::CommandOption(option) => output
+                .debug_point("InterpolatedCommand command options")
+                .end_text(option.as_str()),
+            InterpolatedCommand::Expression(expr) => output.end_output(expr),
+            InterpolatedCommand::Text(text) => output.end_text(text.as_str()),
+        }
     }
 }
 
