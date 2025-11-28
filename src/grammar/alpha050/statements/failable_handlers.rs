@@ -5,6 +5,7 @@ use crate::grammar::alpha050::parser::{
     ident,
 };
 use crate::grammar::alpha050::statements::block::block_parser;
+use crate::grammar::alpha050::statements::comment::comment_parser;
 use crate::grammar::alpha050::{
     AmberParser,
     Block,
@@ -66,7 +67,7 @@ fn succeeded_parser<'a>(
         .boxed()
 }
 
-fn then_parser<'a>(
+fn exited_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,
 ) -> impl AmberParser<'a, Spanned<FailableHandler>> {
     just(T!["exited"])
@@ -95,13 +96,20 @@ fn then_parser<'a>(
         .boxed()
 }
 
+fn comment_parser_in_failable<'a>() -> impl AmberParser<'a, Spanned<FailableHandler>> {
+    comment_parser()
+        .map_with(|comment, e| (FailableHandler::Comment(comment), e.span()))
+        .boxed()
+}
+
 pub fn failable_handlers_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,
 ) -> impl AmberParser<'a, Vec<Spanned<FailableHandler>>> {
     choice((
+        comment_parser_in_failable(),
         failure_parser(stmnts.clone()),
         succeeded_parser(stmnts.clone()),
-        then_parser(stmnts),
+        exited_parser(stmnts),
     ))
     .repeated()
     .collect()

@@ -1090,12 +1090,19 @@ pub fn analyze_failable_handlers(
     let mut is_propagating = false;
     let mut contexts = contexts.to_owned();
 
+    let mut has_exited_handler = false; // exited
+    let mut has_status_handler = false; // Succeeded/Failed
+
     failable_handlers
         .iter()
         .for_each(|(handler, _)| match handler {
             FailableHandler::Failure((failure, span)) => {
+
+                let mut keyword_span = *span;
                 match failure {
-                    FailureHandler::Handle(_, exit_code, block) => {
+                    FailureHandler::Handle((_, name_span), exit_code, block) => {
+                        keyword_span = *name_span;
+
                         if let Some((code_var, code_var_span)) = exit_code {
                             let mut symbol_table = files
                                 .symbol_table
@@ -1109,7 +1116,7 @@ pub fn analyze_failable_handlers(
                                     symbol_type: SymbolType::Variable(VariableSymbol {
                                         is_const: false,
                                     }),
-                                    data_type: DataType::Array(Box::new(DataType::Text)),
+                                    data_type: DataType::Int,
                                     is_definition: true,
                                     undefined: false,
                                     span: *code_var_span,
@@ -1152,8 +1159,18 @@ pub fn analyze_failable_handlers(
                         is_propagating = true;
                     }
                 };
+
+                has_status_handler = true;
+
+                if has_exited_handler {
+                    files.report_error(
+                        &(file_id, file_version),
+                        "Exited handler should be used without any other handlers. Remove this handler or `exited` handler",
+                        keyword_span,
+                    );
+                }
             }
-            FailableHandler::Succeeded(_, block) => {
+            FailableHandler::Succeeded((_, span), block) => {
                 let StmntAnalysisResult {
                     return_ty,
                     is_propagating_failure,
@@ -1167,30 +1184,42 @@ pub fn analyze_failable_handlers(
                     &mut contexts,
                 );
 
+                has_status_handler = true;
+
+                if has_exited_handler {
+                    files.report_error(
+                        &(file_id, file_version),
+                        "Exited handler should be used without any other handlers. Remove this handler or `exited` handler",
+                        *span,
+                    );
+                }
+
                 types.extend(return_ty);
                 is_propagating |= is_propagating_failure;
             }
-            FailableHandler::Exited(_, (code_var, code_var_span), block) => {
-                let mut symbol_table = files
-                    .symbol_table
-                    .entry((file_id, file_version))
-                    .or_default();
+            FailableHandler::Exited((_, name_span), (code_var, code_var_span), block) => {
+                {
+                    let mut symbol_table = files
+                        .symbol_table
+                        .entry((file_id, file_version))
+                        .or_default();
 
-                insert_symbol_definition(
-                    &mut symbol_table,
-                    &SymbolInfo {
-                        name: code_var.to_string(),
-                        symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
-                        data_type: DataType::Array(Box::new(DataType::Text)),
-                        is_definition: true,
-                        undefined: false,
-                        span: *code_var_span,
-                        contexts: vec![],
-                    },
-                    (file_id, file_version),
-                    code_var_span.end..=block.1.end,
-                    false,
-                );
+                    insert_symbol_definition(
+                        &mut symbol_table,
+                        &SymbolInfo {
+                            name: code_var.to_string(),
+                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            data_type: DataType::Int,
+                            is_definition: true,
+                            undefined: false,
+                            span: *code_var_span,
+                            contexts: vec![],
+                        },
+                        (file_id, file_version),
+                        code_var_span.end..=block.1.end,
+                        false,
+                    );
+                }
 
                 let StmntAnalysisResult {
                     return_ty,
@@ -1205,9 +1234,20 @@ pub fn analyze_failable_handlers(
                     &mut contexts,
                 );
 
+                has_exited_handler = true;
+
+                if has_status_handler {
+                    files.report_error(
+                        &(file_id, file_version),
+                        "Exited handler should be used without any other handlers",
+                        *name_span,
+                    );
+                }
+
                 types.extend(return_ty);
                 is_propagating |= is_propagating_failure;
             }
+            FailableHandler::Comment(_) => {}
         });
 
     if types.is_empty() {

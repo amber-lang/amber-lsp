@@ -324,3 +324,58 @@ let y = foo("text") exited(code) {}
         .collect::<Vec<String>>());
     assert_debug_snapshot!(backend.files.errors);
 }
+
+#[test]
+async fn test_failure_handlers() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+$$ failed(code) {
+    echo code
+} succeeded {
+    echo "success"
+} exited(code) {
+    echo code
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    // When both operands are unknown generics, they should get the broad constraint
+    assert_debug_snapshot!(symbol_table.symbols);
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}

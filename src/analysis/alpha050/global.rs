@@ -594,6 +594,8 @@ pub async fn analyze_global_stmnt(
                     );
                 }
 
+                let mut contexts = vec![Context::Main];
+
                 match body {
                     Block::Block(..) => {
                         analyze_stmnt(
