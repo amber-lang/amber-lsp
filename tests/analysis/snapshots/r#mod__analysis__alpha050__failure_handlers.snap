@@ -1,0 +1,70 @@
+---
+source: tests/analysis/alpha050.rs
+expression: symbol_table.symbols
+---
+{
+    11..=15: SymbolInfo {
+        name: "code",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: true,
+        undefined: false,
+        span: 11..15,
+        contexts: [],
+    },
+    28..=32: SymbolInfo {
+        name: "code",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: false,
+        undefined: false,
+        span: 28..32,
+        contexts: [
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+    75..=79: SymbolInfo {
+        name: "code",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: true,
+        undefined: false,
+        span: 75..79,
+        contexts: [],
+    },
+    92..=96: SymbolInfo {
+        name: "code",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: false,
+        undefined: false,
+        span: 92..96,
+        contexts: [
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+}

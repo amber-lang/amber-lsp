@@ -940,6 +940,9 @@ fn semantic_tokens_from_failable_handlers(
                         block.1,
                     )]));
                 }
+                FailableHandler::Comment((_, span)) => {
+                    tokens.push((hash_semantic_token_type(SemanticTokenType::COMMENT), *span))
+                }
             };
 
             tokens

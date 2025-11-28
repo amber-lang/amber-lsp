@@ -197,6 +197,11 @@ fn test_failable_handlers() {
     $$ exited(code): echo code // should succeed
     $$ exited: echo "then" // should fail
 
+    $$
+    // succeeded
+    succeeded: echo "success"
+    // failed
+    failed(code): echo "failed with code: {code}"
 "#;
 
     assert_debug_snapshot!(parse(&tokenize(input)));
