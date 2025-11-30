@@ -6,7 +6,7 @@ use lib::{
         alpha040::{
             Block, Comment, ElseCondition, Expression, FailureHandler, FunctionArgument,
             GlobalStatement, IfChainContent, IfCondition, ImportContent, InterpolatedCommand,
-            InterpolatedText, IterLoopVars, Statement, VariableInitType,
+            IterLoopVars, Statement, VariableInitType,
         },
     },
 };
@@ -77,7 +77,7 @@ impl TextOutput for GlobalStatement {
 
                 output.char('{').increase_indentation();
                 for content in contents {
-                    dbg!(content);
+                    // dbg!(content);
                     output.newline().end_output(content);
                 }
                 output.decrease_indentation().newline().char('}');
@@ -90,11 +90,14 @@ impl TextOutput for GlobalStatement {
                 if let Some(args) = args {
                     output.output(args);
                 }
-                output.char(')');
+                output.char(')').space().char('{').increase_indentation();
 
                 for statement in statements {
-                    output.output(statement);
+                    dbg!(statement);
+                    output.newline().output(statement);
                 }
+
+                output.decrease_indentation().newline().end_char('}');
             }
             GlobalStatement::Statement(statement) => output.end_output(statement),
         }
@@ -203,12 +206,8 @@ impl TextOutput for Statement {
                     .output(new_value);
             }
             Statement::IfCondition(r#if, condition, items, else_condition) => {
-                output
-                    .output(r#if)
-                    .space()
-                    .output(condition)
-                    .space()
-                    .debug_point("If condition items");
+                output.output(r#if).space().output(condition).end_space();
+                // .debug_point("If condition items");
 
                 for ele in items {
                     output.output(ele);
@@ -301,22 +300,26 @@ impl TextOutput for IterLoopVars {
 
 impl TextOutput for Block {
     fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
-        output.debug_point("Block").span(span);
-        // match self {
-        //     Block::Block(modifiers, statements) => {
-        //         output.char('{').end_newline();
+        // output.debug_point("Block").span(span);
+        match self {
+            Block::Block(modifiers, statements) => {
+                output.char('{').increase_indentation().end_newline();
 
-        //         for modifier in modifiers {
-        //             output.output(modifier).end_space();
-        //         }
-        //         for statement in statements {
-        //             output.output(statement).end_newline();
-        //         }
+                for modifier in modifiers {
+                    output.output(modifier).end_space();
+                }
+                for statement in statements {
+                    output.output(statement).end_newline();
+                }
 
-        //         output.char('}').end_newline();
-        //     }
-        //     Block::Error => output.end_span(span),
-        // }
+                output
+                    .remove_newline()
+                    .decrease_indentation()
+                    .newline()
+                    .char('}');
+            }
+            Block::Error => output.end_span(span),
+        }
     }
 }
 
@@ -347,7 +350,7 @@ impl TextOutput for IfCondition {
     fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
         match self {
             IfCondition::IfCondition(condition, block) => {
-                output.output(condition).space().end_output(block);
+                output.output(condition).space().output(block).newline();
             }
             IfCondition::InlineIfCondition(condition, statement) => {
                 output.output(condition).char(':').space().output(statement);
@@ -416,16 +419,9 @@ impl TextOutput for Expression {
             Expression::Boolean(boolean) => {
                 output.output(boolean);
             }
-            Expression::Text(texts) => {
-                if texts.len() > 0 {
-                    output.char('"');
-                }
-                for text in texts {
-                    output.output(text);
-                }
-                if texts.len() > 0 {
-                    output.char('"');
-                }
+            Expression::Text(_) => {
+                // Take raw text from file, as string content should not be modified
+                output.end_span(span);
             }
             Expression::Parentheses(parentheses) => {
                 output.output(parentheses);
@@ -586,27 +582,13 @@ impl TextOutput for CommandModifier {
     }
 }
 
-impl TextOutput for InterpolatedText {
-    fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
-        match self {
-            InterpolatedText::Escape(escape) => output
-                .debug_point("InterpolatedText escape")
-                .end_output(escape),
-            InterpolatedText::Expression(expr) => output.end_output(expr),
-            InterpolatedText::Text(text) => output.output(text).end_space(),
-        }
-    }
-}
-
 impl TextOutput for InterpolatedCommand {
     fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
         match self {
             InterpolatedCommand::Escape(escape) => output
                 .debug_point("InterpolatedCommand escape")
                 .end_text(escape.as_str()),
-            InterpolatedCommand::CommandOption(option) => output
-                .debug_point("InterpolatedCommand command options")
-                .end_text(option.as_str()),
+            InterpolatedCommand::CommandOption(option) => output.end_text(option.as_str()),
             InterpolatedCommand::Expression(expr) => output.end_output(expr),
             InterpolatedCommand::Text(text) => output.end_text(text.as_str()),
         }
