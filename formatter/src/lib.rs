@@ -189,14 +189,13 @@ impl Output {
 
     /// Removes the last fragment from the buffer if it is a space.
     fn remove_space(&mut self) -> &mut Self {
-        self.buffer.pop_if(|last| !matches!(last, Fragment::Space));
+        self.buffer.pop_if(|last| matches!(last, Fragment::Space));
         self
     }
 
     /// Removes the last fragment from the buffer if it is a newline.
     fn remove_newline(&mut self) -> &mut Self {
-        self.buffer
-            .pop_if(|last| !matches!(last, Fragment::Newline));
+        self.buffer.pop_if(|last| matches!(last, Fragment::Newline));
         self
     }
 
