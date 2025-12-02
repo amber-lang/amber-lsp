@@ -4,7 +4,7 @@
 	"description": "Support for the Amber programming language in Visual Studio Code.",
 	"author": "KrosFire",
 	"license": "MIT",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"publisher": "amber-lsp-publisher",
 	"repository": {
 		"type": "git",
@@ -36,7 +36,8 @@
 				],
 				"aliases": [
 					"Amber",
-					"amber"
+					"amber",
+					"ab"
 				],
 				"configuration": "language-configuration.json",
 				"icon": {

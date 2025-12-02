@@ -12,4 +12,4 @@ This extension provides support for the [Amber language](https://amber-lang.com/
 
 And many more...
 
-![Code example](./assets/code_example.png)
+![Code example](/clients/vscode/assets/code_example.png)
