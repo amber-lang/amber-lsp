@@ -333,3 +333,15 @@ fn test_lexer_edge_cases() {
     assert_debug_snapshot!("single_char", compiler.tokenize("x"));
     assert_debug_snapshot!("single_dollar_cmd", compiler.tokenize("$echo$"));
 }
+
+#[test]
+fn test_modifiers() {
+    let input = r#"
+    sudo $$
+    trust $$
+    silent $$
+    unsafe $$
+"#;
+
+    assert_debug_snapshot!(parse(&tokenize(input)));
+}

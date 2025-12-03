@@ -29,6 +29,7 @@ const KEYWORDS: &[&str] = &[
     "let",
     "unsafe",
     "silent",
+    "sudo",
     "main",
     "import",
     "from",

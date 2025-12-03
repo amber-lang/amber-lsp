@@ -68,6 +68,7 @@ pub enum CommandModifier {
     Unsafe,
     Trust,
     Silent,
+    Sudo,
 }
 
 #[derive(PartialEq, Debug, Clone, Eq)]
