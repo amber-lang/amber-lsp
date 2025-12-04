@@ -33,8 +33,8 @@ expression: "parse(&tokenize(\"import  \\\"unclosed\"))"
         ],
     ),
     [
-        found "\"" at 8..9 expected '"*"', or '"{"',
-        found "\"" at 8..9 expected something else,
-        found end of input at 17..17 expected '"\""',
+        found '"\""' at 8..9 expected '"*"', or '"{"',
+        found '"\""' at 8..9 expected something else, or '"from"',
+        found end of input at 17..17 expected any, or '"\""',
     ],
 )

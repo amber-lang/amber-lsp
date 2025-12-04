@@ -40,6 +40,6 @@ expression: "parse(&tokenize(\"1 as \"))"
         ],
     ),
     [
-        found end of input at 4..4 expected "type",
+        found end of input at 4..4 expected type,
     ],
 )

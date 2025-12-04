@@ -10,7 +10,7 @@ expression: "parse(&tokenize(\"fun foo(abc: !WrongType {\n        echo 10\n    }
                     [],
                     (
                         false,
-                        0..3,
+                        0..47,
                     ),
                     (
                         "fun",
@@ -79,8 +79,8 @@ expression: "parse(&tokenize(\"fun foo(abc: !WrongType {\n        echo 10\n    }
         ],
     ),
     [
-        found "!" at 13..14 expected "type",
-        found "WrongType" at 14..23 expected '","',
-        found "{" at 24..25 expected '":"', '","', or '")"',
+        found '"!"' at 13..14 expected type,
+        found '"WrongType"' at 14..23 expected '","',
+        found '"{"' at 24..25 expected '":"', '","', or '")"',
     ],
 )

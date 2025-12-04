@@ -16,6 +16,6 @@ pub fn modifier_parser<'a>() -> impl AmberParser<'a, Spanned<CommandModifier>> {
         just(T!["sudo"]).to(CommandModifier::Sudo),
     ))
     .map_with(|modifier, e| (modifier, e.span()))
-    .labelled("modifier")
     .boxed()
+    .labelled("modifier")
 }

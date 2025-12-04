@@ -28,6 +28,7 @@ pub fn inf_loop_parser<'a>(
             (Statement::InfiniteLoop(loop_keyword, block), e.span())
         })
         .boxed()
+        .labelled("infinite loop")
 }
 
 pub fn iter_loop_parser<'a>(
@@ -56,7 +57,7 @@ pub fn iter_loop_parser<'a>(
         )
         .then(
             just(T!["in"])
-                .recover_with(via_parser(any().or_not().map(|_| T!["in"])))
+                .recover_with(via_parser(default_recovery().or_not().map(|_| T!["in"])))
                 .map_with(|t, e| (t.to_string(), e.span())),
         )
         .then(
@@ -80,6 +81,7 @@ pub fn iter_loop_parser<'a>(
             )
         })
         .boxed()
+        .labelled("iter loop")
 }
 
 pub fn while_loop_parser<'a>(
@@ -98,4 +100,5 @@ pub fn while_loop_parser<'a>(
             )
         })
         .boxed()
+        .labelled("while loop")
 }

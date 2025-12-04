@@ -50,6 +50,6 @@ expression: "parse(&tokenize(\"1 + 2 > \"))"
         ],
     ),
     [
-        found end of input at 7..7 expected "expression",
+        found end of input at 7..7 expected expression,
     ],
 )

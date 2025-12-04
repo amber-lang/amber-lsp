@@ -40,7 +40,7 @@ expression: "parse(&tokenize(\"import { var1 \\\"path\\\"\"))"
         ],
     ),
     [
-        found "\"" at 14..15 expected '","', or '"}"',
-        found "\"" at 14..15 expected something else,
+        found '"\""' at 14..15 expected '","', or '"}"',
+        found '"\""' at 14..15 expected something else, or '"from"',
     ],
 )

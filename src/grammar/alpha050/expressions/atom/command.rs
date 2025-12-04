@@ -17,21 +17,6 @@ pub fn command_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,
     expr: impl AmberParser<'a, Spanned<Expression>>,
 ) -> impl AmberParser<'a, Spanned<Expression>> {
-    let escape = just(T!['\\'])
-        .ignore_then(any())
-        .map(|token: Token| InterpolatedCommand::Escape(token.to_string()))
-        .boxed();
-
-    let command_option = just(T!["-"])
-        .then(just(T!["-"]).or_not())
-        .then(none_of([T!["{"], T!["$"], T!["\\"], T!["-"]]).or_not())
-        .map(|((_, second_dash), option)| {
-            let dashes = if second_dash.is_some() { "--" } else { "-" };
-
-            InterpolatedCommand::CommandOption(format!("{}{}", dashes, option.unwrap_or(T![""])))
-        })
-        .boxed();
-
     let interpolated = expr
         .recover_with(via_parser(
             default_recovery()
@@ -61,9 +46,8 @@ pub fn command_parser<'a>(
                     .filter(|c: &Token| {
                         *c != T!["$"] && *c != T!["{"] && *c != T!["\\"] && *c != T!["-"]
                     })
-                    .map(|text| InterpolatedCommand::Text(text.to_string())),
-                escape,
-                command_option,
+                    .map(|text| InterpolatedCommand::Text(text.to_string()))
+                    .labelled("command string"),
                 interpolated,
             ))
             .map_with(|cmd, e| (cmd, e.span()))

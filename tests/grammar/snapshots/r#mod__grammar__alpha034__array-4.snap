@@ -24,6 +24,6 @@ expression: "parse(&tokenize(\"[\"))"
         ],
     ),
     [
-        found end of input at 1..1 expected "expression", or '"]"',
+        found end of input at 1..1 expected expression, or '"]"',
     ],
 )

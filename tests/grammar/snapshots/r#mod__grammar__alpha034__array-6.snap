@@ -29,7 +29,7 @@ expression: "parse(&tokenize(\"[,\"))"
         ],
     ),
     [
-        found "," at 1..2 expected "expression",
+        found end of input at 1..2 expected expression,
         found end of input at 2..2 expected '","', or '"]"',
     ],
 )

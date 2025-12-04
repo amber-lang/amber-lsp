@@ -44,8 +44,8 @@ expression: "parse(&tokenize(\"import { var1 var2 from \\\"unclosed\"))"
         ],
     ),
     [
-        found "var2" at 14..18 expected '","',
-        found "from" at 19..23 expected '","', or '"}"',
-        found end of input at 33..33 expected '"\""',
+        found '"var2"' at 14..18 expected '","',
+        found '"from"' at 19..23 expected '","', or '"}"',
+        found end of input at 33..33 expected any, or '"\""',
     ],
 )

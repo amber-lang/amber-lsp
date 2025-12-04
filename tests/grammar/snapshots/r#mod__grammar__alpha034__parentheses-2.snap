@@ -27,7 +27,7 @@ expression: "parse(&tokenize(\"(\"))"
         ],
     ),
     [
-        found end of input at 1..1 expected "expression",
-        found end of input at 1..1 expected '")"',
+        found end of input at 1..1 expected expression,
+        found end of input at 1..1 expected something else, or '")"',
     ],
 )

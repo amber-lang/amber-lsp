@@ -24,6 +24,6 @@ expression: "parse(&tokenize(r#\"\"\\\"#))"
         ],
     ),
     [
-        found end of input at 1..2 expected something else,
+        found end of input at 2..2 expected any,
     ],
 )

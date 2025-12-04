@@ -41,7 +41,7 @@ expression: "parse(&tokenize(\"import { var1\"))"
     ),
     [
         found end of input at 13..13 expected '","', or '"}"',
-        found end of input at 13..13 expected '"from"',
-        found end of input at 13..13 expected '"\""',
+        found end of input at 13..13 expected something else, or '"from"',
+        found end of input at 13..13 expected something else, or '"\""',
     ],
 )

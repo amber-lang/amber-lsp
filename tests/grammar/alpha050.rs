@@ -6,12 +6,12 @@ use insta::assert_debug_snapshot;
 use amber_lsp::grammar::alpha050::{
     AmberCompiler,
     GlobalStatement,
-    Spanned,
     Token,
 };
 use amber_lsp::grammar::{
     LSPAnalysis,
     ParserResponse,
+    Spanned,
 };
 
 fn tokenize(input: &str) -> Vec<Spanned<Token>> {
@@ -202,8 +202,11 @@ fn test_failable_handlers() {
     succeeded: echo "success"
     // failed
     failed(code): echo "failed with code: {code}"
-"#;
 
+
+    $$?
+"#;
+    println!("{:?}", tokenize(input));
     assert_debug_snapshot!(parse(&tokenize(input)));
 }
 

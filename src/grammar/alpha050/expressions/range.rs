@@ -29,7 +29,7 @@ pub fn range_parser<'a>(
                 )
                 .repeated(),
             |start, end| {
-                let span = SimpleSpan::new(start.1.start, end.1.end);
+                let span = SimpleSpan::from(start.1.start..end.1.end);
 
                 (Expression::Range(Box::new(start), Box::new(end)), span)
             },

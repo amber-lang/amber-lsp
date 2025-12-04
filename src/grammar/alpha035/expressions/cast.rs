@@ -31,7 +31,7 @@ pub fn cast_parser<'a>(
                 )
                 .repeated(),
             |expr, (as_keyword, cast)| {
-                let span = SimpleSpan::new(expr.1.start, cast.1.end);
+                let span = SimpleSpan::from(expr.1.start..cast.1.end);
 
                 (Expression::Cast(Box::new(expr), as_keyword, cast), span)
             },

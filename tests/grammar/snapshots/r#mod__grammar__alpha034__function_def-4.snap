@@ -8,7 +8,7 @@ expression: "parse_unwrap(&tokenize(\"fun func(a: Num, b, c: Bool): Num {}\"))"
             [],
             (
                 false,
-                0..3,
+                0..36,
             ),
             (
                 "fun",

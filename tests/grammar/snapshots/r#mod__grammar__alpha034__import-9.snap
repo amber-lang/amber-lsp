@@ -35,8 +35,8 @@ expression: "parse(&tokenize(\"import {\"))"
         ],
     ),
     [
-        found end of input at 8..8 expected '"}"',
-        found end of input at 8..8 expected '"from"',
-        found end of input at 8..8 expected '"\""',
+        found end of input at 8..8 expected any, or '"}"',
+        found end of input at 8..8 expected something else, or '"from"',
+        found end of input at 8..8 expected something else, or '"\""',
     ],
 )

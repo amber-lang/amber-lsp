@@ -208,7 +208,7 @@ pub fn analyze_exp(
                     }
                 };
 
-                let mut last_span = SimpleSpan::new(name_span.end, name_span.end);
+                let mut last_span = SimpleSpan::from(name_span.end..name_span.end);
                 symbol_table.symbols.insert(
                     exp_span_inclusive,
                     SymbolInfo {
@@ -222,7 +222,7 @@ pub fn analyze_exp(
                                     let arg_span = args
                                         .get(idx)
                                         .map(|(_, span)| *span)
-                                        .unwrap_or(SimpleSpan::new(last_span.end, exp_span.end));
+                                        .unwrap_or(SimpleSpan::from(last_span.end..exp_span.end));
 
                                     last_span = arg_span;
                                     (

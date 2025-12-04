@@ -10,7 +10,7 @@ expression: "parse(&tokenize(r#\"\n        fun foo(a) {\n\n            return \"
                     [],
                     (
                         false,
-                        9..12,
+                        9..89,
                     ),
                     (
                         "fun",
@@ -139,6 +139,6 @@ expression: "parse(&tokenize(r#\"\n        fun foo(a) {\n\n            return \"
         ],
     ),
     [
-        found end of input at 89..89 expected "statement", or '"}"',
+        found end of input at 89..89 expected statement, or '"}"',
     ],
 )

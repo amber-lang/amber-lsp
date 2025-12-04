@@ -73,4 +73,5 @@ pub fn block_parser_statement<'a>(
     block_parser(stmnts, true, false)
         .map_with(|block, e| (Statement::Block(block), e.span()))
         .boxed()
+        .labelled("block")
 }

@@ -24,6 +24,6 @@ expression: "parse(&tokenize(r#\"\"\"#))"
         ],
     ),
     [
-        found end of input at 1..1 expected '"\\"', '"{"', or '"\""',
+        found end of input at 1..1 expected any, '"\\"', '"{"', or '"\""',
     ],
 )

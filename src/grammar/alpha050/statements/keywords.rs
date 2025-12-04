@@ -58,4 +58,5 @@ pub fn keywords_parser<'a>(
             }),
     ))
     .boxed()
+    .labelled("keyword")
 }

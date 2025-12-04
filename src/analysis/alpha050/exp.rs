@@ -316,7 +316,7 @@ pub fn analyze_exp(
                                 let arg_span = args
                                     .get(idx)
                                     .map(|(_, span)| *span)
-                                    .unwrap_or(SimpleSpan::new(last_span_end, exp_span.end));
+                                    .unwrap_or(SimpleSpan::from(last_span_end..exp_span.end));
 
                                 last_span_end = arg_span.end;
                                 (

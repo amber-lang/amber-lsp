@@ -62,39 +62,41 @@ pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .map_with(|((_, path), _): ((Token, String), Token), e| (path, e.span()))
         .boxed();
 
-    just(T!["pub"])
-        .or_not()
-        .map_with(|is_pub, e| (is_pub.is_some(), e.span()))
-        .then(just(T!["import"]).map_with(|_, e| ("import".to_string(), e.span())))
-        .then(
-            import_all_parser
-                .or(import_specific_parser)
-                .recover_with(via_parser(
-                    default_recovery()
-                        .or_not()
-                        .map_with(|_, e| (ImportContent::ImportAll, e.span())),
-                )),
-        )
-        .then(
-            just(T!["from"])
-                .recover_with(via_parser(default_recovery().or_not().map(|_| T!["from"])))
-                .map_with(|_, e| ("from".to_string(), e.span())),
-        )
-        .then(
-            path_parser.recover_with(via_parser(
+    choice((
+        just(T!["pub"])
+            .map_with(|_, e| (true, e.span()))
+            .then(just(T!["import"]).map_with(|_, e| ("import".to_string(), e.span()))),
+        just(T!["import"]).map_with(|_, e| ((false, e.span()), ("import".to_string(), e.span()))),
+    ))
+    .then(
+        import_all_parser
+            .or(import_specific_parser)
+            .recover_with(via_parser(
                 default_recovery()
                     .or_not()
-                    .map_with(|_, e| ("".to_string(), e.span())),
+                    .map_with(|_, e| (ImportContent::ImportAll, e.span())),
             )),
+    )
+    .then(
+        just(T!["from"])
+            .recover_with(via_parser(default_recovery().or_not().map(|_| T!["from"])))
+            .map_with(|_, e| ("from".to_string(), e.span())),
+    )
+    .then(
+        path_parser.recover_with(via_parser(
+            default_recovery()
+                .or_not()
+                .map_with(|_, e| ("".to_string(), e.span())),
+        )),
+    )
+    .map_with(|((((is_pub, imp), vars), from), path), e| {
+        (
+            GlobalStatement::Import(is_pub, imp, vars, from, path),
+            e.span(),
         )
-        .map_with(|((((is_pub, imp), vars), from), path), e| {
-            (
-                GlobalStatement::Import(is_pub, imp, vars, from, path),
-                e.span(),
-            )
-        })
-        .boxed()
-        .labelled("import statement")
+    })
+    .boxed()
+    .labelled("import statement")
 }
 
 pub fn type_parser<'a>() -> impl AmberParser<'a, Spanned<DataType>> {

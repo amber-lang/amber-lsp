@@ -51,6 +51,8 @@ const KEYWORDS: &[&str] = &[
 
 #[inline]
 pub fn ident<'a>(ident_name: String) -> impl AmberParser<'a, String> {
+    let ident_name_cloned = ident_name.clone();
+
     any()
         .try_map(move |token: Token, span| {
             let word = token.to_string();
@@ -84,13 +86,14 @@ pub fn ident<'a>(ident_name: String) -> impl AmberParser<'a, String> {
             if KEYWORDS.contains(&word.as_str()) {
                 return Err(Rich::custom(
                     span,
-                    format!("keyword used as {ident_name} name"),
+                    format!("keyword used as {} name", ident_name_cloned),
                 ));
             }
 
             Ok(word)
         })
         .boxed()
+        .labelled(ident_name.clone())
 }
 
 #[inline]

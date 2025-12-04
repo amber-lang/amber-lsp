@@ -307,7 +307,7 @@ pub async fn analyze_global_stmnt(
                                         data_type: DataType::Null,
                                         is_definition: false,
                                         undefined: true,
-                                        span: Span::new(span.start, span.end),
+                                        span: Span::from(span.start..span.end),
                                         contexts: vec![Context::Import(import_context.clone())],
                                     },
                                 );
@@ -379,7 +379,7 @@ pub async fn analyze_global_stmnt(
                                             data_type: DataType::Null,
                                             is_definition: false,
                                             undefined: true,
-                                            span: Span::new(span.start, span.end),
+                                            span: *span,
                                             contexts: vec![Context::Import(import_context.clone())],
                                         },
                                     );

@@ -68,6 +68,6 @@ expression: "parse(&tokenize(\"\n        1 +\n        let x = 10\n    \"))"
         ],
     ),
     [
-        found "let" at 21..24 expected "expression",
+        found end of input at 21..24 expected expression,
     ],
 )

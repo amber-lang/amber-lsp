@@ -58,6 +58,7 @@ pub fn if_cond_parser<'a>(
             )
         })
         .boxed()
+        .labelled("if condition")
 }
 
 pub fn if_chain_parser<'a>(
@@ -105,4 +106,5 @@ pub fn if_chain_parser<'a>(
             (Statement::IfChain(if_keyword, if_chain), e.span())
         })
         .boxed()
+        .labelled("if chain")
 }

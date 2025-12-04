@@ -73,6 +73,6 @@ expression: "parse(&tokenize(\"\n    5 + 5 +;\n    echo 10\"))"
         ],
     ),
     [
-        found ";" at 12..13 expected "expression",
+        found end of input at 12..13 expected expression,
     ],
 )

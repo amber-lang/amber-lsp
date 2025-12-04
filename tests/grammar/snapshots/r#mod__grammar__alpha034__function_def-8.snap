@@ -10,7 +10,7 @@ expression: "parse(&tokenize(\"fun foo {\n        echo 10\n    }\"))"
                     [],
                     (
                         false,
-                        0..3,
+                        0..31,
                     ),
                     (
                         "fun",
@@ -48,6 +48,6 @@ expression: "parse(&tokenize(\"fun foo {\n        echo 10\n    }\"))"
         ],
     ),
     [
-        found "{" at 8..9 expected '"("',
+        found '"{"' at 8..9 expected '"("',
     ],
 )

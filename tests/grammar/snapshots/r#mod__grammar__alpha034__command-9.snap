@@ -54,6 +54,6 @@ expression: "parse(&tokenize(\"$command {}$\"))"
         ],
     ),
     [
-        found end of input at 9..10 expected "expression",
+        found end of input at 10..11 expected expression,
     ],
 )

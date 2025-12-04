@@ -31,7 +31,7 @@ pub fn sum_parser<'a>(
             )
             .repeated(),
             |lhs, (op, rhs)| {
-                let span = SimpleSpan::new(lhs.1.start, rhs.1.end);
+                let span = SimpleSpan::from(lhs.1.start..rhs.1.end);
                 (op(Box::new(lhs), Box::new(rhs)), span)
             },
         )

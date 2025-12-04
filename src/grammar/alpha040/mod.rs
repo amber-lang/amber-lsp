@@ -14,7 +14,7 @@ use chumsky::error::Rich;
 use chumsky::extra::Err;
 use chumsky::input::{
     Input,
-    SpannedInput,
+    MappedInput,
 };
 use chumsky::Parser;
 use semantic_tokens::semantic_tokens_from_ast;
@@ -279,9 +279,13 @@ impl LSPAnalysis for AmberCompiler {
     #[tracing::instrument(skip_all)]
     fn parse<'a>(&self, tokens: &'a [Spanned<Token>]) -> ParserResponse<'a> {
         let len = tokens.last().map(|t| t.1.end).unwrap_or(0);
-        let parser_input = tokens.spanned(Span::new(len, len));
+        // let parser_input = tokens.spanned(Span::new(len, len));
 
-        let result = self.parser().parse(parser_input);
+        // let result = self.parser().parse(parser_input);
+
+        let result = self
+            .parser()
+            .parse(Input::map(tokens, Span::from(len..len), |(t, s)| (t, s)));
 
         let semantic_tokens = semantic_tokens_from_ast(result.output());
 
@@ -299,7 +303,12 @@ impl LSPAnalysis for AmberCompiler {
 }
 
 pub type RichError<'src> = Err<Rich<'src, Token>>;
-type AmberInput<'src> = SpannedInput<Token, Span, &'src [Spanned<Token>]>;
+type AmberInput<'src> = MappedInput<
+    Token,
+    Span,
+    &'src [(Token, Span)],
+    fn(&'src (Token, Span)) -> (&'src Token, &'src Span),
+>;
 
 pub trait AmberParser<'src, Output>:
     Parser<'src, AmberInput<'src>, Output, RichError<'src>> + Clone + Sized + 'src
