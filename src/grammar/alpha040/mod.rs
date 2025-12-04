@@ -272,16 +272,12 @@ impl AmberCompiler {
 impl LSPAnalysis for AmberCompiler {
     #[tracing::instrument(skip_all)]
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>> {
-        // Use Logos lexer instead of Heraclitus
         lexer::tokenize(&input.replace("\r\n", "\n").replace("\r", "\n"))
     }
 
     #[tracing::instrument(skip_all)]
     fn parse<'a>(&self, tokens: &'a [Spanned<Token>]) -> ParserResponse<'a> {
         let len = tokens.last().map(|t| t.1.end).unwrap_or(0);
-        // let parser_input = tokens.spanned(Span::new(len, len));
-
-        // let result = self.parser().parse(parser_input);
 
         let result = self
             .parser()

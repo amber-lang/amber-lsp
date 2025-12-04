@@ -261,9 +261,7 @@ impl LSPAnalysis for AmberCompiler {
     #[tracing::instrument(skip_all)]
     fn parse<'a>(&self, tokens: &'a [Spanned<Token>]) -> ParserResponse<'a> {
         let len = tokens.last().map(|t| t.1.end).unwrap_or(0);
-        // let parser_input = tokens.spanned(Span::new(len, len));
 
-        // let result = self.parser().parse(parser_input);
         let result = self
             .parser()
             .parse(Input::map(tokens, Span::from(len..len), |(t, s)| (t, s)));

@@ -255,12 +255,7 @@ pub enum GlobalStatement {
         Option<Spanned<DataType>>,
         Vec<Spanned<Statement>>,
     ),
-    Main(
-        Spanned<String>,
-        Option<Spanned<String>>,
-        // Vec<Spanned<Statement>>,
-        Spanned<Block>,
-    ),
+    Main(Spanned<String>, Option<Spanned<String>>, Spanned<Block>),
     Statement(Box<Spanned<Statement>>),
 }
 
@@ -286,7 +281,6 @@ impl AmberCompiler {
 impl LSPAnalysis for AmberCompiler {
     #[tracing::instrument(skip_all)]
     fn tokenize(&self, input: &str) -> Vec<Spanned<Token>> {
-        // Normalize line endings and use Logos v2 lexer with context morphing
         let normalized = input.replace("\r\n", "\n").replace("\r", "\n");
         lexer::tokenize(&normalized)
     }
