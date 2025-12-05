@@ -109,10 +109,10 @@ pub fn failable_handlers_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,
 ) -> impl AmberParser<'a, Vec<Spanned<FailableHandler>>> {
     choice((
+        comment_parser_in_failable(),
         failure_parser(stmnts.clone()),
         succeeded_parser(stmnts.clone()),
         exited_parser(stmnts),
-        comment_parser_in_failable(),
     ))
     .repeated()
     .collect()

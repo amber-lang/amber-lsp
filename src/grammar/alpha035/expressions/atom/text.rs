@@ -12,11 +12,6 @@ use chumsky::prelude::*;
 pub fn text_parser<'a>(
     expr: impl AmberParser<'a, Spanned<Expression>>,
 ) -> impl AmberParser<'a, Spanned<Expression>> {
-    let escaped = just(T!['\\'])
-        .ignore_then(any())
-        .map_with(|char: Token, e| InterpolatedText::Escape((char.to_string(), e.span())))
-        .boxed();
-
     let interpolated = expr
         .recover_with(via_parser(
             default_recovery()
@@ -41,8 +36,8 @@ pub fn text_parser<'a>(
             choice((
                 any()
                     .filter(|c: &Token| *c != T!['"'] && *c != T!['{'] && *c != T!['\\'])
-                    .map_with(|text, e| InterpolatedText::Text((text.to_string(), e.span()))),
-                escaped,
+                    .map_with(|text, e| InterpolatedText::Text((text.to_string(), e.span())))
+                    .labelled("test string"),
                 interpolated,
             ))
             .map_with(|expr, e| (expr, e.span()))
