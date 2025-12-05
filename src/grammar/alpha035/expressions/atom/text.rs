@@ -37,7 +37,7 @@ pub fn text_parser<'a>(
                 any()
                     .filter(|c: &Token| *c != T!['"'] && *c != T!['{'] && *c != T!['\\'])
                     .map_with(|text, e| InterpolatedText::Text((text.to_string(), e.span())))
-                    .labelled("test string"),
+                    .labelled("text string"),
                 interpolated,
             ))
             .map_with(|expr, e| (expr, e.span()))
