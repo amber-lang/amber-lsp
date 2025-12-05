@@ -1,0 +1,13 @@
+[package]
+name = "amber_types"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+tower-lsp-server = "0.22.0"
+dashmap = "6.0.1"
+rustc-hash = "2.1.1"
+chumsky = { version = "0.11.2", features = ["default", "memoization"] }
+indexmap = "2.6.0"
+tokio = { version = "1.39.1", features = ["full"] }

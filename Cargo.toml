@@ -1,35 +1,11 @@
-[package]
-name = "amber-lsp"
-version = "0.1.14"
-edition = "2021"
-repository = "https://github.com/KrosFire/amber-lsp"
-rust-version = "1.90"
-
-[dependencies]
-tokio = { version = "1.39.1", features = ["full"] }
-tower-lsp-server = "0.22.0"
-phf = { version = "0.11", features = ["macros"] }
-dashmap = "6.0.1"
-ropey = "1.6.1"
-chumsky = { version = "0.11.2", features = ["default", "memoization"] }
-heraclitus-compiler = "1.8.2"
-logos = "0.14"
-serde_json = "1.0.128"
-rangemap = "1.5.1"
-indexmap = "2.6.0"
-clap = { version = "4.5.21", features = ["derive"] }
-include_dir = "0.7.4"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-rustc-hash = "2.1.1"
-tracing-appender = "0.2.3"
-thiserror = "2.0.12"
-
-[dev-dependencies]
-insta = { version = "1.39.0", features = ["yaml"] }
-
-[build-dependencies]
-fs_extra = "1.3.0"
+[workspace]
+members = [
+    "crates/types",
+    "crates/grammar",
+    "crates/analysis",
+    "crates/server",
+]
+resolver = "2"
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

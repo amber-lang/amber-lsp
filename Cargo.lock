@@ -21,6 +21,9 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 name = "amber-lsp"
 version = "0.1.14"
 dependencies = [
+ "amber_analysis",
+ "amber_grammar",
+ "amber_types",
  "chumsky",
  "clap",
  "dashmap",
@@ -41,6 +44,49 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "amber_analysis"
+version = "0.1.0"
+dependencies = [
+ "amber_grammar",
+ "amber_types",
+ "chumsky",
+ "clap",
+ "dashmap",
+ "include_dir",
+ "rangemap",
+ "ropey",
+ "rustc-hash",
+ "thiserror 2.0.17",
+ "tokio",
+ "tower-lsp-server",
+ "tracing",
+]
+
+[[package]]
+name = "amber_grammar"
+version = "0.1.0"
+dependencies = [
+ "amber_types",
+ "chumsky",
+ "logos",
+ "tower-lsp-server",
+ "tracing",
+]
+
+[[package]]
+name = "amber_types"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
+ "dashmap",
+ "indexmap",
+ "rustc-hash",
+ "serde",
+ "tokio",
+ "tower-lsp-server",
 ]
 
 [[package]]

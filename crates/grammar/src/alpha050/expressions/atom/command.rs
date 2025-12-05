@@ -1,0 +1,75 @@
+use chumsky::prelude::*;
+
+use crate::alpha050::parser::default_recovery;
+use crate::alpha050::statements::failable_handlers::failable_handlers_parser;
+use crate::alpha050::statements::modifiers::modifier_parser;
+use crate::alpha050::{
+    AmberParser,
+    Expression,
+    InterpolatedCommand,
+    Spanned,
+    Statement,
+    Token,
+};
+use crate::T;
+
+pub fn command_parser<'a>(
+    stmnts: impl AmberParser<'a, Spanned<Statement>>,
+    expr: impl AmberParser<'a, Spanned<Expression>>,
+) -> impl AmberParser<'a, Spanned<Expression>> {
+    let interpolated = expr
+        .recover_with(via_parser(
+            default_recovery()
+                .or_not()
+                .map_with(|_, e| (Expression::Error, e.span())),
+        ))
+        .delimited_by(
+            just(T!['{']),
+            just(T!['}']).recover_with(via_parser(
+                default_recovery()
+                    .repeated()
+                    .then(just(T!['}']))
+                    .or_not()
+                    .map(|_| T!['}']),
+            )),
+        )
+        .map(|expr| InterpolatedCommand::Expression(Box::new(expr)))
+        .boxed();
+
+    modifier_parser()
+        .repeated()
+        .collect()
+        .then(just(T!['$']).map_with(|_, e| (InterpolatedCommand::Text("$".to_string()), e.span())))
+        .then(
+            choice((
+                any()
+                    .filter(|c: &Token| {
+                        *c != T!["$"] && *c != T!["{"] && *c != T!["\\"] && *c != T!["-"]
+                    })
+                    .map(|text| InterpolatedCommand::Text(text.to_string()))
+                    .labelled("command string"),
+                interpolated,
+            ))
+            .map_with(|cmd, e| (cmd, e.span()))
+            .repeated()
+            .collect::<Vec<Spanned<InterpolatedCommand>>>(),
+        )
+        .then(
+            just(T!['$'])
+                .recover_with(via_parser(default_recovery().or_not().map(|_| T!['$'])))
+                .map_with(|_, e| (InterpolatedCommand::Text("$".to_string()), e.span())),
+        )
+        .then(failable_handlers_parser(stmnts))
+        .map_with(|((((modifier, begin), content), end), handler), e| {
+            let mut content_with_bounds = vec![begin];
+            content_with_bounds.extend(content);
+            content_with_bounds.push(end);
+
+            (
+                Expression::Command(modifier, content_with_bounds, handler),
+                e.span(),
+            )
+        })
+        .boxed()
+        .labelled("command")
+}
