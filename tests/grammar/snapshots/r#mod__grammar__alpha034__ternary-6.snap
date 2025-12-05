@@ -53,6 +53,6 @@ expression: "parse(&tokenize(\"true then 1 else\"))"
         ],
     ),
     [
-        found end of input at 16..16 expected "expression",
+        found end of input at 16..16 expected expression,
     ],
 )

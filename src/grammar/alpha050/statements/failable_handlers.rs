@@ -48,6 +48,7 @@ fn failure_parser<'a>(
         .map_with(|handler, e| (handler, e.span()))
         .boxed()
         .map_with(|stmnt, e| (FailableHandler::Failure(stmnt), e.span()))
+        .labelled("failure handler")
 }
 
 fn succeeded_parser<'a>(
@@ -65,6 +66,7 @@ fn succeeded_parser<'a>(
             )
         })
         .boxed()
+        .labelled("succeeded handler")
 }
 
 fn exited_parser<'a>(
@@ -94,6 +96,7 @@ fn exited_parser<'a>(
             )
         })
         .boxed()
+        .labelled("exited handler")
 }
 
 fn comment_parser_in_failable<'a>() -> impl AmberParser<'a, Spanned<FailableHandler>> {
@@ -114,4 +117,5 @@ pub fn failable_handlers_parser<'a>(
     .repeated()
     .collect()
     .boxed()
+    .labelled("failure handler (?, failed, exited, succeeded)")
 }

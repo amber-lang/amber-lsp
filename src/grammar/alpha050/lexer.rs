@@ -226,7 +226,7 @@ impl<'source> StatefulTokenizer<'source> {
             Ok(TokenKind::Quote) => {
                 // Entering string context
                 self.context_stack.push(LexerContext::String);
-                Some((Token("\"".to_string()), SimpleSpan::new(start, end)))
+                Some((Token("\"".to_string()), SimpleSpan::from(start..end)))
             }
             Ok(TokenKind::Dollar) => {
                 // Check if this starts a command.
@@ -243,12 +243,9 @@ impl<'source> StatefulTokenizer<'source> {
                             if next_ch == '$' {
                                 // next is a dollar -> this $ does not start a command
                                 false
-                            } else if prev_is_dollar {
-                                // this is the second $ in $$ — only start a command if not followed by whitespace
-                                !next_ch.is_whitespace()
                             } else {
                                 // single $ (not followed by $) -> start a command
-                                true
+                                !prev_is_dollar
                             }
                         }
                         None => false,
@@ -261,14 +258,14 @@ impl<'source> StatefulTokenizer<'source> {
                     // Entering command context
                     self.context_stack.push(LexerContext::Command);
                 }
-                Some((Token("$".to_string()), SimpleSpan::new(start, end)))
+                Some((Token("$".to_string()), SimpleSpan::from(start..end)))
             }
             Ok(TokenKind::OpenBrace) => {
                 // Only track brace depth if we're inside an interpolation (context stack > 1)
                 if self.context_stack.len() > 1 {
                     self.brace_depth += 1;
                 }
-                Some((Token("{".to_string()), SimpleSpan::new(start, end)))
+                Some((Token("{".to_string()), SimpleSpan::from(start..end)))
             }
             Ok(TokenKind::CloseBrace) => {
                 // Only track brace depth if we're inside an interpolation
@@ -279,13 +276,13 @@ impl<'source> StatefulTokenizer<'source> {
                         self.context_stack.pop();
                     }
                 }
-                Some((Token("}".to_string()), SimpleSpan::new(start, end)))
+                Some((Token("}".to_string()), SimpleSpan::from(start..end)))
             }
             Ok(kind) => {
                 let token_str = token_kind_to_string(&kind, slice);
-                Some((Token(token_str), SimpleSpan::new(start, end)))
+                Some((Token(token_str), SimpleSpan::from(start..end)))
             }
-            Err(_) => Some((Token(slice.to_string()), SimpleSpan::new(start, end))),
+            Err(_) => Some((Token(slice.to_string()), SimpleSpan::from(start..end))),
         }
     }
 
@@ -304,18 +301,18 @@ impl<'source> StatefulTokenizer<'source> {
             Ok(StringContext::Quote) => {
                 // Exiting string context
                 self.context_stack.pop();
-                Some((Token("\"".to_string()), SimpleSpan::new(start, end)))
+                Some((Token("\"".to_string()), SimpleSpan::from(start..end)))
             }
             Ok(StringContext::OpenBrace) => {
                 // Entering interpolation - switch back to main context
                 self.context_stack.push(LexerContext::Main);
                 self.brace_depth = 1;
-                Some((Token("{".to_string()), SimpleSpan::new(start, end)))
+                Some((Token("{".to_string()), SimpleSpan::from(start..end)))
             }
             Ok(StringContext::Content) | Ok(StringContext::Escape) => {
-                Some((Token(slice.to_string()), SimpleSpan::new(start, end)))
+                Some((Token(slice.to_string()), SimpleSpan::from(start..end)))
             }
-            Err(_) => Some((Token(slice.to_string()), SimpleSpan::new(start, end))),
+            Err(_) => Some((Token(slice.to_string()), SimpleSpan::from(start..end))),
         }
     }
 
@@ -334,13 +331,13 @@ impl<'source> StatefulTokenizer<'source> {
             Ok(CommandContext::Dollar) => {
                 // Exiting command context
                 self.context_stack.pop();
-                Some((Token("$".to_string()), SimpleSpan::new(start, end)))
+                Some((Token("$".to_string()), SimpleSpan::from(start..end)))
             }
             Ok(CommandContext::OpenBrace) => {
                 // Entering interpolation - switch back to main context
                 self.context_stack.push(LexerContext::Main);
                 self.brace_depth = 1;
-                Some((Token("{".to_string()), SimpleSpan::new(start, end)))
+                Some((Token("{".to_string()), SimpleSpan::from(start..end)))
             }
             Ok(CommandContext::Content) | Ok(CommandContext::Escape) => {
                 // If this command context was entered as the second `$` of `$$` and
@@ -353,7 +350,7 @@ impl<'source> StatefulTokenizer<'source> {
                 } else {
                     slice.to_string()
                 };
-                Some((Token(token_text), SimpleSpan::new(start, end)))
+                Some((Token(token_text), SimpleSpan::from(start..end)))
             }
             Err(e) => {
                 eprintln!(
@@ -363,7 +360,7 @@ impl<'source> StatefulTokenizer<'source> {
                     slice,
                     &remaining[..remaining.len().min(50)]
                 );
-                Some((Token(slice.to_string()), SimpleSpan::new(start, end)))
+                Some((Token(slice.to_string()), SimpleSpan::from(start..end)))
             }
         }
     }
@@ -578,11 +575,14 @@ mod tests {
 
     #[test]
     fn test_command_empty() {
-        let input = r#"$$"#;
+        let input = r#"
+        $$?
+        "#;
         let tokens = tokenize(input);
-        assert_eq!(tokens.len(), 2);
+        assert_eq!(tokens.len(), 3);
         assert_eq!(tokens[0].0 .0, "$");
         assert_eq!(tokens[1].0 .0, "$");
+        assert_eq!(tokens[2].0 .0, "?");
     }
 
     #[test]
@@ -702,12 +702,12 @@ mod tests {
         let tokens = tokenize(input);
 
         // Verify spans are correct
-        assert_eq!(tokens[0].1, SimpleSpan::new(0, 1)); // "
-        assert_eq!(tokens[1].1, SimpleSpan::new(1, 7)); // hello
-        assert_eq!(tokens[2].1, SimpleSpan::new(7, 8)); // {
-        assert_eq!(tokens[3].1, SimpleSpan::new(8, 12)); // name
-        assert_eq!(tokens[4].1, SimpleSpan::new(12, 13)); // }
-        assert_eq!(tokens[5].1, SimpleSpan::new(13, 14)); // "
+        assert_eq!(tokens[0].1, SimpleSpan::from(0..1)); // "
+        assert_eq!(tokens[1].1, SimpleSpan::from(1..7)); // hello
+        assert_eq!(tokens[2].1, SimpleSpan::from(7..8)); // {
+        assert_eq!(tokens[3].1, SimpleSpan::from(8..12)); // name
+        assert_eq!(tokens[4].1, SimpleSpan::from(12..13)); // }
+        assert_eq!(tokens[5].1, SimpleSpan::from(13..14)); // "
     }
 
     #[test]

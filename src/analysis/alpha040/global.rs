@@ -52,13 +52,13 @@ pub async fn analyze_global_stmnt(
     if !is_builtin_file(&uri, backend.amber_version.clone()) {
         default_imports.push((
             GlobalStatement::Import(
-                (false, Span::new(0, 0)),
-                ("import".to_string(), Span::new(0, 0)),
-                (ImportContent::ImportAll, Span::new(0, 0)),
-                ("from".to_string(), Span::new(0, 0)),
-                ("builtin".to_string(), Span::new(0, 0)),
+                (false, Span::from(0..0)),
+                ("import".to_string(), Span::from(0..0)),
+                (ImportContent::ImportAll, Span::from(0..0)),
+                ("from".to_string(), Span::from(0..0)),
+                ("builtin".to_string(), Span::from(0..0)),
             ),
-            Span::new(0, 0),
+            Span::from(0..0),
         ))
     }
 
@@ -432,7 +432,7 @@ pub async fn analyze_global_stmnt(
                                         data_type: DataType::Null,
                                         is_definition: false,
                                         undefined: true,
-                                        span: Span::new(span.start, span.end),
+                                        span: *span,
                                         contexts: vec![Context::Import(import_context.clone())],
                                     },
                                 );
@@ -504,7 +504,7 @@ pub async fn analyze_global_stmnt(
                                             data_type: DataType::Null,
                                             is_definition: false,
                                             undefined: true,
-                                            span: Span::new(span.start, span.end),
+                                            span: Span::from(span.start..span.end),
                                             contexts: vec![Context::Import(import_context.clone())],
                                         },
                                     );

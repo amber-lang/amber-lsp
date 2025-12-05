@@ -704,12 +704,53 @@ expression: parse(&tokenize(input))
                 ),
                 295..408,
             ),
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Command(
+                                    [],
+                                    [
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            415..416,
+                                        ),
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            416..417,
+                                        ),
+                                    ],
+                                    [
+                                        (
+                                            Failure(
+                                                (
+                                                    Propagate,
+                                                    417..418,
+                                                ),
+                                            ),
+                                            417..418,
+                                        ),
+                                    ],
+                                ),
+                                415..418,
+                            ),
+                        ),
+                        415..418,
+                    ),
+                ),
+                415..418,
+            ),
         ],
     ),
     [
-        found end of input at 8..17 expected '":"', or '"{"',
-        found end of input at 23..24 expected something else,
-        keyword used as status code argument name at 263..267,
-        found end of input at 261..262 expected something else,
+        found '"("' at 17..18 expected '":"', or '"{"',
+        found '":"' at 23..24 expected '"["', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '";"', import statement, function definition, main body, or statement,
+        found end of input at 263..267 expected status code argument,
+        found '":"' at 261..262 expected import statement, function definition, main body, or statement,
     ],
 )

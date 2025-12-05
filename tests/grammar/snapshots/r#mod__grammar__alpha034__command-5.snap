@@ -45,6 +45,6 @@ expression: "parse(&tokenize(\"$command --arg1 -v\"))"
         ],
     ),
     [
-        found end of input at 18..18 expected '"\\"', '"-"', '"{"', or '"$"',
+        found end of input at 18..18 expected any, '"\\"', '"-"', '"{"', or '"$"',
     ],
 )

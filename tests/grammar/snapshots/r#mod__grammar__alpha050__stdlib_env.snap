@@ -32,7 +32,7 @@ expression: parse_unwrap(&tokenize(&stdlib))
         Import(
             (
                 false,
-                23..22,
+                23..29,
             ),
             (
                 "import",

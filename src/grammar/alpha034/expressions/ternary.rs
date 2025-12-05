@@ -45,7 +45,7 @@ pub fn ternary_parser<'a>(
                 )
                 .repeated(),
             |cond, (((then_keyword, if_true), else_keyword), if_false)| {
-                let span = SimpleSpan::new(cond.1.start, if_false.1.end);
+                let span = SimpleSpan::from(cond.1.start..if_false.1.end);
 
                 (
                     Expression::Ternary(

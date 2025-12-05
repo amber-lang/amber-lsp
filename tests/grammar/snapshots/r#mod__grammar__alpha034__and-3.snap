@@ -58,6 +58,6 @@ expression: "parse(&tokenize(\"true and false and\"))"
         ],
     ),
     [
-        found end of input at 18..18 expected "expression",
+        found end of input at 18..18 expected expression,
     ],
 )

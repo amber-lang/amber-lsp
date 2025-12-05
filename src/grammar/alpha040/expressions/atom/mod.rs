@@ -62,7 +62,7 @@ pub fn array_index_parser<'a>(
                 )
                 .repeated(),
             |expr, index| {
-                let span = SimpleSpan::new(expr.1.start, index.1.end);
+                let span = SimpleSpan::from(expr.1.start..index.1.end);
 
                 (
                     Expression::ArrayIndex(Box::new(expr), Box::new(index)),

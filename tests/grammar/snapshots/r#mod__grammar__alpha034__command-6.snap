@@ -60,6 +60,6 @@ expression: "parse(&tokenize(\"$command {unclosed\"))"
     ),
     [
         found end of input at 18..18 expected '"("', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
-        found end of input at 18..18 expected '"}"', '"\\"', '"-"', '"{"', or '"$"',
+        found end of input at 18..18 expected something else, '"}"', any, '"\\"', '"-"', '"{"', or '"$"',
     ],
 )

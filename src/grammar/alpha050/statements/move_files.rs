@@ -42,4 +42,5 @@ pub fn move_files_parser<'a>(
                 e.span(),
             )
         })
+        .labelled("statement")
 }

@@ -41,7 +41,7 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
                 Import(
                     (
                         false,
-                        50..41,
+                        50..56,
                     ),
                     (
                         "import",
@@ -475,10 +475,10 @@ expression: "parse(&tokenize(r#\"\n        // comments\n        // comments\n\n 
         ],
     ),
     [
-        found end of input at 74..75 expected something else,
-        found "CmdText" at 115..122 expected "type",
-        found end of input at 144..145 expected something else,
-        found "{" at 164..165 expected "expression",
-        found end of input at 170..171 expected something else,
+        found '";"' at 74..75 expected '"pub"', '"import"', function, '"main"', or statement,
+        found '"CmdText"' at 115..122 expected type,
+        found '"`"' at 144..145 expected expression, '";"', or statement,
+        found end of input at 164..165 expected expression,
+        found '"`"' at 170..171 expected '";"', or statement,
     ],
 )

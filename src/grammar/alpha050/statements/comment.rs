@@ -8,7 +8,9 @@ use crate::grammar::alpha050::{
 };
 
 pub fn comment_parser<'a>() -> impl AmberParser<'a, Spanned<Comment>> {
-    choice((doc_string_parser(), single_line_comment_parser())).boxed()
+    choice((doc_string_parser(), single_line_comment_parser()))
+        .boxed()
+        .labelled("comment")
 }
 
 fn single_line_comment_parser<'a>() -> impl AmberParser<'a, Spanned<Comment>> {

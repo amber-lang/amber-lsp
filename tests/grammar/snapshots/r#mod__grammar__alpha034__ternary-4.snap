@@ -48,8 +48,8 @@ expression: "parse(&tokenize(\"true then\"))"
         ],
     ),
     [
-        found end of input at 9..9 expected "expression",
-        found end of input at 9..9 expected '"else"',
-        found end of input at 9..9 expected "expression",
+        found end of input at 9..9 expected expression,
+        found end of input at 9..9 expected something else, or '"else"',
+        found end of input at 9..9 expected something else, or expression,
     ],
 )

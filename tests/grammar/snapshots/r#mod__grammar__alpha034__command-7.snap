@@ -74,7 +74,7 @@ expression: "parse(&tokenize(\"$command {unclosed interpolation$ let x = 10\"))"
         ],
     ),
     [
-        found "interpolation" at 19..32 expected '"("', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
-        found end of input at 33..44 expected something else,
+        found '"interpolation"' at 19..32 expected '"("', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
+        found '"let x = 10"' at 33..44 expected '"failed"', '"?"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '";"', '"pub"', '"import"', function, '"main"', or statement,
     ],
 )

@@ -10,7 +10,7 @@ expression: "parse(&tokenize(\"fun foo(abc!) {}\"))"
                     [],
                     (
                         false,
-                        0..3,
+                        0..16,
                     ),
                     (
                         "fun",
@@ -47,7 +47,7 @@ expression: "parse(&tokenize(\"fun foo(abc!) {}\"))"
         ],
     ),
     [
-        found "!" at 11..12 expected '":"', or '","',
-        found "!" at 11..12 expected "argument",
+        found '"!"' at 11..12 expected '":"', or '","',
+        found end of input at 11..12 expected argument,
     ],
 )

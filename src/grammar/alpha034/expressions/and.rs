@@ -29,7 +29,7 @@ pub fn and_parser<'a>(
                 )
                 .repeated(),
             |lhs, (and_keyword, rhs)| {
-                let span = SimpleSpan::new(lhs.1.start, rhs.1.end);
+                let span = SimpleSpan::from(lhs.1.start..rhs.1.end);
 
                 (
                     Expression::And(Box::new(lhs), and_keyword, Box::new(rhs)),

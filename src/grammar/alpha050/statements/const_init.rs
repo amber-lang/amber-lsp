@@ -43,4 +43,5 @@ pub fn const_init_parser<'a>(
             )
         })
         .boxed()
+        .labelled("const init")
 }

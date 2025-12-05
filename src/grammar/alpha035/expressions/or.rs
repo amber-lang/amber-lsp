@@ -29,7 +29,7 @@ pub fn or_parser<'a>(
                 )
                 .repeated(),
             |lhs, (or_keyword, rhs)| {
-                let span = SimpleSpan::new(lhs.1.start, rhs.1.end);
+                let span = SimpleSpan::from(lhs.1.start..rhs.1.end);
 
                 (
                     Expression::Or(Box::new(lhs), or_keyword, Box::new(rhs)),

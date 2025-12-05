@@ -899,7 +899,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
 
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::STRING),
-                SimpleSpan::new(span.start, span.start + 1),
+                SimpleSpan::from(span.start..span.start + 1),
             ));
             tokens.extend(
                 inter_text
@@ -918,7 +918,7 @@ fn semantic_tokens_from_expr((expr, span): &Spanned<Expression>) -> Vec<SpannedS
 
             tokens.push((
                 hash_semantic_token_type(SemanticTokenType::STRING),
-                SimpleSpan::new(span.end - 1, span.end),
+                SimpleSpan::from(span.end - 1..span.end),
             ));
 
             tokens

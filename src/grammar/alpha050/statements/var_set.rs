@@ -29,4 +29,5 @@ pub fn var_set_parser<'a>(
         )
         .map_with(|(name, value), e| (Statement::VariableSet(name, Box::new(value)), e.span()))
         .boxed()
+        .labelled("variable set")
 }

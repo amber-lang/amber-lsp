@@ -35,6 +35,6 @@ expression: "parse(&tokenize(\"func(,)\"))"
         ],
     ),
     [
-        found "," at 5..6 expected "expression",
+        found end of input at 5..6 expected expression,
     ],
 )

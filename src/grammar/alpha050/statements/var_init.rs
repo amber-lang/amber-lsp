@@ -44,4 +44,5 @@ pub fn var_init_parser<'a>(
             (Statement::VariableInit(let_keyword, name, value), e.span())
         })
         .boxed()
+        .labelled("variable init")
 }

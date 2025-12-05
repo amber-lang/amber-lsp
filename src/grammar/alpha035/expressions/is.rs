@@ -31,7 +31,7 @@ pub fn is_parser<'a>(
                 )
                 .repeated(),
             |expr, (is_keyword, cast)| {
-                let span = SimpleSpan::new(expr.1.start, cast.1.end);
+                let span = SimpleSpan::from(expr.1.start..cast.1.end);
 
                 (Expression::Is(Box::new(expr), is_keyword, cast), span)
             },

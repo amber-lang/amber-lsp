@@ -54,8 +54,8 @@ expression: "parse(&tokenize(\"$command {\"))"
         ],
     ),
     [
-        found end of input at 9..10 expected "expression",
-        found end of input at 10..10 expected '"}"',
-        found end of input at 10..10 expected '"}"', '"\\"', '"-"', '"{"', or '"$"',
+        found end of input at 10..10 expected expression,
+        found end of input at 10..10 expected something else, or '"}"',
+        found end of input at 10..10 expected something else, '"}"', any, '"\\"', '"-"', '"{"', or '"$"',
     ],
 )

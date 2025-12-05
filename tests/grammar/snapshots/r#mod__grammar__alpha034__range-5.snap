@@ -36,6 +36,6 @@ expression: "parse(&tokenize(\"1..=\"))"
         ],
     ),
     [
-        found end of input at 4..4 expected "expression",
+        found end of input at 4..4 expected expression,
     ],
 )

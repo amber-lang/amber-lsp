@@ -8,7 +8,7 @@ expression: "parse_unwrap(&tokenize(\"\n        fun func(a: Num, b: Text, c: Boo
             [],
             (
                 false,
-                9..12,
+                9..103,
             ),
             (
                 "fun",

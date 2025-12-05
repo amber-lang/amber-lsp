@@ -35,4 +35,5 @@ pub fn shorthand_parser<'a>(
         )
         .map_with(|((name, op), value), e| (op(name, Box::new(value)), e.span()))
         .boxed()
+        .labelled("variable set")
 }

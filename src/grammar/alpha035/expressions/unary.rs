@@ -29,7 +29,7 @@ pub fn unary_parser<'a>(
     ))
     .repeated()
     .foldr(atom_parser(stmnts, expr), |(op_string, op), expr| {
-        let span = SimpleSpan::new(expr.1.start, expr.1.end);
+        let span = SimpleSpan::from(expr.1.start..expr.1.end);
 
         (op(op_string, Box::new(expr)), span)
     })

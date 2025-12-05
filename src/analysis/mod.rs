@@ -382,7 +382,7 @@ pub fn insert_symbol_reference(
                     data_type,
                     is_definition: false,
                     undefined: false,
-                    span: Span::new(*span.start(), *span.end()),
+                    span: Span::from(*span.start()..*span.end()),
                     contexts: contexts.to_vec(),
                 },
             );
@@ -414,7 +414,7 @@ pub fn insert_symbol_reference(
                     data_type: DataType::Null,
                     is_definition: false,
                     undefined: true,
-                    span: Span::new(*span.start(), *span.end()),
+                    span: Span::from(*span.start()..*span.end()),
                     contexts: contexts.to_vec(),
                 },
             );

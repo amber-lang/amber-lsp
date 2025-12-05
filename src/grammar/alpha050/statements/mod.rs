@@ -43,9 +43,9 @@ pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
             const_init::const_init_parser(stmnt.clone()),
             parse_expr(stmnt).map_with(|expr, e| (Statement::Expression(Box::new(expr)), e.span())),
         ))
+        .labelled("statement")
         .then_ignore(just(T![';']).or_not())
         .boxed()
-        .labelled("statement")
     })
     .boxed()
 }

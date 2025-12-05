@@ -36,6 +36,6 @@ expression: "parse(&tokenize(r#\"\n        import {}\n\n    \"#))"
     ),
     [
         found end of input at 18..18 expected '"from"',
-        found end of input at 18..18 expected '"\""',
+        found end of input at 18..18 expected something else, or '"\""',
     ],
 )
