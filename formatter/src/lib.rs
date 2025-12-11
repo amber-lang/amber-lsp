@@ -6,6 +6,19 @@ mod alpha040;
 /// The content of an indentation.
 const INDENT: &str = "    ";
 
+const WHITESPACE: [char; 4] = [' ', '\n', '\r', '\t'];
+const WHITESPACE_BYTES: [u8; 4] = {
+    let mut array = [0; WHITESPACE.len()];
+    let mut index = 0;
+
+    while index < WHITESPACE.len() {
+        array[index] = WHITESPACE[index] as u8;
+        index += 1;
+    }
+
+    array
+};
+
 #[derive(Default)]
 pub struct Output {
     buffer: Vec<Fragment>,
@@ -51,6 +64,13 @@ pub enum Fragment {
     /// This has no output in its current position, but will change the indentation after every newline.
     IndentationChange(Indentation),
     Text(Box<str>),
+    Comment {
+        /// Dentoes the start of a comment. E.G "//" or "///".
+        marker: Box<str>,
+        text: Box<str>,
+        /// Byte index of the source file where the comment starts.
+        start_index: usize,
+    },
     Span(FragmentSpan),
     ParseError(FragmentSpan),
 }
@@ -128,6 +148,20 @@ impl Output {
         self
     }
 
+    fn comment(
+        &mut self,
+        marker: impl Into<Box<str>>,
+        text: impl Into<Box<str>>,
+        span: &Span,
+    ) -> &mut Self {
+        self.buffer.push(Fragment::Comment {
+            marker: marker.into(),
+            text: text.into(),
+            start_index: span.start,
+        });
+        self
+    }
+
     fn char(&mut self, character: char) -> &mut Self {
         self.buffer
             .push(Fragment::Text(character.to_string().into_boxed_str()));
@@ -157,6 +191,14 @@ impl Output {
 
     fn end_text(&mut self, text: impl Into<Box<str>>) {
         self.buffer.push(Fragment::Text(text.into()));
+    }
+
+    fn end_comment(&mut self, marker: impl Into<Box<str>>, text: impl Into<Box<str>>, span: &Span) {
+        self.buffer.push(Fragment::Comment {
+            marker: marker.into(),
+            text: text.into(),
+            start_index: span.start,
+        });
     }
 
     fn end_char(&mut self, character: char) {
@@ -203,10 +245,40 @@ impl Output {
         let mut text = String::new();
         let mut indentation = String::new();
 
-        for fragment in self.buffer {
+        let mut iter = self.buffer.into_iter().peekable();
+        while let Some(fragment) = iter.next() {
             match fragment {
                 Fragment::Space => text.push(' '),
                 Fragment::Newline => {
+                    // Don't add newline if comment is on sameline
+                    if let Some(Fragment::Comment {
+                        marker: _,
+                        text: _,
+                        start_index,
+                    }) = iter.peek()
+                    {
+                        let mut index = *start_index;
+                        let mut on_newline = false;
+
+                        while let Some(character) = file_content.as_bytes().get(index).cloned() {
+                            index -= 1;
+                            let character: char = character.into();
+
+                            if character == '\n' || character == '\r' {
+                                on_newline = true;
+                                break;
+                            }
+
+                            if ![' ', '\t', '/'].contains(&character) {
+                                break;
+                            }
+                        }
+
+                        if !on_newline {
+                            continue;
+                        }
+                    }
+
                     text.push('\n');
                     text.push_str(&indentation);
                 }
@@ -241,6 +313,22 @@ impl Output {
                     let span_text = String::from_utf8(span.to_vec())?;
                     eprintln!("Unable to parse '{span_text}'. Failing back to sourcefile content");
                     text.push_str(&span_text);
+                }
+                Fragment::Comment {
+                    marker,
+                    text: comment,
+                    start_index: _,
+                } => {
+                    // Ensure that there is a space between the comment and previous code
+                    if let Some(previous) = text.as_bytes().last()
+                        && !WHITESPACE_BYTES.contains(previous)
+                    {
+                        text.push(' ');
+                    }
+
+                    text.push_str(&marker);
+                    text.push(' ');
+                    text.push_str(&comment);
                 }
             }
         }

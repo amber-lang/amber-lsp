@@ -338,9 +338,12 @@ impl TextOutput for ElseCondition {
 impl TextOutput for Comment {
     fn output(&self, span: &lib::grammar::Span, output: &mut Output) {
         match self {
-            Comment::Comment(comment) => output.text("//").space().end_text(comment.as_str()),
+            Comment::Comment(comment) => output.end_comment("//", comment.as_str(), span),
             Comment::DocString(doc_comment) => {
-                output.text("///").space().end_text(doc_comment.as_str())
+                output
+                    .text("///")
+                    .space()
+                    .end_comment("///", doc_comment.as_str(), span)
             }
         }
     }
