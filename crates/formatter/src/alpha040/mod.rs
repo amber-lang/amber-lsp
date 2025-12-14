@@ -11,7 +11,7 @@ use crate::SpanTextOutput;
 use crate::{Output, TextOutput};
 
 impl TextOutput for GlobalStatement {
-    fn output(&self, span: &Span, output: &mut Output) {
+    fn output(&self, _span: &Span, output: &mut Output) {
         match self {
             GlobalStatement::Import(public, import, content, from, path) => {
                 if public.0 {
@@ -102,7 +102,7 @@ impl TextOutput for GlobalStatement {
 }
 
 impl TextOutput for ImportContent {
-    fn output(&self, span: &Span, output: &mut Output) {
+    fn output(&self, _span: &Span, output: &mut Output) {
         match self {
             ImportContent::ImportAll => {
                 output.char('*');
@@ -141,13 +141,13 @@ impl TextOutput for FunctionArgument {
 }
 
 impl TextOutput for CompilerFlag {
-    fn output(&self, span: &Span, output: &mut Output) {
+    fn output(&self, _span: &Span, output: &mut Output) {
         output.text(format!("#[{self}]"));
     }
 }
 
 impl TextOutput for String {
-    fn output(&self, span: &Span, output: &mut Output) {
+    fn output(&self, _span: &Span, output: &mut Output) {
         output.text(self.clone());
     }
 }
@@ -577,7 +577,7 @@ impl TextOutput for FailureHandler {
 }
 
 impl TextOutput for CommandModifier {
-    fn output(&self, span: &Span, output: &mut Output) {
+    fn output(&self, _span: &Span, output: &mut Output) {
         match self {
             CommandModifier::Unsafe => output.end_text("unsafe"),
             CommandModifier::Trust => output.end_text("trust"),
@@ -588,7 +588,7 @@ impl TextOutput for CommandModifier {
 }
 
 impl TextOutput for InterpolatedCommand {
-    fn output(&self, span: &Span, output: &mut Output) {
+    fn output(&self, _span: &Span, output: &mut Output) {
         match self {
             InterpolatedCommand::Escape(escape) => output
                 .debug_point("InterpolatedCommand escape")

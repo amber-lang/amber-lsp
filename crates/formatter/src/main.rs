@@ -10,8 +10,8 @@ fn main() {
 
     println!("{:?}", parse.ast);
     match parse.ast {
-        Grammar::Alpha034(items) => todo!(),
-        Grammar::Alpha035(items) => todo!(),
+        Grammar::Alpha034(_items) => todo!(),
+        Grammar::Alpha035(_items) => todo!(),
         Grammar::Alpha040(items) => {
             if let Some(items) = items {
                 {
@@ -25,6 +25,6 @@ fn main() {
                 }
             }
         }
-        Grammar::Alpha050(items) => todo!(),
+        Grammar::Alpha050(_items) => todo!(),
     }
 }
