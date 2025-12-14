@@ -492,13 +492,13 @@ impl TextOutput for Expression {
                     output.space();
                 }
 
+                // Do not format bash commands
                 for command in commands {
-                    output.output(command);
-                    output.space();
+                    output.end_span(&command.1);
                 }
 
                 if let Some(failure_handler) = failure_handler {
-                    output.output(failure_handler);
+                    output.space().output(failure_handler);
                 }
             }
             Expression::Array(array) => {
