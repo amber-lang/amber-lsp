@@ -18,14 +18,17 @@ impl TextOutput for GlobalStatement {
                     output.text("pub ");
                 }
 
-                output.output(import);
-                output.space();
-                output.output(content);
-                output.space();
-                output.output(from);
-                output.space();
-                output.output(path);
-                output.newline();
+                output
+                    .output(import)
+                    .space()
+                    .output(content)
+                    .space()
+                    .output(from)
+                    .space()
+                    .char('"')
+                    .output(path)
+                    .char('"')
+                    .newline();
             }
             GlobalStatement::FunctionDefinition(
                 compiler_flags,
@@ -109,10 +112,14 @@ impl TextOutput for ImportContent {
             }
             ImportContent::ImportSpecific(items) => {
                 output.text("{ ");
-                for identifier in items {
-                    output.output(identifier);
-                    output.space();
+
+                for identifier in items.iter().take(items.len().saturating_sub(1)) {
+                    output.output(identifier).char(',').space();
                 }
+                if let Some(item) = items.last() {
+                    output.output(item).end_space();
+                }
+
                 output.char('}');
             }
         }
