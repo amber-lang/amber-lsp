@@ -39,3 +39,8 @@ coverage_output
 
 # MacOS system files
 .DS_Store
+
+# Openspec
+AGENTS.md
+openspec/
+.github/prompts

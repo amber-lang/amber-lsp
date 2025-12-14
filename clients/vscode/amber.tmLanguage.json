@@ -35,7 +35,7 @@
 			},
 			{
 				"name": "keyword.control.amber",
-				"match": "\\b(if|loop|for|ref|exit|const|return|fun|else|then|break|continue|and|or|not|let|import|from|pub|main|echo|as|in|fail|failed|status|silent|nameof|is|unsafe|trust)\\b"
+				"match": "\\b(if|loop|for|ref|exit|const|return|fun|else|then|break|continue|and|or|not|let|import|from|pub|main|echo|as|in|fail|failed|succeeded|status|silent|nameof|is|unsafe|trust|exited|cd|mv)\\b"
 			},
 			{
 				"match": "^#\\[.*\\]$",

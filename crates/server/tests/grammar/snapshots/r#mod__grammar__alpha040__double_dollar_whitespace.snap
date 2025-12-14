@@ -1,0 +1,18 @@
+---
+source: tests/grammar/alpha040.rs
+expression: "compiler.tokenize(\"$$ \\n\")"
+---
+[
+    (
+        Token(
+            "$",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        1..2,
+    ),
+]

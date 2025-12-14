@@ -1,0 +1,9 @@
+[package]
+name = "amber-fmt"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+amber_types = { path = "../types" }
+amber_grammar = { path = "../grammar" }
+thiserror = "2.0.12"

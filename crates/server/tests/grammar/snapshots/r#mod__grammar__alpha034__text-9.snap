@@ -1,0 +1,29 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(r#\"\"\\\"#))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Text(
+                                    [],
+                                ),
+                                0..2,
+                            ),
+                        ),
+                        0..2,
+                    ),
+                ),
+                0..2,
+            ),
+        ],
+    ),
+    [
+        found end of input at 2..2 expected any,
+    ],
+)

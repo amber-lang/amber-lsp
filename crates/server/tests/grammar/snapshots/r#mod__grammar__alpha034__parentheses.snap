@@ -1,0 +1,32 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"()\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Parentheses(
+                                    (
+                                        Error,
+                                        1..1,
+                                    ),
+                                ),
+                                0..2,
+                            ),
+                        ),
+                        0..2,
+                    ),
+                ),
+                0..2,
+            ),
+        ],
+    ),
+    [
+        found end of input at 1..2 expected expression,
+    ],
+)

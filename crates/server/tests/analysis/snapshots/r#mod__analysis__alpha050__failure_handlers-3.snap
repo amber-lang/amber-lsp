@@ -1,0 +1,19 @@
+---
+source: tests/analysis/alpha050.rs
+expression: backend.files.errors
+---
+{
+    (
+        FileId(
+            0,
+        ),
+        FileVersion(
+            1,
+        ),
+    ): [
+        (
+            "Exited handler should be used without any other handlers",
+            68..74,
+        ),
+    ],
+}

@@ -1,29 +1,12 @@
 [workspace]
+members = [
+  "crates/types",
+  "crates/grammar",
+  "crates/analysis",
+  "crates/server",
+  "crates/formatter",
+]
 resolver = "2"
-members = ["lsp", "lib", "formatter"]
-
-[workspace.dependencies]
-lib = { path = "./lib" }
-tokio = "1.39.1"
-tower-lsp-server = "0.22.0"
-phf = "0.11"
-dashmap = "6.0.1"
-ropey = "1.6.1"
-chumsky = { git = "https://github.com/KrosFire/chumsky", rev = "406ea80" }
-heraclitus-compiler = "1.8.2"
-serde_json = "1.0.128"
-rangemap = "1.5.1"
-indexmap = "2.6.0"
-clap = "4.5.21"
-include_dir = "0.7.4"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-rustc-hash = "2.1.1"
-tracing-appender = "0.2.3"
-thiserror = "2.0.12"
-
-# Dev
-insta = "1.39.0"
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

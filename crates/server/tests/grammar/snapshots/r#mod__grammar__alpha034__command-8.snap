@@ -1,0 +1,61 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"$command {\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Command(
+                                    [],
+                                    [
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            0..1,
+                                        ),
+                                        (
+                                            Text(
+                                                "command ",
+                                            ),
+                                            1..9,
+                                        ),
+                                        (
+                                            Expression(
+                                                (
+                                                    Error,
+                                                    10..10,
+                                                ),
+                                            ),
+                                            9..10,
+                                        ),
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            10..10,
+                                        ),
+                                    ],
+                                    None,
+                                ),
+                                0..10,
+                            ),
+                        ),
+                        0..10,
+                    ),
+                ),
+                0..10,
+            ),
+        ],
+    ),
+    [
+        found end of input at 10..10 expected expression,
+        found end of input at 10..10 expected something else, or '"}"',
+        found end of input at 10..10 expected something else, '"}"', any, '"\\"', '"-"', '"{"', or '"$"',
+    ],
+)

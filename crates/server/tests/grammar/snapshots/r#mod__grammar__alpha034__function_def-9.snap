@@ -1,0 +1,73 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"fun foo(abc! {\n        echo 10\n    }\"))"
+---
+(
+    Some(
+        [
+            (
+                FunctionDefinition(
+                    [],
+                    (
+                        false,
+                        0..36,
+                    ),
+                    (
+                        "fun",
+                        0..3,
+                    ),
+                    (
+                        "foo",
+                        4..7,
+                    ),
+                    [
+                        (
+                            Generic(
+                                (
+                                    false,
+                                    8..8,
+                                ),
+                                (
+                                    "abc",
+                                    8..11,
+                                ),
+                            ),
+                            8..11,
+                        ),
+                        (
+                            Error,
+                            11..12,
+                        ),
+                    ],
+                    None,
+                    [
+                        (
+                            Echo(
+                                (
+                                    "echo",
+                                    23..27,
+                                ),
+                                (
+                                    Number(
+                                        (
+                                            10.0,
+                                            28..30,
+                                        ),
+                                    ),
+                                    28..30,
+                                ),
+                            ),
+                            23..30,
+                        ),
+                    ],
+                ),
+                0..36,
+            ),
+        ],
+    ),
+    [
+        found '"!"' at 11..12 expected '":"', or '","',
+        found end of input at 11..12 expected argument,
+        found '"{"' at 13..14 expected '","', or '")"',
+    ],
+)

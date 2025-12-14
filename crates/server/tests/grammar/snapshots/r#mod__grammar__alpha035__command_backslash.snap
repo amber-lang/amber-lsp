@@ -1,0 +1,30 @@
+---
+source: tests/grammar/alpha035.rs
+expression: "compiler.tokenize(r#\"$test\\n$\"#)"
+---
+[
+    (
+        Token(
+            "$",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "test",
+        ),
+        1..5,
+    ),
+    (
+        Token(
+            "\\n",
+        ),
+        5..7,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        7..8,
+    ),
+]

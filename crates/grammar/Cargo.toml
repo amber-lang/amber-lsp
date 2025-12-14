@@ -1,0 +1,11 @@
+[package]
+name = "amber_grammar"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+amber_types = { path = "../types" }
+chumsky = { version = "0.11.2", features = ["default", "memoization"] }
+logos = "0.14"
+tower-lsp-server = "0.22.0"
+tracing = "0.1"

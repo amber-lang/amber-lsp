@@ -1,0 +1,24 @@
+---
+source: tests/grammar/alpha050.rs
+expression: "compiler.tokenize(\"$echo$\")"
+---
+[
+    (
+        Token(
+            "$",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "echo",
+        ),
+        1..5,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        5..6,
+    ),
+]

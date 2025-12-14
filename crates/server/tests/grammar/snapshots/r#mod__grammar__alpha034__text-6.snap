@@ -1,0 +1,43 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(r#\"\"{\"\"#))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Text(
+                                    [
+                                        (
+                                            Expression(
+                                                (
+                                                    Text(
+                                                        [],
+                                                    ),
+                                                    2..3,
+                                                ),
+                                            ),
+                                            1..3,
+                                        ),
+                                    ],
+                                ),
+                                0..3,
+                            ),
+                        ),
+                        0..3,
+                    ),
+                ),
+                0..3,
+            ),
+        ],
+    ),
+    [
+        found end of input at 3..3 expected any, '"\\"', '"{"', or '"\""',
+        found end of input at 3..3 expected something else, '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
+        found end of input at 3..3 expected something else, '"}"', any, '"\\"', '"{"', or '"\""',
+    ],
+)

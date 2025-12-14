@@ -1,0 +1,63 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"true and false and\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                And(
+                                    (
+                                        And(
+                                            (
+                                                Boolean(
+                                                    (
+                                                        true,
+                                                        0..4,
+                                                    ),
+                                                ),
+                                                0..4,
+                                            ),
+                                            (
+                                                "and",
+                                                5..8,
+                                            ),
+                                            (
+                                                Boolean(
+                                                    (
+                                                        false,
+                                                        9..14,
+                                                    ),
+                                                ),
+                                                9..14,
+                                            ),
+                                        ),
+                                        0..14,
+                                    ),
+                                    (
+                                        "and",
+                                        15..18,
+                                    ),
+                                    (
+                                        Error,
+                                        18..18,
+                                    ),
+                                ),
+                                0..18,
+                            ),
+                        ),
+                        0..18,
+                    ),
+                ),
+                0..18,
+            ),
+        ],
+    ),
+    [
+        found end of input at 18..18 expected expression,
+    ],
+)

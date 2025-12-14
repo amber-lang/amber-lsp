@@ -1,0 +1,41 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"1..=\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Range(
+                                    (
+                                        Number(
+                                            (
+                                                1.0,
+                                                0..1,
+                                            ),
+                                        ),
+                                        0..1,
+                                    ),
+                                    (
+                                        Error,
+                                        4..4,
+                                    ),
+                                ),
+                                0..4,
+                            ),
+                        ),
+                        0..4,
+                    ),
+                ),
+                0..4,
+            ),
+        ],
+    ),
+    [
+        found end of input at 4..4 expected expression,
+    ],
+)

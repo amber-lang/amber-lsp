@@ -1,0 +1,80 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"$command {unclosed interpolation$ let x = 10\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Command(
+                                    [],
+                                    [
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            0..1,
+                                        ),
+                                        (
+                                            Text(
+                                                "command ",
+                                            ),
+                                            1..9,
+                                        ),
+                                        (
+                                            Expression(
+                                                (
+                                                    Var(
+                                                        (
+                                                            "unclosed",
+                                                            10..18,
+                                                        ),
+                                                    ),
+                                                    10..18,
+                                                ),
+                                            ),
+                                            9..18,
+                                        ),
+                                        (
+                                            Text(
+                                                "interpolation",
+                                            ),
+                                            19..32,
+                                        ),
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            32..33,
+                                        ),
+                                    ],
+                                    None,
+                                ),
+                                0..33,
+                            ),
+                        ),
+                        0..33,
+                    ),
+                ),
+                0..33,
+            ),
+            (
+                Statement(
+                    (
+                        Error,
+                        33..44,
+                    ),
+                ),
+                33..44,
+            ),
+        ],
+    ),
+    [
+        found '"interpolation"' at 19..32 expected '"("', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '"}"',
+        found '"let x = 10"' at 33..44 expected '"failed"', '"?"', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '";"', '"pub"', '"import"', function, '"main"', or statement,
+    ],
+)

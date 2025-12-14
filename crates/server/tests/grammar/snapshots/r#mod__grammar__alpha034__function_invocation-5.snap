@@ -1,0 +1,45 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"func(1\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                FunctionInvocation(
+                                    [],
+                                    (
+                                        "func",
+                                        0..4,
+                                    ),
+                                    [
+                                        (
+                                            Number(
+                                                (
+                                                    1.0,
+                                                    5..6,
+                                                ),
+                                            ),
+                                            5..6,
+                                        ),
+                                    ],
+                                    None,
+                                ),
+                                0..6,
+                            ),
+                        ),
+                        0..6,
+                    ),
+                ),
+                0..6,
+            ),
+        ],
+    ),
+    [
+        found end of input at 6..6 expected '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '","', or '")"',
+    ],
+)

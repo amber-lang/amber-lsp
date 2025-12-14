@@ -1,0 +1,50 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"$command --arg1 -v\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Command(
+                                    [],
+                                    [
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            0..1,
+                                        ),
+                                        (
+                                            Text(
+                                                "command --arg1 -v",
+                                            ),
+                                            1..18,
+                                        ),
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            18..18,
+                                        ),
+                                    ],
+                                    None,
+                                ),
+                                0..18,
+                            ),
+                        ),
+                        0..18,
+                    ),
+                ),
+                0..18,
+            ),
+        ],
+    ),
+    [
+        found end of input at 18..18 expected any, '"\\"', '"-"', '"{"', or '"$"',
+    ],
+)

@@ -1,0 +1,48 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"$command -$\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Command(
+                                    [],
+                                    [
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            0..1,
+                                        ),
+                                        (
+                                            Text(
+                                                "command -",
+                                            ),
+                                            1..10,
+                                        ),
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            10..11,
+                                        ),
+                                    ],
+                                    None,
+                                ),
+                                0..11,
+                            ),
+                        ),
+                        0..11,
+                    ),
+                ),
+                0..11,
+            ),
+        ],
+    ),
+    [],
+)

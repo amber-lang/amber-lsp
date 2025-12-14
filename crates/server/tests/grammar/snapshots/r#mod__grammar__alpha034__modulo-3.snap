@@ -1,0 +1,55 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"1 % 2 %\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Modulo(
+                                    (
+                                        Modulo(
+                                            (
+                                                Number(
+                                                    (
+                                                        1.0,
+                                                        0..1,
+                                                    ),
+                                                ),
+                                                0..1,
+                                            ),
+                                            (
+                                                Number(
+                                                    (
+                                                        2.0,
+                                                        4..5,
+                                                    ),
+                                                ),
+                                                4..5,
+                                            ),
+                                        ),
+                                        0..5,
+                                    ),
+                                    (
+                                        Error,
+                                        7..7,
+                                    ),
+                                ),
+                                0..7,
+                            ),
+                        ),
+                        0..7,
+                    ),
+                ),
+                0..7,
+            ),
+        ],
+    ),
+    [
+        found end of input at 7..7 expected expression,
+    ],
+)

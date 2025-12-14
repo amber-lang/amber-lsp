@@ -1,0 +1,48 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "compiler.tokenize(\"{ let x = {} }\")"
+---
+[
+    (
+        Token(
+            "{",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "let",
+        ),
+        2..5,
+    ),
+    (
+        Token(
+            "x",
+        ),
+        6..7,
+    ),
+    (
+        Token(
+            "=",
+        ),
+        8..9,
+    ),
+    (
+        Token(
+            "{",
+        ),
+        10..11,
+    ),
+    (
+        Token(
+            "}",
+        ),
+        11..12,
+    ),
+    (
+        Token(
+            "}",
+        ),
+        13..14,
+    ),
+]

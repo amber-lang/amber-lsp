@@ -1,0 +1,36 @@
+---
+source: tests/grammar/alpha050.rs
+expression: "compiler.tokenize(r#\"\"{{{\"\"#)"
+---
+[
+    (
+        Token(
+            "\"",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "{",
+        ),
+        1..2,
+    ),
+    (
+        Token(
+            "{",
+        ),
+        2..3,
+    ),
+    (
+        Token(
+            "{",
+        ),
+        3..4,
+    ),
+    (
+        Token(
+            "\"",
+        ),
+        4..5,
+    ),
+]

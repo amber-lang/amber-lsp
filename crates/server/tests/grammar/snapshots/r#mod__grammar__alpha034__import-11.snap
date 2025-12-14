@@ -1,0 +1,46 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"import { var1 \\\"path\\\"\"))"
+---
+(
+    Some(
+        [
+            (
+                Import(
+                    (
+                        false,
+                        0..6,
+                    ),
+                    (
+                        "import",
+                        0..6,
+                    ),
+                    (
+                        ImportSpecific(
+                            [
+                                (
+                                    "var1",
+                                    9..13,
+                                ),
+                            ],
+                        ),
+                        7..13,
+                    ),
+                    (
+                        "from",
+                        14..13,
+                    ),
+                    (
+                        "path",
+                        14..20,
+                    ),
+                ),
+                0..20,
+            ),
+        ],
+    ),
+    [
+        found '"\""' at 14..15 expected '","', or '"}"',
+        found '"\""' at 14..15 expected something else, or '"from"',
+    ],
+)

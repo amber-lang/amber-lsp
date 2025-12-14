@@ -1,0 +1,36 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"fun\"))"
+---
+(
+    Some(
+        [
+            (
+                FunctionDefinition(
+                    [],
+                    (
+                        false,
+                        0..3,
+                    ),
+                    (
+                        "fun",
+                        0..3,
+                    ),
+                    (
+                        "",
+                        3..3,
+                    ),
+                    [],
+                    None,
+                    [],
+                ),
+                0..3,
+            ),
+        ],
+    ),
+    [
+        Expected function name at 3..3,
+        found end of input at 3..3 expected something else, or '"("',
+        found end of input at 3..3 expected something else, '":"', or '"{"',
+    ],
+)

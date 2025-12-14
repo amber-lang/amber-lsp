@@ -1,0 +1,51 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"import { var1 var2 from \\\"unclosed\"))"
+---
+(
+    Some(
+        [
+            (
+                Import(
+                    (
+                        false,
+                        0..6,
+                    ),
+                    (
+                        "import",
+                        0..6,
+                    ),
+                    (
+                        ImportSpecific(
+                            [
+                                (
+                                    "var1",
+                                    9..13,
+                                ),
+                                (
+                                    "var2",
+                                    14..18,
+                                ),
+                            ],
+                        ),
+                        7..18,
+                    ),
+                    (
+                        "from",
+                        19..23,
+                    ),
+                    (
+                        "unclosed",
+                        24..33,
+                    ),
+                ),
+                0..33,
+            ),
+        ],
+    ),
+    [
+        found '"var2"' at 14..18 expected '","',
+        found '"from"' at 19..23 expected '","', or '"}"',
+        found end of input at 33..33 expected any, or '"\""',
+    ],
+)

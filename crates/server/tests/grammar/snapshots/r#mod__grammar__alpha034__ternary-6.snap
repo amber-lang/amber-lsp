@@ -1,0 +1,58 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"true then 1 else\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Ternary(
+                                    (
+                                        Boolean(
+                                            (
+                                                true,
+                                                0..4,
+                                            ),
+                                        ),
+                                        0..4,
+                                    ),
+                                    (
+                                        "then",
+                                        5..9,
+                                    ),
+                                    (
+                                        Number(
+                                            (
+                                                1.0,
+                                                10..11,
+                                            ),
+                                        ),
+                                        10..11,
+                                    ),
+                                    (
+                                        "else",
+                                        12..16,
+                                    ),
+                                    (
+                                        Error,
+                                        16..16,
+                                    ),
+                                ),
+                                0..16,
+                            ),
+                        ),
+                        0..16,
+                    ),
+                ),
+                0..16,
+            ),
+        ],
+    ),
+    [
+        found end of input at 16..16 expected expression,
+    ],
+)

@@ -1,0 +1,40 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(r#\"\n    #[\n    pub fun func() {}\n    \"#))"
+---
+(
+    Some(
+        [
+            (
+                FunctionDefinition(
+                    [
+                        (
+                            Error,
+                            5..7,
+                        ),
+                    ],
+                    (
+                        true,
+                        12..15,
+                    ),
+                    (
+                        "fun",
+                        16..19,
+                    ),
+                    (
+                        "func",
+                        20..24,
+                    ),
+                    [],
+                    None,
+                    [],
+                ),
+                5..29,
+            ),
+        ],
+    ),
+    [
+        found '"pub"' at 12..15 expected '"allow_nested_if_else"', '"allow_generic_return"', or '"allow_absurd_cast"',
+        found '"pub"' at 12..15 expected something else, or '"]"',
+    ],
+)

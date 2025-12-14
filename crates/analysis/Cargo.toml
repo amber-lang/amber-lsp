@@ -1,0 +1,19 @@
+[package]
+name = "amber_analysis"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+amber_types = { path = "../types" }
+amber_grammar = { path = "../grammar" }
+dashmap = "6.0.1"
+rustc-hash = "2.1.1"
+tower-lsp-server = "0.22.0"
+ropey = "1.6.1"
+tokio = { version = "1.39.1", features = ["full"] }
+include_dir = "0.7.4"
+tracing = "0.1"
+rangemap = "1.5.1"
+clap = { version = "4.5.21", features = ["derive"] }
+chumsky = { version = "0.11.2", features = ["default", "memoization"] }
+thiserror = "2.0.12"

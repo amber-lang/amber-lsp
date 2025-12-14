@@ -1,0 +1,35 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse(&tokenize(\"func(\"))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                FunctionInvocation(
+                                    [],
+                                    (
+                                        "func",
+                                        0..4,
+                                    ),
+                                    [],
+                                    None,
+                                ),
+                                0..5,
+                            ),
+                        ),
+                        0..5,
+                    ),
+                ),
+                0..5,
+            ),
+        ],
+    ),
+    [
+        found end of input at 5..5 expected expression, or '")"',
+    ],
+)

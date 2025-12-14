@@ -1,0 +1,61 @@
+---
+source: tests/grammar/alpha034.rs
+expression: "parse_unwrap(&tokenize(r#\"$echo \\\"Hello, world!\\\"$\"#))"
+---
+[
+    (
+        Statement(
+            (
+                Expression(
+                    (
+                        Command(
+                            [],
+                            [
+                                (
+                                    Text(
+                                        "$",
+                                    ),
+                                    0..1,
+                                ),
+                                (
+                                    Text(
+                                        "echo ",
+                                    ),
+                                    1..6,
+                                ),
+                                (
+                                    Text(
+                                        "\\\"",
+                                    ),
+                                    6..8,
+                                ),
+                                (
+                                    Text(
+                                        "Hello, world!",
+                                    ),
+                                    8..21,
+                                ),
+                                (
+                                    Text(
+                                        "\\\"",
+                                    ),
+                                    21..23,
+                                ),
+                                (
+                                    Text(
+                                        "$",
+                                    ),
+                                    23..24,
+                                ),
+                            ],
+                            None,
+                        ),
+                        0..24,
+                    ),
+                ),
+                0..24,
+            ),
+        ),
+        0..24,
+    ),
+]
