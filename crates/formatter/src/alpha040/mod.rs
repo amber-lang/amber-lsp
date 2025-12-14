@@ -426,9 +426,7 @@ impl TextOutput for Expression {
             Expression::Parentheses(parentheses) => {
                 output.output(parentheses);
             }
-            Expression::Var(var) => {
-                output.char('{').output(var).end_char('}');
-            }
+            Expression::Var(var) => output.end_output(var),
             Expression::Add(rhs, lhs) => char_separated(output, rhs, '+', lhs),
             Expression::Subtract(rhs, lhs) => char_separated(output, rhs, '-', lhs),
             Expression::Multiply(rhs, lhs) => char_separated(output, rhs, '*', lhs),
