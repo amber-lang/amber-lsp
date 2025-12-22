@@ -44,6 +44,7 @@ pub trait AnalysisHost: Sync + Send {
         &'a self,
         uri: &'a Uri,
     ) -> PinBox<dyn Future<Output = OpenDocumentResult> + Send + 'a>;
+    fn show_error(&self, message: &str) -> impl std::future::Future<Output = ()> + Send;
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
