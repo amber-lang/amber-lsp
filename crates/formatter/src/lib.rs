@@ -19,11 +19,12 @@ const WHITESPACE_BYTES: [u8; 4] = {
     array
 };
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Output {
     buffer: Vec<Fragment>,
 }
 
+#[derive(Debug)]
 pub struct FragmentSpan {
     /// Start byte offset into source file.
     start_offset: usize,
@@ -57,6 +58,7 @@ impl From<&Span> for FragmentSpan {
     }
 }
 
+#[derive(Debug)]
 pub enum Fragment {
     Space,
     Newline,
@@ -66,7 +68,7 @@ pub enum Fragment {
     Text(Box<str>),
     Comment {
         /// Dentoes the start of a comment. E.G "//" or "///".
-        marker: Box<str>,
+        variant: CommentVariant,
         text: Box<str>,
         /// Byte index of the source file where the comment starts.
         start_index: usize,
@@ -75,9 +77,29 @@ pub enum Fragment {
     ParseError(FragmentSpan),
 }
 
+#[derive(Debug)]
 pub enum Indentation {
     Increase,
     Decrease,
+}
+
+/// Comments can either be doc comments or regular comments.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum CommentVariant {
+    /// Doc comment
+    Doc,
+    /// Regular comment
+    Regular,
+}
+
+impl CommentVariant {
+    /// Returns the string that this comment variant is denoted by.
+    fn denoted_by(self) -> &'static str {
+        match self {
+            CommentVariant::Doc => "///",
+            CommentVariant::Regular => "//",
+        }
+    }
 }
 
 pub trait SpanTextOutput {
@@ -150,12 +172,12 @@ impl Output {
 
     fn comment(
         &mut self,
-        marker: impl Into<Box<str>>,
+        variant: CommentVariant,
         text: impl Into<Box<str>>,
         span: &Span,
     ) -> &mut Self {
         self.buffer.push(Fragment::Comment {
-            marker: marker.into(),
+            variant,
             text: text.into(),
             start_index: span.start,
         });
@@ -193,9 +215,9 @@ impl Output {
         self.buffer.push(Fragment::Text(text.into()));
     }
 
-    fn end_comment(&mut self, marker: impl Into<Box<str>>, text: impl Into<Box<str>>, span: &Span) {
+    fn end_comment(&mut self, variant: CommentVariant, text: impl Into<Box<str>>, span: &Span) {
         self.buffer.push(Fragment::Comment {
-            marker: marker.into(),
+            variant,
             text: text.into(),
             start_index: span.start,
         });
@@ -252,7 +274,7 @@ impl Output {
                 Fragment::Newline => {
                     // Don't add newline if comment is on sameline
                     if let Some(Fragment::Comment {
-                        marker: _,
+                        variant: _,
                         text: _,
                         start_index,
                     }) = iter.peek()
@@ -315,7 +337,7 @@ impl Output {
                     text.push_str(&span_text);
                 }
                 Fragment::Comment {
-                    marker,
+                    variant,
                     text: comment,
                     start_index: _,
                 } => {
@@ -326,9 +348,16 @@ impl Output {
                         text.push(' ');
                     }
 
-                    text.push_str(&marker);
+                    text.push_str(variant.denoted_by());
                     text.push(' ');
                     text.push_str(&comment);
+
+                    if let Some(Fragment::Comment { variant, .. }) = iter.peek()
+                        && *variant == CommentVariant::Doc
+                        && matches!(variant, CommentVariant::Doc)
+                    {
+                        text.push('\n');
+                    }
                 }
             }
         }

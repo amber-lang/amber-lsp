@@ -7,7 +7,7 @@ use amber_grammar::{CommandModifier, CompilerFlag};
 use amber_types::DataType;
 use amber_types::token::Span;
 
-use crate::SpanTextOutput;
+use crate::{CommentVariant, SpanTextOutput};
 use crate::{Output, TextOutput};
 
 impl TextOutput for GlobalStatement {
@@ -77,7 +77,6 @@ impl TextOutput for GlobalStatement {
 
                 output.char('{').increase_indentation();
                 for content in contents {
-                    // dbg!(content);
                     output.newline().end_output(content);
                 }
                 output.decrease_indentation().newline().char('}');
@@ -93,7 +92,6 @@ impl TextOutput for GlobalStatement {
                 output.char(')').space().char('{').increase_indentation();
 
                 for statement in statements {
-                    dbg!(statement);
                     output.newline().output(statement);
                 }
 
@@ -342,12 +340,11 @@ impl TextOutput for ElseCondition {
 impl TextOutput for Comment {
     fn output(&self, span: &Span, output: &mut Output) {
         match self {
-            Comment::Comment(comment) => output.end_comment("//", comment.as_str(), span),
+            Comment::Comment(comment) => {
+                output.end_comment(CommentVariant::Regular, comment.as_str(), span)
+            }
             Comment::DocString(doc_comment) => {
-                output
-                    .text("///")
-                    .space()
-                    .end_comment("///", doc_comment.as_str(), span)
+                output.end_comment(CommentVariant::Doc, doc_comment.as_str(), span)
             }
         }
     }
