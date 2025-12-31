@@ -68,7 +68,7 @@ pub async fn save_resources(backend: &impl AnalysisHost) -> Option<PathBuf> {
         Ok(stdlib_dir) => stdlib_dir,
         Err(_) => {
             backend
-                .show_error("Failed to resolve LSP executable path")
+                .show_error("Failed to resolve LSP executable path.")
                 .await;
             return None;
         }
@@ -89,7 +89,10 @@ pub async fn save_resources(backend: &impl AnalysisHost) -> Option<PathBuf> {
         .is_err()
     {
         backend
-            .show_error(&format!("Could not save std lib files to {:?}", stdlib_dir))
+            .show_error(&format!(
+                "Could not save std lib files to {}",
+                stdlib_dir.to_string_lossy()
+            ))
             .await;
         return None;
     }
@@ -125,7 +128,18 @@ fn save_entry<'a>(
                     return;
                 }
 
-                let contents = file.contents_utf8().unwrap().to_string();
+                let contents = match file.contents_utf8() {
+                    Some(c) => c.to_string(),
+                    None => {
+                        backend
+                            .show_error(&format!(
+                                "Embedded std lib file at {:?} is not valid UTF-8",
+                                path
+                            ))
+                            .await;
+                        return;
+                    }
+                };
 
                 if backend
                     .get_files()
@@ -135,7 +149,10 @@ fn save_entry<'a>(
                     .is_err()
                 {
                     backend
-                        .show_error(&format!("Could not save std lib file to {:?}", path))
+                        .show_error(&format!(
+                            "Could not save std lib file to {}",
+                            path.to_string_lossy()
+                        ))
                         .await;
                 }
             }
