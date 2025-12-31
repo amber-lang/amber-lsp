@@ -63,8 +63,16 @@ pub fn is_builtin_file(uri: &Uri, amber_version: AmberVersion) -> bool {
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn save_resources(backend: &impl AnalysisHost) -> PathBuf {
-    let stdlib_dir = get_stdlib_dir(backend.get_amber_version().clone()).unwrap();
+pub async fn save_resources(backend: &impl AnalysisHost) -> Option<PathBuf> {
+    let stdlib_dir = match get_stdlib_dir(backend.get_amber_version().clone()) {
+        Ok(stdlib_dir) => stdlib_dir,
+        Err(_) => {
+            backend
+                .show_error("Failed to resolve LSP executable path.")
+                .await;
+            return None;
+        }
+    };
 
     let binary_stdlib_dir = match backend.get_amber_version() {
         AmberVersion::Alpha034 => "alpha034/".to_string(),
@@ -73,7 +81,21 @@ pub async fn save_resources(backend: &impl AnalysisHost) -> PathBuf {
         AmberVersion::Alpha050 => "alpha050/".to_string(),
     };
 
-    let _ = backend.get_files().fs.create_dir_all(&stdlib_dir).await;
+    if backend
+        .get_files()
+        .fs
+        .create_dir_all(&stdlib_dir)
+        .await
+        .is_err()
+    {
+        backend
+            .show_error(&format!(
+                "Could not save std lib files to {}",
+                stdlib_dir.to_string_lossy()
+            ))
+            .await;
+        return None;
+    }
 
     if let Some(dir) = STDLIB.get_dir(binary_stdlib_dir) {
         for entry in dir.entries() {
@@ -81,7 +103,7 @@ pub async fn save_resources(backend: &impl AnalysisHost) -> PathBuf {
         }
     }
 
-    stdlib_dir
+    Some(stdlib_dir)
 }
 
 fn save_entry<'a>(
@@ -106,14 +128,33 @@ fn save_entry<'a>(
                     return;
                 }
 
-                let contents = file.contents_utf8().unwrap().to_string();
+                let contents = match file.contents_utf8() {
+                    Some(c) => c.to_string(),
+                    None => {
+                        backend
+                            .show_error(&format!(
+                                "Embedded std lib file at {:?} is not valid UTF-8",
+                                path
+                            ))
+                            .await;
+                        return;
+                    }
+                };
 
-                backend
+                if backend
                     .get_files()
                     .fs
                     .write(&path, &contents)
                     .await
-                    .unwrap();
+                    .is_err()
+                {
+                    backend
+                        .show_error(&format!(
+                            "Could not save std lib file to {}",
+                            path.to_string_lossy()
+                        ))
+                        .await;
+                }
             }
         }
     })
@@ -139,7 +180,10 @@ pub async fn resolve(backend: &impl AnalysisHost, path: String) -> Option<Uri> {
         return None;
     }
 
-    let base_path = save_resources(backend).await;
+    let base_path = match save_resources(backend).await {
+        Some(base_path) => base_path,
+        None => return None,
+    };
 
     let file_path = base_path.join(file_path);
 
@@ -164,7 +208,10 @@ pub async fn find_in_stdlib(backend: &impl AnalysisHost, path: &str) -> Vec<Stri
                 return vec![];
             }
 
-            let stdlib_dir = save_resources(backend).await;
+            let stdlib_dir = match save_resources(backend).await {
+                Some(stdlib_dir) => stdlib_dir,
+                None => return vec![],
+            };
 
             let path_in_std = stdlib_dir.clone().join(parts.join("/"));
 

@@ -106,6 +106,10 @@ impl AnalysisHost for Backend {
             Ok((file_id, DEFAULT_VERSION))
         })
     }
+
+    async fn show_error(&self, message: &str) {
+        self.client.show_message(MessageType::ERROR, message).await;
+    }
 }
 
 impl Backend {
