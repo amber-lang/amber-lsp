@@ -301,7 +301,7 @@ jobs:
       - name: Publish VSCode extension (macOS Apple Silicon)
         run: |
           vsce publish -i amber-ext-darwin-arm64.vsix
-          ovsx publish amber-ext-darwin-arm64.vsix
+          ovsx publish -i amber-ext-darwin-arm64.vsix
         working-directory: clients/vscode/
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
@@ -310,7 +310,7 @@ jobs:
       - name: Publish VSCode extension (macOS Intel)
         run: |
           vsce publish -i amber-ext-darwin-x64.vsix
-          ovsx publish amber-ext-darwin-x64.vsix
+          ovsx publish -i amber-ext-darwin-x64.vsix
         working-directory: clients/vscode/
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
@@ -319,7 +319,7 @@ jobs:
       - name: Publish VSCode extension (Windows x64)
         run: |
           vsce publish -i amber-ext-win32-x64.vsix
-          ovsx publish amber-ext-win32-x64.vsix
+          ovsx publish -i amber-ext-win32-x64.vsix
         working-directory: clients/vscode/
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
@@ -328,7 +328,7 @@ jobs:
       - name: Publish VSCode extension (Linux x64)
         run: |
           vsce publish -i amber-ext-linux-x64.vsix
-          ovsx publish amber-ext-linux-x64.vsix
+          ovsx publish -i amber-ext-linux-x64.vsix
         working-directory: clients/vscode/
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
