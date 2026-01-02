@@ -288,6 +288,9 @@ jobs:
       - name: Install vsce
         run: npm install -g vsce
 
+      - name: Install ovsx
+        run: npm install -g ovsx
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -296,28 +299,40 @@ jobs:
           merge-multiple: true
 
       - name: Publish VSCode extension (macOS Apple Silicon)
-        run: vsce publish -i amber-ext-darwin-arm64.vsix
+        run: |
+          vsce publish -i amber-ext-darwin-arm64.vsix
+          ovsx publish -i amber-ext-darwin-arm64.vsix
         working-directory: clients/vscode/
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
       - name: Publish VSCode extension (macOS Intel)
-        run: vsce publish -i amber-ext-darwin-x64.vsix
+        run: |
+          vsce publish -i amber-ext-darwin-x64.vsix
+          ovsx publish -i amber-ext-darwin-x64.vsix
         working-directory: clients/vscode/
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
       - name: Publish VSCode extension (Windows x64)
-        run: vsce publish -i amber-ext-win32-x64.vsix
+        run: |
+          vsce publish -i amber-ext-win32-x64.vsix
+          ovsx publish -i amber-ext-win32-x64.vsix
         working-directory: clients/vscode/
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
       - name: Publish VSCode extension (Linux x64)
-        run: vsce publish -i amber-ext-linux-x64.vsix
+        run: |
+          vsce publish -i amber-ext-linux-x64.vsix
+          ovsx publish -i amber-ext-linux-x64.vsix
         working-directory: clients/vscode/
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
   # Determines if we should publish/announce
   host:
