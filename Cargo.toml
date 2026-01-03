@@ -1,9 +1,10 @@
 [workspace]
 members = [
-    "crates/types",
-    "crates/grammar",
-    "crates/analysis",
-    "crates/server",
+  "crates/types",
+  "crates/grammar",
+  "crates/analysis",
+  "crates/server",
+  "crates/formatter",
 ]
 resolver = "2"
 
