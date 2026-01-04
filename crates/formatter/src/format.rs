@@ -198,6 +198,29 @@ impl Output {
         self
     }
 
+    /// Removes the any trailing whitespace fragments.
+    ///
+    /// Indentation changes are ignored but still preserved.
+    pub(crate) fn remove_trailing_whitespace(&mut self) -> &mut Self {
+        let mut indentation = Vec::new();
+
+        let is_text = |last: &mut Fragment| {
+            matches!(
+                last,
+                Fragment::IndentationChange(..) | Fragment::Space | Fragment::Newline
+            )
+        };
+
+        while let Some(fragment) = self.buffer.pop_if(is_text) {
+            if matches!(fragment, Fragment::IndentationChange(..)) {
+                indentation.push(fragment);
+            }
+        }
+
+        self.buffer.append(&mut indentation);
+        self
+    }
+
     fn format(self, file_content: &str) -> Result<String, FormattingError> {
         let mut text = String::new();
         let mut indentation = String::new();

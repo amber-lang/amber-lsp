@@ -47,8 +47,6 @@ impl TextOutput<Gen> for GlobalStatement {
                 return_type,
                 contents,
             ) => {
-                // output.newline();
-
                 for flag in compiler_flags {
                     output.output(ctx, flag);
                     output.newline();
@@ -87,14 +85,17 @@ impl TextOutput<Gen> for GlobalStatement {
                 for content in contents {
                     output.newline().end_output(ctx, content);
                 }
-                output.decrease_indentation().newline().char('}');
+                output
+                    .remove_trailing_whitespace()
+                    .decrease_indentation()
+                    .newline()
+                    .char('}');
 
                 if ctx.next_global().is_some() {
                     output.newline().newline();
                 }
             }
             GlobalStatement::Main(main, args, statements) => {
-                // output.newline();
                 output.output(ctx, main);
 
                 output.char('(');
@@ -107,7 +108,11 @@ impl TextOutput<Gen> for GlobalStatement {
                     output.newline().output(ctx, statement);
                 }
 
-                output.decrease_indentation().newline().char('}');
+                output
+                    .remove_trailing_whitespace()
+                    .decrease_indentation()
+                    .newline()
+                    .char('}');
 
                 if ctx.next_global().is_some() {
                     output.newline().newline();
