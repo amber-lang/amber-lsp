@@ -14,12 +14,15 @@ fn main() {
         Grammar::Alpha035(_items) => todo!(),
         Grammar::Alpha040(items) => {
             if let Some(items) = items {
+                // eprintln!("{items:?}");
+
                 {
-                    let mut output = Output::default();
-                    for item in items {
-                        use amber_fmt::SpanTextOutput;
-                        (&item).output(&mut output);
-                    }
+                    // let mut output = Output::default();
+                    // for item in items {
+                    //     use amber_fmt::SpanTextOutput;
+                    //     (&item).output(&mut output);
+                    // }
+                    let output = Output::parse(&items);
                     eprintln!("{output:?}");
                     let format = output.format(data).expect("Able to parse");
                     println!("{format}");

@@ -7,11 +7,13 @@ use amber_grammar::{CommandModifier, CompilerFlag};
 use amber_types::DataType;
 use amber_types::token::Span;
 
-use crate::{CommentVariant, SpanTextOutput};
+use crate::{CommentVariant, FmtContext, SpanTextOutput};
 use crate::{Output, TextOutput};
 
-impl TextOutput for GlobalStatement {
-    fn output(&self, _span: &Span, output: &mut Output) {
+type Gen = (GlobalStatement, Span);
+
+impl TextOutput<Gen> for GlobalStatement {
+    fn output(&self, _span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             GlobalStatement::Import(public, import, content, from, path) => {
                 if public.0 {
@@ -19,14 +21,14 @@ impl TextOutput for GlobalStatement {
                 }
 
                 output
-                    .output(import)
+                    .output(ctx, import)
                     .space()
-                    .output(content)
+                    .output(ctx, content)
                     .space()
-                    .output(from)
+                    .output(ctx, from)
                     .space()
                     .char('"')
-                    .output(path)
+                    .output(ctx, path)
                     .char('"')
                     .newline();
             }
@@ -39,10 +41,10 @@ impl TextOutput for GlobalStatement {
                 return_type,
                 contents,
             ) => {
-                output.newline();
+                // output.newline();
 
                 for flag in compiler_flags {
-                    output.output(flag);
+                    output.output(ctx, flag);
                     output.newline();
                 }
 
@@ -50,21 +52,21 @@ impl TextOutput for GlobalStatement {
                     output.text("pub ");
                 }
 
-                output.output(function_keyword);
+                output.output(ctx, function_keyword);
                 output.space();
-                output.output(name);
+                output.output(ctx, name);
 
                 output.char('(');
                 // Handle adding variables with proper spacing
                 {
                     for arg in args.iter().take(args.len().saturating_sub(1)) {
-                        output.output(arg);
+                        output.output(ctx, arg);
                         output.char(',');
                         output.space();
                     }
 
                     if let Some(arg) = args.last() {
-                        output.output(arg);
+                        output.output(ctx, arg);
                     }
                 }
                 output.char(')');
@@ -72,38 +74,50 @@ impl TextOutput for GlobalStatement {
                 if let Some(returns) = return_type {
                     output.char(':');
                     output.space();
-                    output.output(returns);
+                    output.output(ctx, returns);
                 }
 
                 output.char('{').increase_indentation();
                 for content in contents {
-                    output.newline().end_output(content);
+                    output.newline().end_output(ctx, content);
                 }
-                output.decrease_indentation().newline().char('}');
+                output
+                    .decrease_indentation()
+                    .newline()
+                    .char('}')
+                    .newline()
+                    .newline();
             }
             GlobalStatement::Main(main, args, statements) => {
-                output.newline();
-                output.output(main);
+                // output.newline();
+                output.output(ctx, main);
 
                 output.char('(');
                 if let Some(args) = args {
-                    output.output(args);
+                    output.output(ctx, args);
                 }
                 output.char(')').space().char('{').increase_indentation();
 
                 for statement in statements {
-                    output.newline().output(statement);
+                    output.newline().output(ctx, statement);
                 }
 
-                output.decrease_indentation().newline().end_char('}');
+                output
+                    .decrease_indentation()
+                    .newline()
+                    .char('}')
+                    .newline()
+                    .newline();
             }
-            GlobalStatement::Statement(statement) => output.end_output(statement),
+            GlobalStatement::Statement(statement) => {
+                output.output(ctx, statement).newline();
+            }
         }
     }
 }
 
-impl TextOutput for ImportContent {
-    fn output(&self, _span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for ImportContent {
+    fn output(&self, _span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             ImportContent::ImportAll => {
                 output.char('*');
@@ -112,10 +126,10 @@ impl TextOutput for ImportContent {
                 output.text("{ ");
 
                 for identifier in items.iter().take(items.len().saturating_sub(1)) {
-                    output.output(identifier).char(',').space();
+                    output.output(ctx, identifier).char(',').space();
                 }
                 if let Some(item) = items.last() {
-                    output.output(item).end_space();
+                    output.output(ctx, item).end_space();
                 }
 
                 output.char('}');
@@ -124,20 +138,25 @@ impl TextOutput for ImportContent {
     }
 }
 
-impl TextOutput for FunctionArgument {
-    fn output(&self, span: &Span, output: &mut Output) {
-        fn push_arg(output: &mut Output, is_ref: bool, text: &impl SpanTextOutput) {
+impl TextOutput<Gen> for FunctionArgument {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+        fn push_arg(
+            output: &mut Output,
+            ctx: &mut FmtContext<Gen>,
+            is_ref: bool,
+            text: &impl SpanTextOutput<Gen>,
+        ) {
             if is_ref {
                 output.text("ref");
                 output.space();
             }
-            output.output(text);
+            output.output(ctx, text);
         }
 
         match self {
-            FunctionArgument::Generic(is_ref, text) => push_arg(output, is_ref.0, text),
-            FunctionArgument::Optional(is_ref, text, _, _) => push_arg(output, is_ref.0, text),
-            FunctionArgument::Typed(is_ref, text, _) => push_arg(output, is_ref.0, text),
+            FunctionArgument::Generic(is_ref, text) => push_arg(output, ctx, is_ref.0, text),
+            FunctionArgument::Optional(is_ref, text, _, _) => push_arg(output, ctx, is_ref.0, text),
+            FunctionArgument::Typed(is_ref, text, _) => push_arg(output, ctx, is_ref.0, text),
             FunctionArgument::Error => {
                 output.error(span);
             }
@@ -145,85 +164,94 @@ impl TextOutput for FunctionArgument {
     }
 }
 
-impl TextOutput for CompilerFlag {
-    fn output(&self, _span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for CompilerFlag {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         output.text(format!("#[{self}]"));
     }
 }
 
-impl TextOutput for String {
-    fn output(&self, _span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for String {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         output.text(self.clone());
     }
 }
 
-impl TextOutput for DataType {}
+impl TextOutput<Gen> for DataType {}
 
-impl TextOutput for Statement {
-    fn output(&self, span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for Statement {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         fn shorthand(
             output: &mut Output,
-            variable: &impl SpanTextOutput,
+            ctx: &mut FmtContext<Gen>,
+            variable: &impl SpanTextOutput<Gen>,
             separator: &str,
-            expression: &impl SpanTextOutput,
+            expression: &impl SpanTextOutput<Gen>,
         ) {
             output
-                .output(variable)
+                .output(ctx, variable)
                 .space()
                 .text(separator)
                 .space()
-                .output(expression);
+                .output(ctx, expression);
         }
 
         match self {
             Statement::Expression(expression) => {
-                output.output(expression);
+                output.output(ctx, expression);
             }
             Statement::VariableInit(keyword, name, init) => {
                 output
-                    .output(keyword)
+                    .output(ctx, keyword)
                     .space()
-                    .output(name)
+                    .output(ctx, name)
                     .space()
                     .char('=')
                     .space()
-                    .output(init);
+                    .output(ctx, init);
             }
             Statement::ConstInit(keyword, name, init) => {
                 output
-                    .output(keyword)
+                    .output(ctx, keyword)
                     .space()
-                    .output(name)
+                    .output(ctx, name)
                     .space()
                     .char('=')
                     .space()
-                    .output(init);
+                    .output(ctx, init);
             }
             Statement::VariableSet(name, new_value) => {
                 output
-                    .output(name)
+                    .output(ctx, name)
                     .space()
                     .char('=')
                     .space()
-                    .output(new_value);
+                    .output(ctx, new_value);
             }
             Statement::IfCondition(r#if, condition, items, else_condition) => {
-                output.output(r#if).space().output(condition).end_space();
+                output
+                    .output(ctx, r#if)
+                    .space()
+                    .output(ctx, condition)
+                    .end_space();
                 // .debug_point("If condition items");
 
                 for ele in items {
-                    output.output(ele);
+                    output.output(ctx, ele);
                 }
 
                 if let Some(else_condition) = else_condition {
-                    output.output(else_condition);
+                    output.output(ctx, else_condition);
                 }
             }
             Statement::IfChain(r#if, items) => {
-                output.output(r#if).space().char('{').increase_indentation();
+                output
+                    .output(ctx, r#if)
+                    .space()
+                    .char('{')
+                    .increase_indentation();
 
                 for ele in items {
-                    output.newline().output(ele);
+                    output.newline().output(ctx, ele);
                 }
 
                 output.decrease_indentation();
@@ -232,86 +260,88 @@ impl TextOutput for Statement {
                 }
                 output.char('}');
             }
-            Statement::ShorthandAdd(variable, expr) => shorthand(output, variable, "+=", expr),
-            Statement::ShorthandSub(variable, expr) => shorthand(output, variable, "-=", expr),
-            Statement::ShorthandMul(variable, expr) => shorthand(output, variable, "*=", expr),
-            Statement::ShorthandDiv(variable, expr) => shorthand(output, variable, "/=", expr),
-            Statement::ShorthandModulo(variable, expr) => shorthand(output, variable, "%=", expr),
+            Statement::ShorthandAdd(variable, expr) => shorthand(output, ctx, variable, "+=", expr),
+            Statement::ShorthandSub(variable, expr) => shorthand(output, ctx, variable, "-=", expr),
+            Statement::ShorthandMul(variable, expr) => shorthand(output, ctx, variable, "*=", expr),
+            Statement::ShorthandDiv(variable, expr) => shorthand(output, ctx, variable, "/=", expr),
+            Statement::ShorthandModulo(variable, expr) => {
+                shorthand(output, ctx, variable, "%=", expr)
+            }
             Statement::InfiniteLoop(r#loop, block) => {
-                output.output(r#loop).space().output(block);
+                output.output(ctx, r#loop).space().output(ctx, block);
             }
             Statement::IterLoop(r#for, element, r#in, expr, block) => {
                 output
-                    .output(r#for)
+                    .output(ctx, r#for)
                     .space()
-                    .output(element)
+                    .output(ctx, element)
                     .space()
-                    .output(r#in)
+                    .output(ctx, r#in)
                     .space()
-                    .output(expr)
+                    .output(ctx, expr)
                     .space()
-                    .end_output(block);
+                    .end_output(ctx, block);
             }
             Statement::Break => output.end_text("break"),
             Statement::Continue => output.end_text("continue"),
             Statement::Return(r#return, expr) => {
-                output.end_output(r#return);
+                output.end_output(ctx, r#return);
 
                 if let Some(expr) = expr {
-                    output.space().end_output(expr);
+                    output.space().end_output(ctx, expr);
                 }
             }
             Statement::Fail(fail, expr) => {
-                output.end_output(fail);
+                output.end_output(ctx, fail);
 
                 if let Some(expr) = expr {
-                    output.space().end_output(expr);
+                    output.space().end_output(ctx, expr);
                 }
             }
-            Statement::Echo(echo, text) => output.output(echo).space().end_output(text),
-            Statement::Cd(cd, text) => output.output(cd).space().end_output(text),
+            Statement::Echo(echo, text) => output.output(ctx, echo).space().end_output(ctx, text),
+            Statement::Cd(cd, text) => output.output(ctx, cd).space().end_output(ctx, text),
             Statement::MoveFiles(modifiers, mv, source, destination, failure_handler) => {
                 for modifier in modifiers {
-                    output.output(modifier).space();
+                    output.output(ctx, modifier).space();
                 }
 
                 output
-                    .output(mv)
+                    .output(ctx, mv)
                     .space()
-                    .output(source)
+                    .output(ctx, source)
                     .space()
-                    .output(destination);
+                    .output(ctx, destination);
 
                 if let Some(failure_handler) = failure_handler {
-                    output.space().output(failure_handler);
+                    output.space().output(ctx, failure_handler);
                 }
             }
-            Statement::Block(block) => output.end_output(block),
-            Statement::Comment(comment) => output.end_output(comment),
+            Statement::Block(block) => output.end_output(ctx, block),
+            Statement::Comment(comment) => output.end_output(ctx, comment),
             Statement::Shebang(shebang) => output.end_text(shebang.as_str()),
             Statement::Error => output.error(span),
         }
     }
 }
 
-impl TextOutput for IterLoopVars {
-    fn output(&self, span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for IterLoopVars {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         output.span(span);
     }
 }
 
-impl TextOutput for Block {
-    fn output(&self, span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for Block {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         // output.debug_point("Block").span(span);
         match self {
             Block::Block(modifiers, statements) => {
                 output.char('{').increase_indentation().end_newline();
 
                 for modifier in modifiers {
-                    output.output(modifier).end_space();
+                    output.output(ctx, modifier).end_space();
                 }
                 for statement in statements {
-                    output.output(statement).end_newline();
+                    output.output(ctx, statement).end_newline();
                 }
 
                 output
@@ -325,20 +355,20 @@ impl TextOutput for Block {
     }
 }
 
-impl TextOutput for IfChainContent {
-    fn output(&self, span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for IfChainContent {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         output.span(span);
     }
 }
 
-impl TextOutput for ElseCondition {
-    fn output(&self, span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for ElseCondition {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         output.span(span);
     }
 }
 
-impl TextOutput for Comment {
-    fn output(&self, span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for Comment {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             Comment::Comment(comment) => {
                 output.end_comment(CommentVariant::Regular, comment.as_str(), span)
@@ -350,147 +380,158 @@ impl TextOutput for Comment {
     }
 }
 
-impl TextOutput for IfCondition {
-    fn output(&self, span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for IfCondition {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             IfCondition::IfCondition(condition, block) => {
-                output.output(condition).space().output(block).newline();
+                output
+                    .output(ctx, condition)
+                    .space()
+                    .output(ctx, block)
+                    .newline();
             }
             IfCondition::InlineIfCondition(condition, statement) => {
-                output.output(condition).char(':').space().output(statement);
+                output
+                    .output(ctx, condition)
+                    .char(':')
+                    .space()
+                    .output(ctx, statement);
             }
-            IfCondition::Comment(comment) => output.end_output(comment),
+            IfCondition::Comment(comment) => output.end_output(ctx, comment),
             IfCondition::Error => output.error(span),
         }
     }
 }
 
-impl TextOutput for VariableInitType {
-    fn output(&self, span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for VariableInitType {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
-            VariableInitType::Expression(expr) => output.end_output(expr),
-            VariableInitType::DataType(r#type) => output.end_output(r#type),
+            VariableInitType::Expression(expr) => output.end_output(ctx, expr),
+            VariableInitType::DataType(r#type) => output.end_output(ctx, r#type),
             VariableInitType::Error => output.error(span),
         }
     }
 }
 
-impl TextOutput for Expression {
-    fn output(&self, span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for Expression {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         fn char_separated(
             output: &mut Output,
-            rhs: &impl SpanTextOutput,
+            ctx: &mut FmtContext<Gen>,
+            rhs: &impl SpanTextOutput<Gen>,
             middle: char,
-            lhs: &impl SpanTextOutput,
+            lhs: &impl SpanTextOutput<Gen>,
         ) {
-            output.output(rhs);
+            output.output(ctx, rhs);
             output.space();
             output.char(middle);
             output.space();
-            output.output(lhs);
+            output.output(ctx, lhs);
         }
 
         fn string_separated(
             output: &mut Output,
-            rhs: &impl SpanTextOutput,
+            ctx: &mut FmtContext<Gen>,
+            rhs: &impl SpanTextOutput<Gen>,
             middle: &str,
-            lhs: &impl SpanTextOutput,
+            lhs: &impl SpanTextOutput<Gen>,
         ) {
-            output.output(rhs);
+            output.output(ctx, rhs);
             output.space();
             output.text(middle);
             output.space();
-            output.output(lhs);
+            output.output(ctx, lhs);
         }
 
         fn output_separated(
             output: &mut Output,
-            rhs: &impl SpanTextOutput,
-            middle: &impl SpanTextOutput,
-            lhs: &impl SpanTextOutput,
+            ctx: &mut FmtContext<Gen>,
+            rhs: &impl SpanTextOutput<Gen>,
+            middle: &impl SpanTextOutput<Gen>,
+            lhs: &impl SpanTextOutput<Gen>,
         ) {
-            output.output(rhs);
+            output.output(ctx, rhs);
             output.space();
-            output.output(middle);
+            output.output(ctx, middle);
             output.space();
-            output.output(lhs);
+            output.output(ctx, lhs);
         }
 
         match self {
             Expression::Number(num) => {
-                output.output(num);
+                output.output(ctx, num);
             }
             Expression::Boolean(boolean) => {
-                output.output(boolean);
+                output.output(ctx, boolean);
             }
             Expression::Text(_) => {
                 // Take raw text from file, as string content should not be modified
                 output.end_span(span);
             }
             Expression::Parentheses(parentheses) => {
-                output.output(parentheses);
+                output.output(ctx, parentheses);
             }
-            Expression::Var(var) => output.end_output(var),
-            Expression::Add(rhs, lhs) => char_separated(output, rhs, '+', lhs),
-            Expression::Subtract(rhs, lhs) => char_separated(output, rhs, '-', lhs),
-            Expression::Multiply(rhs, lhs) => char_separated(output, rhs, '*', lhs),
-            Expression::Divide(rhs, lhs) => char_separated(output, rhs, '/', lhs),
-            Expression::Modulo(rhs, lhs) => char_separated(output, rhs, '%', lhs),
+            Expression::Var(var) => output.end_output(ctx, var),
+            Expression::Add(rhs, lhs) => char_separated(output, ctx, rhs, '+', lhs),
+            Expression::Subtract(rhs, lhs) => char_separated(output, ctx, rhs, '-', lhs),
+            Expression::Multiply(rhs, lhs) => char_separated(output, ctx, rhs, '*', lhs),
+            Expression::Divide(rhs, lhs) => char_separated(output, ctx, rhs, '/', lhs),
+            Expression::Modulo(rhs, lhs) => char_separated(output, ctx, rhs, '%', lhs),
             Expression::Neg(neg, lhs) => {
-                output.output(neg);
-                output.output(lhs);
+                output.output(ctx, neg);
+                output.output(ctx, lhs);
             }
-            Expression::And(rhs, and, lhs) => output_separated(output, rhs, and, lhs),
-            Expression::Or(rhs, or, lhs) => output_separated(output, rhs, or, lhs),
-            Expression::Gt(rhs, lhs) => char_separated(output, rhs, '>', lhs),
-            Expression::Ge(rhs, lhs) => string_separated(output, rhs, ">=", lhs),
-            Expression::Lt(rhs, lhs) => char_separated(output, rhs, '<', lhs),
-            Expression::Le(rhs, lhs) => string_separated(output, rhs, ">=", lhs),
-            Expression::Eq(rhs, lhs) => string_separated(output, rhs, "==", lhs),
-            Expression::Neq(rhs, lhs) => string_separated(output, rhs, "!=", lhs),
+            Expression::And(rhs, and, lhs) => output_separated(output, ctx, rhs, and, lhs),
+            Expression::Or(rhs, or, lhs) => output_separated(output, ctx, rhs, or, lhs),
+            Expression::Gt(rhs, lhs) => char_separated(output, ctx, rhs, '>', lhs),
+            Expression::Ge(rhs, lhs) => string_separated(output, ctx, rhs, ">=", lhs),
+            Expression::Lt(rhs, lhs) => char_separated(output, ctx, rhs, '<', lhs),
+            Expression::Le(rhs, lhs) => string_separated(output, ctx, rhs, ">=", lhs),
+            Expression::Eq(rhs, lhs) => string_separated(output, ctx, rhs, "==", lhs),
+            Expression::Neq(rhs, lhs) => string_separated(output, ctx, rhs, "!=", lhs),
             Expression::Not(not, lhs) => {
-                output.output(not);
+                output.output(ctx, not);
                 output.space();
-                output.output(lhs);
+                output.output(ctx, lhs);
             }
             Expression::Ternary(condition, then, if_then, r#else, if_else) => {
                 // TODO(tye-exe): Allow single line ternary if short enough. Use given span to measure length?
                 output.increase_indentation();
-                output.output(condition);
+                output.output(ctx, condition);
                 output.newline();
-                output.output(then);
+                output.output(ctx, then);
                 output.space();
-                output.output(if_then);
+                output.output(ctx, if_then);
                 output.newline();
-                output.output(r#else);
+                output.output(ctx, r#else);
                 output.space();
-                output.output(if_else);
+                output.output(ctx, if_else);
                 output.decrease_indentation();
             }
             Expression::FunctionInvocation(modifiers, function_name, args, failure_handler) => {
                 for modifier in modifiers {
-                    output.output(modifier);
+                    output.output(ctx, modifier);
                     output.space();
                 }
 
-                output.output(function_name).char('(');
+                output.output(ctx, function_name).char('(');
 
                 for arg in args.iter().take(args.len().saturating_sub(1)) {
-                    output.output(arg).char(',').space();
+                    output.output(ctx, arg).char(',').space();
                 }
                 if let Some(arg) = args.last() {
-                    output.output(arg);
+                    output.output(ctx, arg);
                 }
 
                 output.char(')');
 
                 if let Some(failure_handler) = failure_handler {
-                    output.output(failure_handler);
+                    output.output(ctx, failure_handler);
                 }
             }
             Expression::Command(modifiers, commands, failure_handler) => {
                 for modifier in modifiers {
-                    output.output(modifier);
+                    output.output(ctx, modifier);
                     output.space();
                 }
 
@@ -500,13 +541,13 @@ impl TextOutput for Expression {
                 }
 
                 if let Some(failure_handler) = failure_handler {
-                    output.space().output(failure_handler);
+                    output.space().output(ctx, failure_handler);
                 }
             }
             Expression::Array(array) => {
                 output.char('[');
                 for expression in array {
-                    output.output(expression);
+                    output.output(ctx, expression);
                     output.char(',');
                     output.space();
                 }
@@ -514,33 +555,40 @@ impl TextOutput for Expression {
                 output.char(']');
             }
             Expression::Range(lhs, rhs) => {
-                output.output(lhs);
+                output.output(ctx, lhs);
                 output.text("..");
-                output.output(rhs);
+                output.output(ctx, rhs);
             }
             Expression::Null => {
                 output.text("Null");
             }
-            Expression::Cast(lhs, r#as, rhs) => string_separated(output, rhs, &r#as.0, lhs),
+            Expression::Cast(lhs, r#as, rhs) => string_separated(output, ctx, rhs, &r#as.0, lhs),
             Expression::Status => {
                 output.text("status");
             }
             Expression::Nameof(name_of, variable) => {
-                output.output(name_of);
+                output.output(ctx, name_of);
                 output.space();
-                output.output(variable);
+                output.output(ctx, variable);
             }
             Expression::Is(lhs, is, rhs) => {
-                output.output(lhs).space().output(is).space().output(rhs);
+                output
+                    .output(ctx, lhs)
+                    .space()
+                    .output(ctx, is)
+                    .space()
+                    .output(ctx, rhs);
             }
-            Expression::ArrayIndex(array, index) => {
-                output.output(array).char('[').output(index).end_char(']')
-            }
+            Expression::ArrayIndex(array, index) => output
+                .output(ctx, array)
+                .char('[')
+                .output(ctx, index)
+                .end_char(']'),
             Expression::Exit(exit, value) => {
-                output.output(exit);
+                output.output(ctx, exit);
 
                 if let Some(value) = value {
-                    output.space().output(value);
+                    output.space().output(ctx, value);
                 }
             }
             Expression::Error => {
@@ -550,21 +598,21 @@ impl TextOutput for Expression {
     }
 }
 
-impl TextOutput for FailureHandler {
-    fn output(&self, _span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for FailureHandler {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             FailureHandler::Propagate => {
                 output.char('?');
             }
             FailureHandler::Handle(failed, statements) => {
-                output.output(failed);
+                output.output(ctx, failed);
                 output.space();
                 output.char('{');
                 output.increase_indentation();
                 output.newline();
 
                 for statement in statements {
-                    output.output(statement);
+                    output.output(ctx, statement);
                     output.newline();
                 }
 
@@ -578,8 +626,8 @@ impl TextOutput for FailureHandler {
     }
 }
 
-impl TextOutput for CommandModifier {
-    fn output(&self, _span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for CommandModifier {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             CommandModifier::Unsafe => output.end_text("unsafe"),
             CommandModifier::Trust => output.end_text("trust"),
@@ -589,18 +637,18 @@ impl TextOutput for CommandModifier {
     }
 }
 
-impl TextOutput for InterpolatedCommand {
-    fn output(&self, _span: &Span, output: &mut Output) {
+impl TextOutput<Gen> for InterpolatedCommand {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             InterpolatedCommand::Escape(escape) => output
                 .debug_point("InterpolatedCommand escape")
                 .end_text(escape.as_str()),
             InterpolatedCommand::CommandOption(option) => output.end_text(option.as_str()),
-            InterpolatedCommand::Expression(expr) => output.end_output(expr),
+            InterpolatedCommand::Expression(expr) => output.end_output(ctx, expr),
             InterpolatedCommand::Text(text) => output.end_text(text.as_str()),
         }
     }
 }
 
-impl TextOutput for f32 {}
-impl TextOutput for bool {}
+impl TextOutput<Gen> for f32 {}
+impl TextOutput<Gen> for bool {}

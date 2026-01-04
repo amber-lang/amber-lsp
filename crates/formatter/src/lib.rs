@@ -1,3 +1,4 @@
+use amber_grammar::alpha040::GlobalStatement;
 use amber_types::{Spanned, token::Span};
 use std::{panic::Location, string::FromUtf8Error};
 
@@ -19,9 +20,35 @@ const WHITESPACE_BYTES: [u8; 4] = {
     array
 };
 
+/// Contains string fragments of the code ready for finial formatting into a string.
 #[derive(Default, Debug)]
 pub struct Output {
     buffer: Vec<Fragment>,
+}
+
+/// Context about the general structure of the program to use during formatting.
+pub struct FmtContext<'a, T> {
+    /// The parsed top level statements of the program.
+    items: &'a [T],
+    /// The location of the statement currently being formatted.
+    index: usize,
+}
+
+impl<'a, T> FmtContext<'a, T> {
+    /// Moves the context to the next top level statement.
+    fn increment(&mut self) {
+        self.index += 1;
+    }
+
+    /// Returns the previous top level statement if it exists.
+    pub fn previous_global(&self) -> Option<&T> {
+        self.items.get(self.index.checked_sub(1)?)
+    }
+
+    /// Returns the next top level statement if it exists.
+    pub fn next_global(&self) -> Option<&T> {
+        self.items.get(self.index.checked_add(1)?)
+    }
 }
 
 #[derive(Debug)]
@@ -102,11 +129,11 @@ impl CommentVariant {
     }
 }
 
-pub trait SpanTextOutput {
-    fn output(&self, output: &mut Output);
+pub trait SpanTextOutput<T> {
+    fn output(&self, output: &mut Output, ctx: &mut FmtContext<T>);
 }
 
-pub trait TextOutput {
+pub trait TextOutput<T> {
     /// Gets the formatted string representation of an AST element.
     /// The string representation should be written to the output buffer.
     ///
@@ -115,8 +142,20 @@ pub trait TextOutput {
     ///
     /// It is the responsibilirt of the caller to append a space to the buffer if required.
     /// An implementation should not end with adding a space.
-    fn output(&self, span: &Span, output: &mut Output) {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<T>) {
         output.span(span);
+    }
+}
+
+impl<D, T: TextOutput<D>> SpanTextOutput<D> for Spanned<T> {
+    fn output(&self, output: &mut Output, ctx: &mut FmtContext<D>) {
+        self.0.output(&self.1, output, ctx);
+    }
+}
+
+impl<D, T: TextOutput<D>> SpanTextOutput<D> for Box<Spanned<T>> {
+    fn output(&self, output: &mut Output, ctx: &mut FmtContext<D>) {
+        self.0.output(&self.1, output, ctx);
     }
 }
 
@@ -130,19 +169,22 @@ pub enum FormattingError {
     InvalidSpan(#[from] FromUtf8Error),
 }
 
-impl<T: TextOutput> SpanTextOutput for Spanned<T> {
-    fn output(&self, output: &mut Output) {
-        self.0.output(&self.1, output);
-    }
-}
-
-impl<T: TextOutput> SpanTextOutput for Box<Spanned<T>> {
-    fn output(&self, output: &mut Output) {
-        self.0.output(&self.1, output);
-    }
-}
-
 impl Output {
+    pub fn parse(items: &[(GlobalStatement, Span)]) -> Self {
+        let mut index = 0;
+
+        let mut output = Output::default();
+        let mut ctx = FmtContext { items, index };
+
+        while let Some(item) = items.get(index) {
+            index += 1;
+            item.output(&mut output, &mut ctx);
+            ctx.increment();
+        }
+
+        output
+    }
+
     #[track_caller]
     fn debug_point(&mut self, info: &str) -> &mut Self {
         self.text(format!(
@@ -190,11 +232,11 @@ impl Output {
         self
     }
 
-    fn output<TOutput>(&mut self, output: &TOutput) -> &mut Self
+    fn output<T, TOutput>(&mut self, ctx: &mut FmtContext<T>, output: &TOutput) -> &mut Self
     where
-        TOutput: SpanTextOutput,
+        TOutput: SpanTextOutput<T>,
     {
-        output.output(self);
+        output.output(self, ctx);
         self
     }
 
@@ -228,11 +270,11 @@ impl Output {
             .push(Fragment::Text(character.to_string().into_boxed_str()));
     }
 
-    fn end_output<TOutput>(&mut self, output: &TOutput)
+    fn end_output<T, TOutput>(&mut self, ctx: &mut FmtContext<T>, output: &TOutput)
     where
-        TOutput: SpanTextOutput,
+        TOutput: SpanTextOutput<T>,
     {
-        output.output(self);
+        output.output(self, ctx);
     }
 
     fn end_span(&mut self, span: &Span) {
