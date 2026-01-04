@@ -1,14 +1,13 @@
-use amber_grammar::alpha040::{
-    Block, Comment, ElseCondition, Expression, FailureHandler, FunctionArgument, GlobalStatement,
-    IfChainContent, IfCondition, ImportContent, InterpolatedCommand, IterLoopVars, Statement,
-    VariableInitType,
+use crate::{FmtContext, Output, SpanTextOutput, TextOutput, fragments::CommentVariant};
+use amber_grammar::{
+    CommandModifier, CompilerFlag,
+    alpha040::{
+        Block, Comment, ElseCondition, Expression, FailureHandler, FunctionArgument,
+        GlobalStatement, IfChainContent, IfCondition, ImportContent, InterpolatedCommand,
+        IterLoopVars, Statement, VariableInitType,
+    },
 };
-use amber_grammar::{CommandModifier, CompilerFlag};
-use amber_types::DataType;
-use amber_types::token::Span;
-
-use crate::{CommentVariant, FmtContext, SpanTextOutput};
-use crate::{Output, TextOutput};
+use amber_types::{DataType, token::Span};
 
 type Gen = (GlobalStatement, Span);
 
@@ -170,13 +169,13 @@ impl TextOutput<Gen> for FunctionArgument {
 }
 
 impl TextOutput<Gen> for CompilerFlag {
-    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, _span: &Span, output: &mut Output, _ctx: &mut FmtContext<Gen>) {
         output.text(format!("#[{self}]"));
     }
 }
 
 impl TextOutput<Gen> for String {
-    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, _span: &Span, output: &mut Output, _ctx: &mut FmtContext<Gen>) {
         output.text(self.clone());
     }
 }
@@ -330,7 +329,7 @@ impl TextOutput<Gen> for Statement {
 }
 
 impl TextOutput<Gen> for IterLoopVars {
-    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, span: &Span, output: &mut Output, _ctx: &mut FmtContext<Gen>) {
         output.span(span);
     }
 }
@@ -361,19 +360,19 @@ impl TextOutput<Gen> for Block {
 }
 
 impl TextOutput<Gen> for IfChainContent {
-    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, span: &Span, output: &mut Output, _ctx: &mut FmtContext<Gen>) {
         output.span(span);
     }
 }
 
 impl TextOutput<Gen> for ElseCondition {
-    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, span: &Span, output: &mut Output, _ctx: &mut FmtContext<Gen>) {
         output.span(span);
     }
 }
 
 impl TextOutput<Gen> for Comment {
-    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, span: &Span, output: &mut Output, _ctx: &mut FmtContext<Gen>) {
         match self {
             Comment::Comment(comment) => {
                 output.end_comment(CommentVariant::Regular, comment.as_str(), span)
@@ -604,7 +603,7 @@ impl TextOutput<Gen> for Expression {
 }
 
 impl TextOutput<Gen> for FailureHandler {
-    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, _span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             FailureHandler::Propagate => {
                 output.char('?');
@@ -632,7 +631,7 @@ impl TextOutput<Gen> for FailureHandler {
 }
 
 impl TextOutput<Gen> for CommandModifier {
-    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, _span: &Span, output: &mut Output, _ctx: &mut FmtContext<Gen>) {
         match self {
             CommandModifier::Unsafe => output.end_text("unsafe"),
             CommandModifier::Trust => output.end_text("trust"),
@@ -643,7 +642,7 @@ impl TextOutput<Gen> for CommandModifier {
 }
 
 impl TextOutput<Gen> for InterpolatedCommand {
-    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, _span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             InterpolatedCommand::Escape(escape) => output
                 .debug_point("InterpolatedCommand escape")
