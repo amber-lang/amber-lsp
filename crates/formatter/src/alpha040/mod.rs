@@ -73,7 +73,7 @@ impl TextOutput<Gen> for GlobalStatement {
                         output.output(ctx, arg);
                     }
                 }
-                output.char(')');
+                output.char(')').space();
 
                 if let Some(returns) = return_type {
                     output.char(':');
@@ -81,10 +81,24 @@ impl TextOutput<Gen> for GlobalStatement {
                     output.output(ctx, returns);
                 }
 
-                output.char('{').increase_indentation();
+                output.char('{').increase_indentation().newline();
+
+                let mut last_span_end = None;
                 for content in contents {
-                    output.newline().end_output(ctx, content);
+                    if let Some(last_span_end) = last_span_end {
+                        if !matches!(content.0, Statement::Comment(..))
+                            || ctx.source_has_newline(last_span_end..=content.1.start)
+                        {
+                            output.end_newline()
+                        }
+
+                        ctx.allow_newline(output, last_span_end..=content.1.start);
+                    }
+
+                    output.end_output(ctx, content);
+                    last_span_end = Some(content.1.end);
                 }
+
                 output
                     .remove_trailing_whitespace()
                     .decrease_indentation()
@@ -102,10 +116,27 @@ impl TextOutput<Gen> for GlobalStatement {
                 if let Some(args) = args {
                     output.output(ctx, args);
                 }
-                output.char(')').space().char('{').increase_indentation();
+                output
+                    .char(')')
+                    .space()
+                    .char('{')
+                    .increase_indentation()
+                    .newline();
 
+                let mut last_span_end = None;
                 for statement in statements {
-                    output.newline().output(ctx, statement);
+                    if let Some(last_span_end) = last_span_end {
+                        if !matches!(statement.0, Statement::Comment(..))
+                            || ctx.source_has_newline(last_span_end..=statement.1.start)
+                        {
+                            output.end_newline()
+                        }
+
+                        ctx.allow_newline(output, last_span_end..=statement.1.start);
+                    }
+
+                    output.output(ctx, statement);
+                    last_span_end = Some(statement.1.end);
                 }
 
                 output
@@ -236,20 +267,20 @@ impl TextOutput<Gen> for Statement {
                     .space()
                     .output(ctx, new_value);
             }
-            Statement::IfCondition(r#if, condition, items, else_condition) => {
-                output
-                    .output(ctx, r#if)
-                    .space()
-                    .output(ctx, condition)
-                    .end_space();
-                // .debug_point("If condition items");
+            Statement::IfCondition(r#if, condition, comments, else_condition) => {
+                output.output(ctx, r#if).space().output(ctx, condition);
 
-                for ele in items {
-                    output.output(ctx, ele);
+                if let Some(comment) = comments.first() {
+                    ctx.allow_newline(output, condition.1.end..=comment.1.start);
+                    output.output(ctx, comment);
+                }
+
+                for comment in comments.iter().skip(1) {
+                    output.output(ctx, comment);
                 }
 
                 if let Some(else_condition) = else_condition {
-                    output.output(ctx, else_condition);
+                    output.space().output(ctx, else_condition);
                 }
             }
             Statement::IfChain(r#if, items) => {

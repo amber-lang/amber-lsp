@@ -25,6 +25,8 @@ const WHITESPACE_BYTES: [u8; 4] = {
 
 pub trait SpanTextOutput<T> {
     fn output(&self, output: &mut Output, ctx: &mut FmtContext<T>);
+
+    fn span(&self) -> Span;
 }
 
 pub trait TextOutput<T> {
@@ -40,10 +42,18 @@ impl<D, T: TextOutput<D>> SpanTextOutput<D> for Spanned<T> {
     fn output(&self, output: &mut Output, ctx: &mut FmtContext<D>) {
         self.0.output(&self.1, output, ctx);
     }
+
+    fn span(&self) -> Span {
+        self.1
+    }
 }
 
 impl<D, T: TextOutput<D>> SpanTextOutput<D> for Box<Spanned<T>> {
     fn output(&self, output: &mut Output, ctx: &mut FmtContext<D>) {
         self.0.output(&self.1, output, ctx);
+    }
+
+    fn span(&self) -> Span {
+        self.1
     }
 }

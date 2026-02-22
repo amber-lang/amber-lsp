@@ -1,8 +1,11 @@
 use super::{INDENT, SpanTextOutput, WHITESPACE_BYTES};
-use crate::fragments::{CommentVariant, Fragment, Indentation};
+use crate::{
+    WHITESPACE,
+    fragments::{CommentVariant, Fragment, Indentation},
+};
 use amber_grammar::alpha040::GlobalStatement;
 use amber_types::token::Span;
-use std::{panic::Location, string::FromUtf8Error};
+use std::{ops::RangeBounds, panic::Location, string::FromUtf8Error};
 
 /// Formats the file.
 ///
@@ -12,10 +15,24 @@ pub fn format(
     items: &[(GlobalStatement, Span)],
     file_content: &str,
 ) -> Result<String, FormattingError> {
+    // eprintln!("{items:?}");
     let mut index = 0;
 
-    let mut output = Output::default();
-    let mut ctx = FmtContext { items, index };
+    let mut output = Output::new();
+    let consecutive_newlines = consecutive_newlines(file_content);
+    let source_newlines = file_content
+        .bytes()
+        .enumerate()
+        .filter_map(|(index, byte)| if byte == b'\n' { Some(index) } else { None })
+        .collect();
+
+    // eprintln!("{consecutive_newlines:?}");
+    let mut ctx = FmtContext {
+        items,
+        index,
+        consecutive_newlines,
+        source_newlines,
+    };
 
     while let Some(item) = items.get(index) {
         index += 1;
@@ -23,8 +40,45 @@ pub fn format(
         ctx.increment();
     }
 
-    eprintln!("{output:?}");
+    // eprintln!("{output:?}");
     output.format(file_content)
+}
+
+/// Index of newlines in the content only separated by whitepspace (ignoring the first newline in a consecutive sequence).
+fn consecutive_newlines(file_content: &str) -> Vec<usize> {
+    // amber-lsp parses by bytes, not by chars
+    let char_indices: Vec<u8> = file_content.bytes().collect();
+    let mut newlines = Vec::new();
+    let mut index = 0;
+
+    while index < char_indices.len() {
+        let character = char_indices.get(index).unwrap();
+        index += 1;
+
+        if *character != b'\n' {
+            continue;
+        }
+
+        // Finds subsequent newline chars
+        while index < char_indices.len() {
+            let character = char_indices.get(index).unwrap();
+            index += 1;
+
+            match *character {
+                b' ' | b'\t' | b'\r' => {
+                    continue;
+                }
+                b'\n' => {
+                    newlines.push(index - 1);
+                }
+                _ => {
+                    break;
+                }
+            }
+        }
+    }
+
+    newlines
 }
 
 /// Contains string fragments of the code ready for finial formatting into a string.
@@ -39,6 +93,10 @@ pub struct FmtContext<'a, T> {
     items: &'a [T],
     /// The location of the statement currently being formatted.
     index: usize,
+    /// The byte index of consecutive newlines in the source file.
+    consecutive_newlines: Vec<usize>,
+    /// Byte index of newlines in the source file.
+    source_newlines: Box<[usize]>,
 }
 
 impl<'a, T> FmtContext<'a, T> {
@@ -56,6 +114,22 @@ impl<'a, T> FmtContext<'a, T> {
     pub fn next_global(&self) -> Option<&T> {
         self.items.get(self.index.checked_add(1)?)
     }
+
+    pub fn allow_newline<R: RangeBounds<usize>>(&self, output: &mut Output, range: R) {
+        if self
+            .consecutive_newlines
+            .iter()
+            .any(|newline| range.contains(&(newline + 2)))
+        {
+            output.end_newline();
+        }
+    }
+
+    pub fn source_has_newline<R: RangeBounds<usize>>(&self, range: R) -> bool {
+        self.source_newlines
+            .iter()
+            .any(|newline| range.contains(newline))
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -69,6 +143,10 @@ pub enum FormattingError {
 }
 
 impl Output {
+    pub fn new() -> Self {
+        Self { buffer: Vec::new() }
+    }
+
     #[track_caller]
     pub(crate) fn debug_point(&mut self, info: &str) -> &mut Self {
         self.text(format!(
@@ -224,41 +302,22 @@ impl Output {
     fn format(self, file_content: &str) -> Result<String, FormattingError> {
         let mut text = String::new();
         let mut indentation = String::new();
+        let mut consecutive_newlines = 0;
 
         let mut iter = self.buffer.into_iter().peekable();
         while let Some(fragment) = iter.next() {
+            if let Fragment::Newline = fragment {
+                consecutive_newlines += 1;
+            } else {
+                consecutive_newlines = 0;
+            }
+
             match fragment {
                 Fragment::Space => text.push(' '),
                 Fragment::Newline => {
-                    // Don't add newline if comment is on sameline
-                    if let Some(Fragment::Comment {
-                        variant: _,
-                        text: _,
-                        start_index,
-                    }) = iter.peek()
-                    {
-                        let mut index = *start_index;
-                        let mut on_newline = false;
-
-                        while let Some(character) = file_content.as_bytes().get(index).cloned() {
-                            index -= 1;
-                            let character: char = character.into();
-
-                            if character == '\n' || character == '\r' {
-                                on_newline = true;
-                                break;
-                            }
-
-                            if ![' ', '\t', '/'].contains(&character) {
-                                break;
-                            }
-                        }
-
-                        if !on_newline {
-                            continue;
-                        }
+                    if consecutive_newlines > 2 {
+                        continue;
                     }
-
                     text.push('\n');
                     text.push_str(&indentation);
                 }
@@ -321,5 +380,31 @@ impl Output {
         }
 
         Ok(text)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn single_newline() {
+        let newlines = "Some\nText\nWith\n\nNewlines";
+        let consecutive_newlines = consecutive_newlines(newlines);
+        assert_eq!(consecutive_newlines.as_slice(), &[15]);
+    }
+
+    #[test]
+    fn multiple_newline() {
+        let newlines = "Some\nText\nWith\n\n\nNewlines\n\nMultiple";
+        let consecutive_newlines = consecutive_newlines(newlines);
+        assert_eq!(consecutive_newlines.as_slice(), &[15, 16, 26]);
+    }
+
+    #[test]
+    fn multiple_newline_whitespace() {
+        let newlines = "Some\nText\nWith\n  \n  \n  Newlines\n\t\nMultiple";
+        let consecutive_newlines = consecutive_newlines(newlines);
+        assert_eq!(consecutive_newlines.as_slice(), &[17, 20, 33]);
     }
 }
