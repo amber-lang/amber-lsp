@@ -1,5 +1,5 @@
 ---
-source: tests/analysis/alpha050.rs
+source: crates/server/tests/analysis/alpha050.rs
 expression: symbol_table.symbols
 ---
 {
@@ -145,7 +145,7 @@ expression: symbol_table.symbols
                 is_const: false,
             },
         ),
-        data_type: Text,
+        data_type: Int,
         is_definition: true,
         undefined: false,
         span: 108..109,
@@ -159,7 +159,7 @@ expression: symbol_table.symbols
                     (
                         FunctionArgument {
                             name: "a",
-                            data_type: Text,
+                            data_type: Int,
                             is_optional: true,
                             default_value_type: Some(
                                 Int,
@@ -174,7 +174,7 @@ expression: symbol_table.symbols
                 docs: None,
             },
         ),
-        data_type: Text,
+        data_type: Int,
         is_definition: false,
         undefined: false,
         span: 112..115,

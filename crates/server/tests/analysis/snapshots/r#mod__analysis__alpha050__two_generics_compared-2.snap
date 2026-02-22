@@ -1,13 +1,13 @@
 ---
-source: tests/analysis/alpha050.rs
+source: crates/server/tests/analysis/alpha050.rs
 expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_string(&generic_types)).collect::<Vec<String>>()"
 ---
 [
-    "fun max_value(a: Int | Num | Text | [Int | Num | Text], b: Int | Num | Text | [Int | Num | Text]): Int | Num | Text | [Int | Num | Text]",
-    "a: Int | Num | Text | [Int | Num | Text]",
-    "b: Int | Num | Text | [Int | Num | Text]",
-    "a: Int | Num | Text | [Int | Num | Text]",
-    "b: Int | Num | Text | [Int | Num | Text]",
-    "a: Int | Num | Text | [Int | Num | Text]",
-    "b: Int | Num | Text | [Int | Num | Text]",
+    "fun max_value(a: Int | Num | Text | [Num | Int | Text], b: Int | Num | Text | [Num | Int | Text]): Int | Num | Text | [Num | Int | Text]",
+    "a: Int | Num | Text | [Num | Int | Text]",
+    "b: Int | Num | Text | [Num | Int | Text]",
+    "a: Int | Num | Text | [Num | Int | Text]",
+    "b: Int | Num | Text | [Num | Int | Text]",
+    "a: Int | Num | Text | [Num | Int | Text]",
+    "b: Int | Num | Text | [Num | Int | Text]",
 ]

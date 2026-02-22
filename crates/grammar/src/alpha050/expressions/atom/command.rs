@@ -43,9 +43,7 @@ pub fn command_parser<'a>(
         .then(
             choice((
                 any()
-                    .filter(|c: &Token| {
-                        *c != T!["$"] && *c != T!["{"] && *c != T!["\\"] && *c != T!["-"]
-                    })
+                    .filter(|c: &Token| *c != T!["$"] && *c != T!["{"])
                     .map(|text| InterpolatedCommand::Text(text.to_string()))
                     .labelled("command string"),
                 interpolated,

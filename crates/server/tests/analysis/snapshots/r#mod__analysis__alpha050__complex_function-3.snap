@@ -1,5 +1,5 @@
 ---
-source: tests/analysis/alpha050.rs
+source: crates/server/tests/analysis/alpha050.rs
 expression: backend.files.errors
 ---
 {
@@ -10,5 +10,10 @@ expression: backend.files.errors
         FileVersion(
             1,
         ),
-    ): [],
+    ): [
+        (
+            "Expected type `Int`, found type `Text`",
+            116..122,
+        ),
+    ],
 }

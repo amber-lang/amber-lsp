@@ -1,0 +1,60 @@
+---
+source: crates/server/tests/grammar/alpha050.rs
+expression: "parse(&compiler.tokenize(r#\"\n    $ MY_VAR=1 \\\n     my_command $\n    \"#))"
+---
+(
+    Some(
+        [
+            (
+                Statement(
+                    (
+                        Expression(
+                            (
+                                Command(
+                                    [],
+                                    [
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            5..6,
+                                        ),
+                                        (
+                                            Text(
+                                                "MY_VAR=1 ",
+                                            ),
+                                            6..16,
+                                        ),
+                                        (
+                                            Text(
+                                                "\\",
+                                            ),
+                                            16..17,
+                                        ),
+                                        (
+                                            Text(
+                                                "\n     my_command ",
+                                            ),
+                                            17..34,
+                                        ),
+                                        (
+                                            Text(
+                                                "$",
+                                            ),
+                                            34..35,
+                                        ),
+                                    ],
+                                    [],
+                                ),
+                                5..35,
+                            ),
+                        ),
+                        5..35,
+                    ),
+                ),
+                5..35,
+            ),
+        ],
+    ),
+    [],
+)
