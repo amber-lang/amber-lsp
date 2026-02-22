@@ -12,7 +12,7 @@ use amber_types::{DataType, token::Span};
 type Gen = (GlobalStatement, Span);
 
 impl TextOutput<Gen> for GlobalStatement {
-    fn output(&self, _span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+    fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             GlobalStatement::Import(public, import, content, from, path) => {
                 if public.0 {
@@ -36,6 +36,12 @@ impl TextOutput<Gen> for GlobalStatement {
                     .is_some_and(|next| !matches!(next.0, GlobalStatement::Import(..)))
                 {
                     output.newline();
+                }
+
+                if let Some(next_global) = ctx.next_global()
+                    && matches!(next_global.0, GlobalStatement::Import(..))
+                {
+                    ctx.allow_newline(output, span.end..=next_global.1.start);
                 }
             }
             GlobalStatement::FunctionDefinition(

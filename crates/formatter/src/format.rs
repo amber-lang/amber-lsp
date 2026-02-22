@@ -16,8 +16,6 @@ pub fn format(
     file_content: &str,
 ) -> Result<String, FormattingError> {
     // eprintln!("{items:?}");
-    let mut index = 0;
-
     let mut output = Output::new();
     let consecutive_newlines = consecutive_newlines(file_content);
     let source_newlines = file_content
@@ -29,13 +27,12 @@ pub fn format(
     // eprintln!("{consecutive_newlines:?}");
     let mut ctx = FmtContext {
         items,
-        index,
+        index: 0,
         consecutive_newlines,
         source_newlines,
     };
 
-    while let Some(item) = items.get(index) {
-        index += 1;
+    for item in items {
         item.output(&mut output, &mut ctx);
         ctx.increment();
     }
@@ -119,7 +116,7 @@ impl<'a, T> FmtContext<'a, T> {
         if self
             .consecutive_newlines
             .iter()
-            .any(|newline| range.contains(&(newline + 2)))
+            .any(|newline| range.contains(&newline))
         {
             output.end_newline();
         }
