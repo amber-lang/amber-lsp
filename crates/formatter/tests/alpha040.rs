@@ -18,21 +18,31 @@ fn parse(data: &str) -> Vec<(GlobalStatement, Span)> {
 }
 
 /// Asserts that the input string matches the output string after formatting.
+///
+/// A newline is appended to output.
 fn test_format(input: &str, output: &str) {
     let items = parse(input);
     let formatted = format(&items, input).expect("Able to format amber file");
-    assert_eq!(formatted, output);
+    assert_eq!(formatted, format!("{output}\n"));
 }
 
 #[test]
 fn import_allow_newlines() {
-    let data = r#"import { function } from "std/array"
+    test_format(
+        r#"import { function } from "std/array"
 import { function } from "std/array"
 
 import { function } from "std/array"
-"#;
 
-    test_format(data, data);
+
+import { large } from "std/array""#,
+        r#"import { function } from "std/array"
+import { function } from "std/array"
+
+import { function } from "std/array"
+
+import { large } from "std/array""#,
+    );
 }
 
 #[test]
@@ -40,8 +50,7 @@ fn imports_singleline() {
     let input = r#"import { function } from "std/array" import { function } from "std/array" import { function } from "std/array""#;
     let output = r#"import { function } from "std/array"
 import { function } from "std/array"
-import { function } from "std/array"
-"#;
+import { function } from "std/array""#;
 
     test_format(input, output);
 }
@@ -50,8 +59,7 @@ import { function } from "std/array"
 fn imports_whitespace() {
     test_format(
         r#"import  {  function  }  from  "std/array"  "#,
-        r#"import { function } from "std/array"
-"#,
+        r#"import { function } from "std/array""#,
     );
 }
 
@@ -65,8 +73,7 @@ function
 from
 "std/array"
 "#,
-        r#"import { function } from "std/array"
-"#,
+        r#"import { function } from "std/array""#,
     );
 }
 
@@ -74,7 +81,35 @@ from
 fn imports_multifunction() {
     test_format(
         r#"import { function,other } from "std/array""#,
-        r#"import { function, other } from "std/array"
+        r#"import { function, other } from "std/array""#,
+    );
+}
+
+#[test]
+fn top_level() {
+    test_format(
+        r#"echo "abc" echo "123""#,
+        r#"echo "abc"
+echo "123""#,
+    );
+}
+
+#[test]
+fn top_level_newlines() {
+    test_format(
+        r#"echo "abc"
+echo "123"
+
+echo "123"
+
+
+echo "large"
 "#,
+        r#"echo "abc"
+echo "123"
+
+echo "123"
+
+echo "large""#,
     );
 }

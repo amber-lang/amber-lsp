@@ -154,6 +154,12 @@ impl TextOutput<Gen> for GlobalStatement {
             }
             GlobalStatement::Statement(statement) => {
                 output.output(ctx, statement).newline();
+
+                if let Some(next_global) = ctx.next_global()
+                    && matches!(next_global.0, GlobalStatement::Statement(..))
+                {
+                    ctx.allow_newline(output, span.end..=next_global.1.start);
+                }
             }
         }
     }
