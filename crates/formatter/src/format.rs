@@ -1,9 +1,8 @@
 use super::{INDENT, SpanTextOutput, WHITESPACE_BYTES};
 use crate::{
-    WHITESPACE,
+    TextOutput,
     fragments::{CommentVariant, Fragment, Indentation},
 };
-use amber_grammar::alpha040::GlobalStatement;
 use amber_types::token::Span;
 use std::{ops::RangeBounds, panic::Location, string::FromUtf8Error};
 
@@ -11,10 +10,13 @@ use std::{ops::RangeBounds, panic::Location, string::FromUtf8Error};
 ///
 /// items is the parsed file content.
 /// file_content is the raw file content.
-pub fn format(
-    items: &[(GlobalStatement, Span)],
+pub fn format<AmberStatement>(
+    items: &[(AmberStatement, Span)],
     file_content: &str,
-) -> Result<String, FormattingError> {
+) -> Result<String, FormattingError>
+where
+    AmberStatement: TextOutput<(AmberStatement, Span)>,
+{
     // eprintln!("{items:?}");
     let mut output = Output::new();
     let consecutive_newlines = consecutive_newlines(file_content);
