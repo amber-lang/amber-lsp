@@ -1,11 +1,19 @@
 use amber_grammar::{Grammar, LSPAnalysis as _, alpha040::AmberCompiler};
 
 fn main() {
-    // let data = include_str!("../../../run_coverage.ab");
-    let data = include_str!("../../../resources/alpha040/std/fs.ab");
+    let Some(file_path) = std::env::args().skip(1).next() else {
+        eprintln!("No files to format");
+        return;
+    };
+
+    let Ok(data) = std::fs::read_to_string(&file_path)
+        .inspect_err(|err| eprintln!("Unable to read file '{file_path}' err: {err}"))
+    else {
+        return;
+    };
 
     let amber_compiler = AmberCompiler::new();
-    let tokenize = amber_compiler.tokenize(data);
+    let tokenize = amber_compiler.tokenize(&data);
     let parse = amber_compiler.parse(&tokenize);
 
     match parse.ast {
@@ -14,7 +22,7 @@ fn main() {
         Grammar::Alpha040(items) => {
             if let Some(items) = items {
                 {
-                    let format = amber_fmt::format(&items, data).expect("Able to parse");
+                    let format = amber_fmt::format(&items, &data).expect("Able to parse");
                     println!("{format}");
                 }
             }
