@@ -5,6 +5,7 @@ use crate::types::{
     make_union_type,
     matches_type,
     DataType,
+    GenericsMap,
 };
 use crate::{
     import_symbol,
@@ -37,6 +38,27 @@ use super::stmnts::{
     analyze_stmnt,
     StmntAnalysisResult,
 };
+
+/// Walk a type tree and propagate any nested `Generic(id)` entries from `from` into `to`,
+/// marking them as inferred so they can be resolved at call sites.
+fn propagate_nested_generics(ty: &DataType, from: &GenericsMap, to: &GenericsMap) {
+    match ty {
+        DataType::Generic(id) => {
+            let inner_ty = from.get(*id);
+            to.constrain_generic_type(*id, inner_ty.clone());
+            to.mark_as_inferred(*id);
+            propagate_nested_generics(&inner_ty, from, to);
+        }
+        DataType::Array(inner) => propagate_nested_generics(inner, from, to),
+        DataType::Failable(inner) => propagate_nested_generics(inner, from, to),
+        DataType::Union(types) => {
+            types
+                .iter()
+                .for_each(|ty| propagate_nested_generics(ty, from, to));
+        }
+        _ => {}
+    }
+}
 
 #[tracing::instrument(skip_all)]
 pub async fn analyze_global_stmnt(
@@ -212,14 +234,22 @@ pub async fn analyze_global_stmnt(
                 });
 
                 new_generic_types.iter().for_each(|generic_id| {
+                    let ty = scoped_generics_map.get(*generic_id);
                     backend
                         .get_files()
                         .generic_types
-                        .constrain_generic_type(*generic_id, scoped_generics_map.get(*generic_id));
+                        .constrain_generic_type(*generic_id, ty.clone());
                     backend
                         .get_files()
                         .generic_types
                         .mark_as_inferred(*generic_id);
+                    // Also propagate any nested generics created during body analysis
+                    // (e.g. inner element-type generics from array indexing).
+                    propagate_nested_generics(
+                        &ty,
+                        &scoped_generics_map,
+                        &backend.get_files().generic_types,
+                    );
                 });
 
                 let mut inferred_return_type = match return_types.len() {

@@ -3,22 +3,20 @@ source: crates/server/tests/analysis/alpha050.rs
 expression: symbol_table.symbols
 ---
 {
-    5..=8: SymbolInfo {
-        name: "foo",
+    5..=16: SymbolInfo {
+        name: "array_first",
         symbol_type: Function(
             FunctionSymbol {
                 arguments: [
                     (
                         FunctionArgument {
-                            name: "a",
+                            name: "array",
                             data_type: Any,
-                            is_optional: true,
-                            default_value_type: Some(
-                                Int,
-                            ),
+                            is_optional: false,
+                            default_value_type: None,
                             is_ref: false,
                         },
-                        9..14,
+                        17..22,
                     ),
                 ],
                 is_public: false,
@@ -29,11 +27,11 @@ expression: symbol_table.symbols
         data_type: Any?,
         is_definition: true,
         undefined: false,
-        span: 5..8,
+        span: 5..16,
         contexts: [],
     },
-    9..=10: SymbolInfo {
-        name: "a",
+    17..=22: SymbolInfo {
+        name: "array",
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
@@ -42,11 +40,11 @@ expression: symbol_table.symbols
         data_type: Any,
         is_definition: true,
         undefined: false,
-        span: 9..10,
+        span: 17..22,
         contexts: [],
     },
-    26..=27: SymbolInfo {
-        name: "a",
+    48..=53: SymbolInfo {
+        name: "array",
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
@@ -55,7 +53,7 @@ expression: symbol_table.symbols
         data_type: Any,
         is_definition: false,
         undefined: false,
-        span: 26..27,
+        span: 48..53,
         contexts: [
             Function(
                 FunctionContext {
@@ -64,26 +62,7 @@ expression: symbol_table.symbols
             ),
         ],
     },
-    69..=70: SymbolInfo {
-        name: "a",
-        symbol_type: Variable(
-            VariableSymbol {
-                is_const: false,
-            },
-        ),
-        data_type: Any,
-        is_definition: false,
-        undefined: false,
-        span: 69..70,
-        contexts: [
-            Function(
-                FunctionContext {
-                    compiler_flags: [],
-                },
-            ),
-        ],
-    },
-    78..=79: SymbolInfo {
+    64..=65: SymbolInfo {
         name: "x",
         symbol_type: Variable(
             VariableSymbol {
@@ -93,25 +72,23 @@ expression: symbol_table.symbols
         data_type: Int,
         is_definition: true,
         undefined: false,
-        span: 78..79,
+        span: 64..65,
         contexts: [],
     },
-    82..=85: SymbolInfo {
-        name: "foo",
+    68..=79: SymbolInfo {
+        name: "array_first",
         symbol_type: Function(
             FunctionSymbol {
                 arguments: [
                     (
                         FunctionArgument {
-                            name: "a",
-                            data_type: Int,
-                            is_optional: true,
-                            default_value_type: Some(
-                                Int,
-                            ),
+                            name: "array",
+                            data_type: [Int],
+                            is_optional: false,
+                            default_value_type: None,
                             is_ref: false,
                         },
-                        86..103,
+                        80..87,
                     ),
                 ],
                 is_public: false,
@@ -122,10 +99,10 @@ expression: symbol_table.symbols
         data_type: Int?,
         is_definition: false,
         undefined: false,
-        span: 82..85,
+        span: 68..79,
         contexts: [],
     },
-    95..=99: SymbolInfo {
+    96..=100: SymbolInfo {
         name: "code",
         symbol_type: Variable(
             VariableSymbol {
@@ -135,10 +112,10 @@ expression: symbol_table.symbols
         data_type: Int,
         is_definition: true,
         undefined: false,
-        span: 95..99,
+        span: 96..100,
         contexts: [],
     },
-    108..=109: SymbolInfo {
+    109..=110: SymbolInfo {
         name: "y",
         symbol_type: Variable(
             VariableSymbol {
@@ -148,25 +125,23 @@ expression: symbol_table.symbols
         data_type: Int,
         is_definition: true,
         undefined: false,
-        span: 108..109,
+        span: 109..110,
         contexts: [],
     },
-    112..=115: SymbolInfo {
-        name: "foo",
+    113..=124: SymbolInfo {
+        name: "array_first",
         symbol_type: Function(
             FunctionSymbol {
                 arguments: [
                     (
                         FunctionArgument {
-                            name: "a",
-                            data_type: Int,
-                            is_optional: true,
-                            default_value_type: Some(
-                                Int,
-                            ),
+                            name: "array",
+                            data_type: [Int],
+                            is_optional: false,
+                            default_value_type: None,
                             is_ref: false,
                         },
-                        116..122,
+                        125..132,
                     ),
                 ],
                 is_public: false,
@@ -177,20 +152,7 @@ expression: symbol_table.symbols
         data_type: Int?,
         is_definition: false,
         undefined: false,
-        span: 112..115,
-        contexts: [],
-    },
-    131..=135: SymbolInfo {
-        name: "code",
-        symbol_type: Variable(
-            VariableSymbol {
-                is_const: false,
-            },
-        ),
-        data_type: Int,
-        is_definition: true,
-        undefined: false,
-        span: 131..135,
+        span: 113..124,
         contexts: [],
     },
 }

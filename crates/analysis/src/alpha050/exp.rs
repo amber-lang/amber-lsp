@@ -138,7 +138,33 @@ pub fn analyze_exp(
                     DataType::Array(inner) => {
                         match scoped_generic_types.deref_type(&index_result.exp_ty) {
                             DataType::Array(_) => array_result.exp_ty,
-                            _ => *inner,
+                            _ => match *inner {
+                                DataType::Any => {
+                                    // Create a parametric inner type so the element type
+                                    // can be resolved at call sites via generic unification.
+                                    let inner_id = scoped_generic_types.new_generic_id();
+                                    scoped_generic_types.constrain_generic_type(
+                                        id,
+                                        DataType::Array(Box::new(DataType::Generic(inner_id))),
+                                    );
+                                    DataType::Generic(inner_id)
+                                }
+                                other => other,
+                            },
+                        }
+                    }
+                    DataType::Any => {
+                        // The generic is unconstrained; we know it's used as an array.
+                        let inner_id = scoped_generic_types.new_generic_id();
+                        scoped_generic_types.constrain_generic_type(
+                            id,
+                            DataType::Array(Box::new(DataType::Generic(inner_id))),
+                        );
+                        match scoped_generic_types.deref_type(&index_result.exp_ty) {
+                            DataType::Array(_) => {
+                                DataType::Array(Box::new(DataType::Generic(inner_id)))
+                            }
+                            _ => DataType::Generic(inner_id),
                         }
                     }
                     _ => DataType::Null,
