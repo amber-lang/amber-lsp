@@ -86,7 +86,7 @@ pub fn analyze_exp(
             );
 
             is_propagating_failure |= result.is_propagating_failure;
-            return_types.extend(result.return_ty.clone());
+            return_types.extend(result.return_ty.iter().cloned());
 
             result
         }};
@@ -97,7 +97,7 @@ pub fn analyze_exp(
             let lhs_result = analyze_expr!($exp1, $exp1_type);
             let rhs_result = analyze_expr!($exp2, lhs_result.exp_ty.clone());
 
-            if let DataType::Generic(id) = lhs_result.exp_ty {
+            if let DataType::Generic(id) = lhs_result.exp_ty.clone() {
                 scoped_generic_types.constrain_generic_type(id, rhs_result.exp_ty.clone());
             }
 
@@ -528,7 +528,7 @@ pub fn analyze_exp(
             let mut left_constrain_ty =
                 get_constrain_ty_for_compare(lhs.exp_ty.clone(), scoped_generic_types);
 
-            let rhs = analyze_expr!(exp2, lhs.exp_ty.clone());
+            let rhs = analyze_expr!(exp2, left_constrain_ty.clone());
 
             let right_constrain_ty = get_constrain_ty_for_compare(rhs.exp_ty, scoped_generic_types);
 
