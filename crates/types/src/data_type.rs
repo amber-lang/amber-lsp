@@ -110,7 +110,33 @@ impl GenericsMap {
                 self.constrain_generic_type(id, constraint);
             }
             ty if self.is_more_or_equally_specific(&ty, &constraint) => {
+                self.unify_inner_generics(&ty, &constraint);
                 self.map.insert(id, constraint);
+            }
+            _ => {}
+        }
+    }
+
+    /// When replacing a type that contains generics (e.g. `Array(Generic(inner_id))`) with
+    /// a more specific type (e.g. `Array(Int)`), also constrain the nested generics so
+    /// parametric return types can be resolved at call sites.
+    fn unify_inner_generics(&self, current: &DataType, new: &DataType) {
+        match (current, new) {
+            (DataType::Array(curr_inner), DataType::Array(new_inner)) => {
+                self.unify_inner_generics(curr_inner, new_inner);
+            }
+            (DataType::Failable(curr_inner), DataType::Failable(new_inner)) => {
+                self.unify_inner_generics(curr_inner, new_inner);
+            }
+            (DataType::Union(curr_types), DataType::Union(new_types))
+                if curr_types.len() == new_types.len() =>
+            {
+                for (c, n) in curr_types.iter().zip(new_types.iter()) {
+                    self.unify_inner_generics(c, n);
+                }
+            }
+            (DataType::Generic(id), new_ty) if !matches!(new_ty, DataType::Generic(_)) => {
+                self.constrain_generic_type(*id, new_ty.clone());
             }
             _ => {}
         }

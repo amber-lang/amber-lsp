@@ -469,7 +469,7 @@ pub fn analyze_stmnt(
                 );
 
                 return StmntAnalysisResult {
-                    is_propagating_failure: exp.is_propagating_failure,
+                    is_propagating_failure: true,
                     return_ty: exp.return_ty,
                 };
             }

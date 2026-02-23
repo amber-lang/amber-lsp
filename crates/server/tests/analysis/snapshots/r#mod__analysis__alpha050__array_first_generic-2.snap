@@ -3,14 +3,12 @@ source: crates/server/tests/analysis/alpha050.rs
 expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_string(&generic_types)).collect::<Vec<String>>()"
 ---
 [
-    "fun foo(a?: Int): Int?",
-    "a: Int",
-    "a: Int",
-    "a: Int",
+    "fun array_first(array: [Any]): Any?",
+    "array: [Any]",
+    "array: [Any]",
     "x: Int",
-    "fun foo(a?: Int): Int?",
+    "fun array_first(array: [Int]): Int?",
     "code: Int",
     "y: Int",
-    "fun foo(a?: Int): Int?",
-    "code: Int",
+    "fun array_first(array: [Int]): Int?",
 ]
