@@ -21,6 +21,15 @@ use amber_types::AmberVersion;
 
 pub const STDLIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../resources/");
 
+/// Environment variable that overrides the base directory where stdlib and
+/// builtin resource files are saved.  When set, resources are written to
+/// `$AMBER_LSP_RESOURCES_DIR/{alpha_version}/` instead of the default
+/// `<exe_dir>/amber-lsp-resources/{alpha_version}/`.
+///
+/// This is useful on operating systems that sandbox the application and
+/// prevent writing next to the executable.
+const RESOURCES_DIR_ENV: &str = "AMBER_LSP_RESOURCES_DIR";
+
 fn get_stdlib_dir(amber_version: AmberVersion) -> Result<PathBuf, std::io::Error> {
     let amber_subdir = match amber_version {
         AmberVersion::Alpha034 => "alpha034",
@@ -29,12 +38,16 @@ fn get_stdlib_dir(amber_version: AmberVersion) -> Result<PathBuf, std::io::Error
         AmberVersion::Alpha050 => "alpha050",
     };
 
-    Ok(current_exe()?
-        .parent()
-        .unwrap()
-        .to_path_buf()
-        .join("amber-lsp-resources")
-        .join(amber_subdir))
+    let base_dir = match std::env::var(RESOURCES_DIR_ENV) {
+        Ok(dir) if !dir.is_empty() => PathBuf::from(dir),
+        _ => current_exe()?
+            .parent()
+            .unwrap()
+            .to_path_buf()
+            .join("amber-lsp-resources"),
+    };
+
+    Ok(base_dir.join(amber_subdir))
 }
 
 #[tracing::instrument]
