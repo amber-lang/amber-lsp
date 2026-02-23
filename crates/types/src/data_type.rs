@@ -128,6 +128,13 @@ impl GenericsMap {
             (DataType::Failable(curr_inner), DataType::Failable(new_inner)) => {
                 self.unify_inner_generics(curr_inner, new_inner);
             }
+            (DataType::Union(curr_types), DataType::Union(new_types))
+                if curr_types.len() == new_types.len() =>
+            {
+                for (c, n) in curr_types.iter().zip(new_types.iter()) {
+                    self.unify_inner_generics(c, n);
+                }
+            }
             (DataType::Generic(id), new_ty) if !matches!(new_ty, DataType::Generic(_)) => {
                 self.constrain_generic_type(*id, new_ty.clone());
             }
