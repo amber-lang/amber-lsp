@@ -73,78 +73,88 @@ pub fn analyze_exp(
     let mut return_types = vec![];
     let mut is_propagating_failure = false;
 
-    let ty: DataType = match exp {
-        Expression::ArrayIndex(exp, index) => {
-            let ExpAnalysisResult {
-                exp_ty: array_ty,
-                return_ty,
-                is_propagating_failure: prop,
-            } = analyze_exp(
+    macro_rules! analyze_expr {
+        ($exp:expr, $exp_type:expr) => {{
+            let result = analyze_exp(
                 file_id,
                 file_version,
-                exp,
-                DataType::Array(Box::new(DataType::Any)),
+                $exp,
+                $exp_type,
                 files,
                 scoped_generic_types,
                 contexts,
             );
 
-            is_propagating_failure |= prop;
-            return_types.extend(return_ty);
+            is_propagating_failure |= result.is_propagating_failure;
+            return_types.extend(result.return_ty.iter().cloned());
 
-            let ExpAnalysisResult {
-                return_ty: index_return_ty,
-                is_propagating_failure: prop,
-                exp_ty: index_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
+            result
+        }};
+    }
+
+    macro_rules! analyze_binop_codep {
+        ($exp1:expr, $exp1_type:expr, $exp2:expr) => {{
+            let lhs_result = analyze_expr!($exp1, $exp1_type);
+            let rhs_result = analyze_expr!($exp2, lhs_result.exp_ty.clone());
+
+            if let DataType::Generic(id) = lhs_result.exp_ty.clone() {
+                scoped_generic_types.constrain_generic_type(id, rhs_result.exp_ty.clone());
+            }
+
+            if !matches_type(
+                &rhs_result.exp_ty,
+                &lhs_result.exp_ty,
+                &scoped_generic_types,
+            ) {
+                files.report_error(
+                    &file,
+                    &format!(
+                        "Expected type {}, found type {}",
+                        rhs_result.exp_ty.to_string(&scoped_generic_types),
+                        lhs_result.exp_ty.to_string(&scoped_generic_types),
+                    ),
+                    $exp1.1,
+                );
+            }
+
+            lhs_result.exp_ty
+        }};
+    }
+
+    let ty: DataType = match exp {
+        Expression::ArrayIndex(exp, index) => {
+            let array_result = analyze_expr!(exp, DataType::Array(Box::new(DataType::Any)));
+
+            let index_result = analyze_expr!(
                 index,
                 DataType::Union(vec![
                     DataType::Int,
                     DataType::Array(Box::new(DataType::Int)),
-                ]),
-                files,
-                scoped_generic_types,
-                contexts,
+                ])
             );
 
-            is_propagating_failure |= prop;
-            return_types.extend(index_return_ty);
-
-            match array_ty {
+            match array_result.exp_ty {
                 DataType::Generic(id) => match scoped_generic_types.get_recursive(id) {
-                    DataType::Array(inner) => match scoped_generic_types.deref_type(&index_ty) {
-                        DataType::Array(_) => array_ty,
-                        _ => *inner,
-                    },
+                    DataType::Array(inner) => {
+                        match scoped_generic_types.deref_type(&index_result.exp_ty) {
+                            DataType::Array(_) => array_result.exp_ty,
+                            _ => *inner,
+                        }
+                    }
                     _ => DataType::Null,
                 },
-                DataType::Array(ref inner) => match scoped_generic_types.deref_type(&index_ty) {
-                    DataType::Array(_) => array_ty,
-                    _ => *inner.clone(),
-                },
+                DataType::Array(ref inner) => {
+                    match scoped_generic_types.deref_type(&index_result.exp_ty) {
+                        DataType::Array(_) => array_result.exp_ty,
+                        _ => *inner.clone(),
+                    }
+                }
                 _ => DataType::Null,
             }
         }
         Expression::Exit(_, exit_code) => {
             if let Some(exit_code) = exit_code {
-                let ExpAnalysisResult {
-                    return_ty,
-                    is_propagating_failure: prop,
-                    ..
-                } = analyze_exp(
-                    file_id,
-                    file_version,
-                    exit_code,
-                    DataType::Int,
-                    files,
-                    scoped_generic_types,
-                    contexts,
-                );
-
-                is_propagating_failure |= prop;
-                return_types.extend(return_ty);
+                analyze_expr!(exit_code, DataType::Int);
             }
 
             DataType::Null
@@ -182,20 +192,6 @@ pub fn analyze_exp(
 
             args.iter().enumerate().for_each(|(idx, arg)| {
                 if let Some((ty, _, is_ref, _)) = expected_types.get(idx) {
-                    let ExpAnalysisResult {
-                        is_propagating_failure: propagates_failure,
-                        return_ty,
-                        exp_ty,
-                    } = analyze_exp(
-                        file_id,
-                        file_version,
-                        arg,
-                        ty.clone(),
-                        files,
-                        scoped_generic_types,
-                        contexts,
-                    );
-
                     match (is_ref, arg.0.clone()) {
                         (true, Expression::Var((name, span))) => {
                             if let Some(var) =
@@ -222,11 +218,10 @@ pub fn analyze_exp(
                         _ => {}
                     }
 
-                    return_types.extend(return_ty);
-                    is_propagating_failure |= propagates_failure;
+                    let arg_result = analyze_expr!(arg, ty.clone());
 
                     if let DataType::Generic(id) = ty {
-                        scoped_generic_types.constrain_generic_type(*id, exp_ty.clone());
+                        scoped_generic_types.constrain_generic_type(*id, arg_result.exp_ty.clone());
                     }
                 } else {
                     files.report_error(
@@ -400,13 +395,7 @@ pub fn analyze_exp(
             }
         }
         Expression::Add(exp1, exp2) => {
-            let ExpAnalysisResult {
-                exp_ty: ty,
-                return_ty: return1,
-                is_propagating_failure: is_prop1,
-            } = analyze_exp(
-                file_id,
-                file_version,
+            analyze_binop_codep!(
                 exp1,
                 DataType::Union(vec![
                     DataType::Number,
@@ -418,79 +407,11 @@ pub fn analyze_exp(
                         DataType::Text,
                     ]))),
                 ]),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: is_prop2,
-                exp_ty: right_hand_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                ty.clone(),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= is_prop1 || is_prop2;
-
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            if let DataType::Generic(id) = ty {
-                scoped_generic_types.constrain_generic_type(id, right_hand_ty.clone());
-            }
-
-            if !matches_type(&right_hand_ty, &ty, scoped_generic_types) {
-                files.report_error(
-                    &file,
-                    &format!(
-                        "Expected type {}, found type {}",
-                        right_hand_ty.to_string(scoped_generic_types),
-                        ty.to_string(scoped_generic_types),
-                    ),
-                    exp1.1,
-                );
-            }
-
-            ty
+                exp2
+            )
         }
-        Expression::And(exp1, _, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Boolean,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                DataType::Boolean,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2;
-
-            return_types.extend(return1);
-            return_types.extend(return2);
+        Expression::And(exp1, _, exp2) | Expression::Or(exp1, _, exp2) => {
+            analyze_binop_codep!(exp1, DataType::Boolean, exp2);
 
             DataType::Boolean
         }
@@ -498,24 +419,12 @@ pub fn analyze_exp(
             let types: Vec<DataType> = elements
                 .iter()
                 .map(|exp| {
-                    let ExpAnalysisResult {
-                        exp_ty: ty,
-                        return_ty,
-                        is_propagating_failure: prop,
-                    } = analyze_exp(
-                        file_id,
-                        file_version,
+                    let result = analyze_expr!(
                         exp,
-                        DataType::Union(vec![DataType::Number, DataType::Int, DataType::Text]),
-                        files,
-                        scoped_generic_types,
-                        contexts,
+                        DataType::Union(vec![DataType::Number, DataType::Int, DataType::Text])
                     );
 
-                    is_propagating_failure |= prop;
-                    return_types.extend(return_ty);
-
-                    ty
+                    result.exp_ty
                 })
                 .collect();
 
@@ -532,44 +441,14 @@ pub fn analyze_exp(
             DataType::Array(Box::new(array_type))
         }
         Expression::Cast(exp, _, (ty, _)) => {
-            let ExpAnalysisResult {
-                return_ty,
-                is_propagating_failure: prop,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp,
-                DataType::Any,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop;
-            return_types.extend(return_ty);
+            analyze_expr!(exp, DataType::Any);
 
             ty.clone()
         }
         Expression::Command(modifiers, inter_cmd, failable_handlers) => {
             inter_cmd.iter().for_each(|(inter_cmd, _)| {
                 if let InterpolatedCommand::Expression(exp) = inter_cmd {
-                    let ExpAnalysisResult {
-                        return_ty,
-                        is_propagating_failure: is_prop,
-                        ..
-                    } = analyze_exp(
-                        file_id,
-                        file_version,
-                        exp,
-                        DataType::Any,
-                        files,
-                        scoped_generic_types,
-                        contexts,
-                    );
-
-                    is_propagating_failure |= is_prop;
-                    return_types.extend(return_ty);
+                    analyze_expr!(exp, DataType::Any);
                 }
             });
 
@@ -612,86 +491,26 @@ pub fn analyze_exp(
 
             DataType::Text
         }
-        Expression::Divide(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                exp_ty: exp_ty1,
-            } = analyze_exp(
-                file_id,
-                file_version,
+        Expression::Multiply(exp1, exp2)
+        | Expression::Divide(exp1, exp2)
+        | Expression::Modulo(exp1, exp2)
+        | Expression::Subtract(exp1, exp2) => {
+            analyze_binop_codep!(
                 exp1,
                 DataType::Union([DataType::Number, DataType::Int].to_vec()),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                exp_ty: exp_ty2,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                DataType::Union([DataType::Number, DataType::Int].to_vec()),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            if exp_ty1 == DataType::Number || exp_ty2 == DataType::Number {
-                DataType::Number
-            } else {
-                DataType::Int
-            }
+                exp2
+            )
         }
-        Expression::Eq(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Any,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                DataType::Any,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
+        Expression::Eq(exp1, exp2) | Expression::Neq(exp1, exp2) => {
+            analyze_binop_codep!(exp1, DataType::Any, exp2);
 
             DataType::Boolean
         }
-        Expression::Ge(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                exp_ty: left_hand_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
+        Expression::Ge(exp1, exp2)
+        | Expression::Gt(exp1, exp2)
+        | Expression::Le(exp1, exp2)
+        | Expression::Lt(exp1, exp2) => {
+            let lhs = analyze_expr!(
                 exp1,
                 DataType::Union(
                     [
@@ -703,36 +522,19 @@ pub fn analyze_exp(
                         ))),
                     ]
                     .to_vec(),
-                ),
-                files,
-                scoped_generic_types,
-                contexts,
+                )
             );
 
             let mut left_constrain_ty =
-                get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+                get_constrain_ty_for_compare(lhs.exp_ty.clone(), scoped_generic_types);
 
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                exp_ty: right_hand_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                left_constrain_ty.clone(),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
+            let rhs = analyze_expr!(exp2, left_constrain_ty.clone());
 
-            let right_constrain_ty =
-                get_constrain_ty_for_compare(right_hand_ty, scoped_generic_types);
+            let right_constrain_ty = get_constrain_ty_for_compare(rhs.exp_ty, scoped_generic_types);
 
-            if let DataType::Generic(id) = left_hand_ty {
+            if let DataType::Generic(id) = lhs.exp_ty.clone() {
                 scoped_generic_types.constrain_generic_type(id, right_constrain_ty.clone());
-                left_constrain_ty =
-                    get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
+                left_constrain_ty = get_constrain_ty_for_compare(lhs.exp_ty, scoped_generic_types);
             }
 
             if !matches_type(
@@ -750,615 +552,48 @@ pub fn analyze_exp(
                     exp1.1,
                 );
             }
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            DataType::Boolean
-        }
-        Expression::Gt(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                exp_ty: left_hand_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Union(
-                    [
-                        DataType::Number,
-                        DataType::Int,
-                        DataType::Text,
-                        DataType::Array(Box::new(DataType::Union(
-                            [DataType::Number, DataType::Int, DataType::Text].to_vec(),
-                        ))),
-                    ]
-                    .to_vec(),
-                ),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            let mut left_constrain_ty =
-                get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
-
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                exp_ty: right_hand_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                left_constrain_ty.clone(),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            let right_constrain_ty =
-                get_constrain_ty_for_compare(right_hand_ty, scoped_generic_types);
-
-            if let DataType::Generic(id) = left_hand_ty {
-                scoped_generic_types.constrain_generic_type(id, right_constrain_ty.clone());
-                left_constrain_ty =
-                    get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
-            }
-
-            if !matches_type(
-                &right_constrain_ty,
-                &left_constrain_ty,
-                scoped_generic_types,
-            ) {
-                files.report_error(
-                    &file,
-                    &format!(
-                        "Expected type {}, found type {}",
-                        right_constrain_ty.to_string(scoped_generic_types),
-                        left_constrain_ty.to_string(scoped_generic_types),
-                    ),
-                    exp1.1,
-                );
-            }
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
 
             DataType::Boolean
         }
         Expression::Is(exp, _, _) => {
-            let ExpAnalysisResult {
-                return_ty,
-                is_propagating_failure: prop,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp,
-                DataType::Any,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop;
-            return_types.extend(return_ty);
+            analyze_expr!(exp, DataType::Any);
 
             DataType::Boolean
-        }
-        Expression::Le(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                exp_ty: left_hand_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Union(
-                    [
-                        DataType::Number,
-                        DataType::Int,
-                        DataType::Text,
-                        DataType::Array(Box::new(DataType::Union(
-                            [DataType::Number, DataType::Int, DataType::Text].to_vec(),
-                        ))),
-                    ]
-                    .to_vec(),
-                ),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            let mut left_constrain_ty =
-                get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
-
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                exp_ty: right_hand_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                left_constrain_ty.clone(),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            let right_constrain_ty =
-                get_constrain_ty_for_compare(right_hand_ty, scoped_generic_types);
-
-            if let DataType::Generic(id) = left_hand_ty {
-                scoped_generic_types.constrain_generic_type(id, right_constrain_ty.clone());
-                left_constrain_ty =
-                    get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
-            }
-
-            if !matches_type(
-                &right_constrain_ty,
-                &left_constrain_ty,
-                scoped_generic_types,
-            ) {
-                files.report_error(
-                    &file,
-                    &format!(
-                        "Expected type {}, found type {}",
-                        right_constrain_ty.to_string(scoped_generic_types),
-                        left_constrain_ty.to_string(scoped_generic_types),
-                    ),
-                    exp1.1,
-                );
-            }
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            DataType::Boolean
-        }
-        Expression::Lt(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                exp_ty: left_hand_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Union(
-                    [
-                        DataType::Number,
-                        DataType::Int,
-                        DataType::Text,
-                        DataType::Array(Box::new(DataType::Union(
-                            [DataType::Number, DataType::Int, DataType::Text].to_vec(),
-                        ))),
-                    ]
-                    .to_vec(),
-                ),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            let mut left_constrain_ty =
-                get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
-
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                exp_ty: right_hand_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                left_constrain_ty.clone(),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            let right_constrain_ty =
-                get_constrain_ty_for_compare(right_hand_ty, scoped_generic_types);
-
-            if let DataType::Generic(id) = left_hand_ty {
-                scoped_generic_types.constrain_generic_type(id, right_constrain_ty.clone());
-                left_constrain_ty =
-                    get_constrain_ty_for_compare(left_hand_ty.clone(), scoped_generic_types);
-            }
-
-            if !matches_type(
-                &right_constrain_ty,
-                &left_constrain_ty,
-                scoped_generic_types,
-            ) {
-                files.report_error(
-                    &file,
-                    &format!(
-                        "Expected type {}, found type {}",
-                        right_constrain_ty.to_string(scoped_generic_types),
-                        left_constrain_ty.to_string(scoped_generic_types),
-                    ),
-                    exp1.1,
-                );
-            }
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            DataType::Boolean
-        }
-        Expression::Modulo(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                exp_ty: exp_ty1,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Union([DataType::Number, DataType::Int].to_vec()),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                exp_ty: exp_ty2,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                DataType::Union([DataType::Number, DataType::Int].to_vec()),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            if exp_ty1 == DataType::Number || exp_ty2 == DataType::Number {
-                DataType::Number
-            } else {
-                DataType::Int
-            }
-        }
-        Expression::Multiply(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                exp_ty: exp_ty1,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Union([DataType::Number, DataType::Int].to_vec()),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                exp_ty: exp_ty2,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                DataType::Union([DataType::Number, DataType::Int].to_vec()),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            if exp_ty1 == DataType::Number || exp_ty2 == DataType::Number {
-                DataType::Number
-            } else {
-                DataType::Int
-            }
         }
         Expression::Nameof(_, exp) => {
-            let ExpAnalysisResult {
-                return_ty,
-                is_propagating_failure: prop,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp,
-                DataType::Any,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop;
-            return_types.extend(return_ty);
+            analyze_expr!(exp, DataType::Any);
 
             DataType::Text
         }
         Expression::Neg(_, exp) => {
-            let ExpAnalysisResult {
-                return_ty,
-                is_propagating_failure: prop,
-                exp_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
+            analyze_expr!(
                 exp,
-                DataType::Union([DataType::Number, DataType::Int].to_vec()),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop;
-            return_types.extend(return_ty);
-
-            exp_ty
-        }
-        Expression::Neq(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Any,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                DataType::Any,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            DataType::Boolean
+                DataType::Union([DataType::Number, DataType::Int].to_vec())
+            )
+            .exp_ty
         }
         Expression::Not(_, exp) => {
-            let ExpAnalysisResult {
-                return_ty,
-                is_propagating_failure: prop,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp,
-                DataType::Boolean,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop;
-            return_types.extend(return_ty);
+            analyze_expr!(exp, DataType::Boolean);
 
             DataType::Boolean
         }
-        Expression::Or(exp1, _, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Boolean,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                DataType::Boolean,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            DataType::Boolean
-        }
-        Expression::Parentheses(exp) => {
-            let ExpAnalysisResult {
-                return_ty,
-                is_propagating_failure: prop,
-                exp_ty,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp,
-                DataType::Any,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop;
-            return_types.extend(return_ty);
-
-            exp_ty
-        }
+        Expression::Parentheses(exp) => analyze_expr!(exp, DataType::Any).exp_ty,
         Expression::Range(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Int,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                DataType::Int,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
+            analyze_binop_codep!(exp1, DataType::Int, exp2);
 
             DataType::Array(Box::new(DataType::Int))
         }
-        Expression::Subtract(exp1, exp2) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                exp_ty: exp_ty1,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Union([DataType::Number, DataType::Int].to_vec()),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                return_ty: return2,
-                is_propagating_failure: prop2,
-                exp_ty: exp_ty2,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                DataType::Union([DataType::Number, DataType::Int].to_vec()),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2;
-            return_types.extend(return1);
-            return_types.extend(return2);
-
-            if exp_ty1 == DataType::Number || exp_ty2 == DataType::Number {
-                DataType::Number
-            } else {
-                DataType::Int
-            }
-        }
         Expression::Ternary(exp1, _, exp2, _, exp3) => {
-            let ExpAnalysisResult {
-                return_ty: return1,
-                is_propagating_failure: prop1,
-                ..
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp1,
-                DataType::Boolean,
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                exp_ty: if_true,
-                return_ty: return2,
-                is_propagating_failure: prop2,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp2,
-                expected_type.clone(),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-            let ExpAnalysisResult {
-                exp_ty: if_false,
-                return_ty: return3,
-                is_propagating_failure: prop3,
-            } = analyze_exp(
-                file_id,
-                file_version,
-                exp3,
-                expected_type.clone(),
-                files,
-                scoped_generic_types,
-                contexts,
-            );
-
-            is_propagating_failure |= prop1 || prop2 || prop3;
-            return_types.extend(return1);
-            return_types.extend(return2);
-            return_types.extend(return3);
+            analyze_expr!(exp1, DataType::Boolean);
+            let if_true = analyze_expr!(exp2, expected_type.clone()).exp_ty;
+            let if_false = analyze_expr!(exp3, expected_type.clone()).exp_ty;
 
             make_union_type(vec![if_true, if_false])
         }
         Expression::Text(int_text) => {
             int_text.iter().for_each(|(text, _)| {
                 if let InterpolatedText::Expression(exp) = text {
-                    let ExpAnalysisResult {
-                        return_ty,
-                        is_propagating_failure: prop,
-                        ..
-                    } = analyze_exp(
-                        file_id,
-                        file_version,
-                        exp,
-                        DataType::Any,
-                        files,
-                        scoped_generic_types,
-                        contexts,
-                    );
-
-                    is_propagating_failure |= prop;
-                    return_types.extend(return_ty);
+                    analyze_expr!(exp, DataType::Any);
                 }
             });
 
@@ -1432,10 +667,6 @@ fn get_constrain_ty_for_compare(
         }
         DataType::Int => DataType::Union(vec![DataType::Int, DataType::Number]),
         DataType::Number => DataType::Union(vec![DataType::Int, DataType::Number]),
-        DataType::Array(ty) => DataType::Array(Box::new(get_constrain_ty_for_compare(
-            *ty,
-            scoped_generic_types,
-        ))),
         DataType::Union(types) => DataType::Union(
             types
                 .iter()

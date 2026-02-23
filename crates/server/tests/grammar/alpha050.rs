@@ -260,6 +260,15 @@ fn test_lexer_command_escapes() {
         compiler.tokenize(r#"$echo\ with\ spaces$"#)
     );
     assert_debug_snapshot!("command_backslash", compiler.tokenize(r#"$test\n$"#));
+    assert_debug_snapshot!(
+        "command_new_line",
+        parse(&compiler.tokenize(
+            r#"
+    $ MY_VAR=1 \
+     my_command $
+    "#
+        ))
+    );
 }
 
 #[test]
