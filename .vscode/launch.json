@@ -20,7 +20,8 @@
           "<node_internals>/**/*.js"
         ],
         "env": {
-          "SERVER_PATH": "${workspaceFolder}/target/release/amber-lsp"
+          "SERVER_PATH": "${workspaceFolder}/target/release/amber-lsp",
+          "AMBER_LSP_RESOURCES_DIR": ""
         }
       },
     ],
