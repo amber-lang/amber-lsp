@@ -8,8 +8,12 @@ pub mod version;
 
 // Re-export commonly used types
 pub use data_type::{
+    matches_type_pure,
     DataType,
     GenericsMap,
+    GenericsSnapshot,
+    LocalGenericsAllocator,
+    PureGenericsMap,
 };
 pub use token::{
     Spanned,

@@ -185,7 +185,7 @@ pub struct SymbolLocation {
 /// `references` map contains references to each symbol.
 ///
 /// `symbols` range map contains information about symbols in the document.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SymbolTable {
     pub symbols: RangeInclusiveMap<usize, SymbolInfo>,
     pub definitions: HashMap<String, RangeInclusiveMap<usize, SymbolLocation>>,
