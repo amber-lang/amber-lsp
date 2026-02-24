@@ -6,6 +6,7 @@
 //! Run with: `cargo bench -p amber_analysis`
 
 use std::collections::HashMap;
+use std::time::Duration;
 
 use criterion::{
     black_box,
@@ -132,6 +133,8 @@ fn bench_parse(c: &mut Criterion) {
     let all_stdlib = all_stdlib_combined();
 
     let mut group = c.benchmark_group("parse");
+    group.sample_size(10);
+    group.warm_up_time(Duration::from_secs(3));
 
     group.bench_with_input(
         BenchmarkId::new("tokenize_and_parse", "std/text.ab (312 lines)"),
@@ -198,6 +201,8 @@ fn bench_salsa_cold(c: &mut Criterion) {
     let all_stdlib = all_stdlib_combined();
 
     let mut group = c.benchmark_group("salsa_cold_analysis");
+    group.sample_size(10);
+    group.warm_up_time(Duration::from_secs(3));
 
     group.bench_function("std/text.ab (312 lines)", |b| {
         b.iter_with_setup(
@@ -227,6 +232,8 @@ fn bench_salsa_incremental(c: &mut Criterion) {
     let all_stdlib = all_stdlib_combined();
 
     let mut group = c.benchmark_group("salsa_incremental_reanalysis");
+    group.sample_size(10);
+    group.warm_up_time(Duration::from_secs(3));
 
     // Benchmark: modify the file (append a function) and re-analyze.
     // Setup performs the cold analysis; the measured portion is the re-analysis.
@@ -279,6 +286,8 @@ fn bench_end_to_end(c: &mut Criterion) {
     let all_stdlib = all_stdlib_combined();
 
     let mut group = c.benchmark_group("end_to_end_parse_and_analyze");
+    group.sample_size(10);
+    group.warm_up_time(Duration::from_secs(3));
 
     // Pure pipeline: parse + analyze_global_pure (no Salsa overhead)
     group.bench_function("pure: all_stdlib (~960 lines)", |b| {
