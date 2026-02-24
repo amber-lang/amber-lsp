@@ -83,7 +83,6 @@ impl TextOutput<Gen> for IterLoopVars {
 
 impl TextOutput<Gen> for Block {
     fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
-        // output.debug_point("Block").span(span);
         match self {
             Block::Block(modifiers, statements) => {
                 output.char('{').increase_indentation().end_newline();
@@ -135,11 +134,7 @@ impl TextOutput<Gen> for IfCondition {
     fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             IfCondition::IfCondition(condition, block) => {
-                output
-                    .output(ctx, condition)
-                    .space()
-                    .output(ctx, block)
-                    .newline();
+                output.output(ctx, condition).space().end_output(ctx, block)
             }
             IfCondition::InlineIfCondition(condition, statement) => {
                 output

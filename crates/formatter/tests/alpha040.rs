@@ -113,3 +113,15 @@ echo "123"
 echo "large""#,
     );
 }
+
+#[test]
+fn if_spacing() {
+    test_format(
+        r#"if true {
+    echo "a"
+}"#,
+        r#"if true {
+    echo "a"
+}"#,
+    );
+}
