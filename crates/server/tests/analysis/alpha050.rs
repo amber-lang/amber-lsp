@@ -681,8 +681,9 @@ set_first([1, 2, 3], 42)
     let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
     let generic_types = backend.files.generic_types.clone();
 
-    // The generic parameter 'arr' should be constrained to [Any]
-    // and 'value' should remain generic
+    // In symbol_table.symbols the definition of set_first shows generic
+    // params 'arr: [Any]' and 'value: Any', but at the call site
+    // set_first([1, 2, 3], 42) they are constrained to [Int] and Int.
     assert_debug_snapshot!(symbol_table.symbols);
     assert_debug_snapshot!(symbol_table
         .symbols

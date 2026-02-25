@@ -958,7 +958,7 @@ pub fn analyze_stmnt(
                 }
             };
 
-            analyze_exp(
+            let index_analysis = analyze_exp(
                 file_id,
                 file_version,
                 index_exp,
@@ -996,8 +996,13 @@ pub fn analyze_stmnt(
             );
 
             StmntAnalysisResult {
-                is_propagating_failure: exp_analysis.is_propagating_failure,
-                return_ty: exp_analysis.return_ty,
+                is_propagating_failure: exp_analysis.is_propagating_failure
+                    || index_analysis.is_propagating_failure,
+                return_ty: match (index_analysis.return_ty, exp_analysis.return_ty) {
+                    (Some(a), Some(b)) => Some(make_union_type(vec![a, b])),
+                    (Some(a), None) | (None, Some(a)) => Some(a),
+                    (None, None) => None,
+                },
             }
         }
         Statement::Break => {
