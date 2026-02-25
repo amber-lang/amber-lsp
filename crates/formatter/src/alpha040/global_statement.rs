@@ -80,15 +80,13 @@ impl TextOutput<Gen> for GlobalStatement {
                         output.output(ctx, arg);
                     }
                 }
-                output.char(')').space();
+                output.char(')');
 
                 if let Some(returns) = return_type {
-                    output.char(':');
-                    output.space();
-                    output.output(ctx, returns);
+                    output.char(':').space().output(ctx, returns);
                 }
 
-                output.char('{').increase_indentation().newline();
+                output.space().char('{').increase_indentation().newline();
 
                 let mut last_span_end = None;
                 for content in contents {

@@ -144,3 +144,11 @@ fn newline_around_funcs() {
         ),
     );
 }
+
+#[test]
+fn return_type_spacing_func() {
+    test_format(
+        concat!("fun some() :Num{\n    2\n}",),
+        concat!("fun some(): Num {\n    2\n}",),
+    );
+}
