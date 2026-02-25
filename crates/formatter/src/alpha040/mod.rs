@@ -39,23 +39,42 @@ impl TextOutput<Gen> for ImportContent {
 
 impl TextOutput<Gen> for FunctionArgument {
     fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
-        fn push_arg(
-            output: &mut Output,
-            ctx: &mut FmtContext<Gen>,
-            is_ref: bool,
-            text: &impl SpanTextOutput<Gen>,
-        ) {
-            if is_ref {
-                output.text("ref");
-                output.space();
-            }
-            output.output(ctx, text);
-        }
-
         match self {
-            FunctionArgument::Generic(is_ref, text) => push_arg(output, ctx, is_ref.0, text),
-            FunctionArgument::Optional(is_ref, text, _, _) => push_arg(output, ctx, is_ref.0, text),
-            FunctionArgument::Typed(is_ref, text, _) => push_arg(output, ctx, is_ref.0, text),
+            FunctionArgument::Generic(is_ref, text) => {
+                if is_ref.0 {
+                    output.text("ref");
+                    output.space();
+                }
+                output.output(ctx, text);
+            }
+            FunctionArgument::Optional(is_ref, text, data_type, expression) => {
+                let is_ref = is_ref.0;
+                if is_ref {
+                    output.text("ref");
+                    output.space();
+                }
+
+                output.output(ctx, text);
+
+                if let Some(data_type) = data_type {
+                    output.char(':').space().output(ctx, data_type);
+                }
+
+                output.space().char('=').space().output(ctx, expression);
+            }
+            FunctionArgument::Typed(is_ref, text, data_type) => {
+                let is_ref = is_ref.0;
+                if is_ref {
+                    output.text("ref");
+                    output.space();
+                }
+
+                output
+                    .output(ctx, text)
+                    .char(':')
+                    .space()
+                    .output(ctx, data_type);
+            }
             FunctionArgument::Error => {
                 output.error(span);
             }
