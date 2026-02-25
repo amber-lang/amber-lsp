@@ -23,6 +23,7 @@ fn parse(data: &str) -> Vec<(GlobalStatement, Span)> {
 fn test_format(input: &str, output: &str) {
     let items = parse(input);
     let formatted = format(&items, input).expect("Able to format amber file");
+    eprintln!("Formatted:\n{}\nOutput:\n{}", formatted, output);
     assert_eq!(formatted, format!("{output}\n"));
 }
 
@@ -123,5 +124,25 @@ fn if_spacing() {
         r#"if true {
     echo "a"
 }"#,
+    );
+}
+
+#[test]
+fn newline_around_funcs() {
+    test_format(
+        concat!(
+            "let a = 1\n",
+            "fun some() {\n    let a = 2\n}\n",
+            "let a = 3\n",
+            "main {\n    let a = 4\n}\n",
+            "let a = 5",
+        ),
+        concat!(
+            "let a = 1\n\n",
+            "fun some() {\n    let a = 2\n}\n\n",
+            "let a = 3\n\n",
+            "main {\n    let a = 4\n}\n\n",
+            "let a = 5",
+        ),
     );
 }

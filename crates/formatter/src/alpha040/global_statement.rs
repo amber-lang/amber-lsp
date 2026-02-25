@@ -50,6 +50,10 @@ impl TextOutput<Gen> for GlobalStatement {
                 return_type,
                 contents,
             ) => {
+                if ctx.previous_global().is_some() {
+                    output.newline();
+                }
+
                 for flag in compiler_flags {
                     output.output(ctx, flag);
                     output.newline();
@@ -113,6 +117,10 @@ impl TextOutput<Gen> for GlobalStatement {
                 }
             }
             GlobalStatement::Main(main, args, statements) => {
+                if ctx.previous_global().is_some() {
+                    output.newline();
+                }
+
                 output.output(ctx, main);
 
                 if let Some(args) = args {
