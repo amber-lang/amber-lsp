@@ -115,16 +115,10 @@ impl TextOutput<Gen> for GlobalStatement {
             GlobalStatement::Main(main, args, statements) => {
                 output.output(ctx, main);
 
-                output.char('(');
                 if let Some(args) = args {
-                    output.output(ctx, args);
+                    output.char('(').output(ctx, args).char(')');
                 }
-                output
-                    .char(')')
-                    .space()
-                    .char('{')
-                    .increase_indentation()
-                    .newline();
+                output.space().char('{').increase_indentation().newline();
 
                 let mut last_span_end = None;
                 for statement in statements {
