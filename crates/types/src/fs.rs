@@ -67,7 +67,13 @@ impl FS for MemoryFS {
     ) -> Pin<Box<dyn Future<Output = Result<String>> + Send + 'a>> {
         Box::pin(async move {
             let files = self.files.lock().unwrap();
-            Ok(files.get(path.to_str().unwrap()).unwrap().clone())
+            match files.get(path.to_str().unwrap()) {
+                Some(content) => Ok(content.clone()),
+                None => Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("File not found: {}", path.display()),
+                )),
+            }
         })
     }
 

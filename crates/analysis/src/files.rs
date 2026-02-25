@@ -96,12 +96,12 @@ impl Files {
         self.file_dependencies.remove(&(file_id, version));
     }
 
-    pub fn get_latest_version(&self, file_id: FileId) -> FileVersion {
-        *self.file_versions.get(&file_id).unwrap()
+    pub fn get_latest_version(&self, file_id: FileId) -> Option<FileVersion> {
+        self.file_versions.get(&file_id).map(|v| *v)
     }
 
     pub fn get_document_latest_version(&self, file_id: FileId) -> Option<(Rope, FileVersion)> {
-        let file_version = self.get_latest_version(file_id);
+        let file_version = self.get_latest_version(file_id)?;
 
         self.document_map
             .get(&(file_id, file_version))
@@ -160,8 +160,11 @@ impl Files {
     pub fn is_depending_on(&self, file: &(FileId, FileVersion), dependency: FileId) -> bool {
         match self.file_dependencies.get(file) {
             Some(deps) => deps.iter().any(|dep| {
-                *dep == dependency
-                    || self.is_depending_on(&(*dep, self.get_latest_version(*dep)), dependency)
+                if let Some(ver) = self.get_latest_version(*dep) {
+                    *dep == dependency || self.is_depending_on(&(*dep, ver), dependency)
+                } else {
+                    *dep == dependency
+                }
             }),
             None => false,
         }
