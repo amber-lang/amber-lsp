@@ -438,3 +438,256 @@ $$ failed(code) {
         .collect::<Vec<String>>());
     assert_debug_snapshot!(backend.files.errors);
 }
+
+#[test]
+async fn test_array_index_set() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+let arr = [1, 2, 3]
+arr[0] = 10
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table.symbols);
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_array_index_set_const_error() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+const arr = [1, 2, 3]
+arr[0] = 10
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table.symbols);
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    // Should contain an error about assigning to a constant
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_array_index_set_non_array_error() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+let x = 5
+x[0] = 10
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table.symbols);
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    // Should contain an error about indexing into a non-array type
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_array_index_set_type_mismatch_error() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+let arr = [1, 2, 3]
+arr[0] = "hello"
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table.symbols);
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    // Should contain a type mismatch error
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_array_index_set_generic() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+fun set_first(arr, value) {
+    arr[0] = value
+}
+
+set_first([1, 2, 3], 42)
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    // The generic parameter 'arr' should be constrained to [Any]
+    // and 'value' should remain generic
+    assert_debug_snapshot!(symbol_table.symbols);
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}

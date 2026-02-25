@@ -193,6 +193,11 @@ pub enum Statement {
     VariableInit(Spanned<String>, Spanned<String>, Spanned<VariableInitType>),
     ConstInit(Spanned<String>, Spanned<String>, Box<Spanned<Expression>>),
     VariableSet(Spanned<String>, Box<Spanned<Expression>>),
+    ArrayIndexSet(
+        Spanned<String>,
+        Box<Spanned<Expression>>,
+        Box<Spanned<Expression>>,
+    ),
     IfCondition(
         Spanned<String>,
         Spanned<IfCondition>,
