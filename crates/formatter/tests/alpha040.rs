@@ -18,13 +18,11 @@ fn parse(data: &str) -> Vec<(GlobalStatement, Span)> {
 }
 
 /// Asserts that the input string matches the output string after formatting.
-///
-/// A newline is appended to output.
 fn test_format(input: &str, output: &str) {
     let items = parse(input);
     let formatted = format(&items, input).expect("Able to format amber file");
     eprintln!("Formatted:\n{}\nOutput:\n{}", formatted, output);
-    assert_eq!(formatted, format!("{output}\n"));
+    assert_eq!(formatted, output);
 }
 
 #[test]

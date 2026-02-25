@@ -298,7 +298,9 @@ impl Output {
         self
     }
 
-    fn format(self, file_content: &str) -> Result<String, FormattingError> {
+    fn format(mut self, file_content: &str) -> Result<String, FormattingError> {
+        self.remove_trailing_whitespace();
+
         let mut text = String::new();
         let mut indentation = String::new();
         let mut consecutive_newlines = 0;
