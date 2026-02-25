@@ -887,6 +887,124 @@ pub fn analyze_stmnt(
                 return_ty: exp_analysis.return_ty,
             }
         }
+        Statement::ArrayIndexSet((var, var_span), index_exp, value_exp) => {
+            let var_ty = match get_symbol_definition_info(files, var, &file, var_span.start) {
+                Some(info) => {
+                    match info.symbol_type {
+                        SymbolType::Function(_) => {
+                            files.report_error(&file, "Cannot assign to a function", *var_span);
+                        }
+                        SymbolType::Variable(var) if var.is_const => {
+                            files.report_error(&file, "Cannot assign to a constant", *var_span);
+                        }
+                        _ => {}
+                    }
+
+                    info.data_type
+                }
+                None => DataType::Any,
+            };
+
+            let element_ty = match &var_ty {
+                DataType::Array(inner) => *inner.clone(),
+                DataType::Generic(id) => {
+                    match scoped_generic_types.get_recursive(*id) {
+                        DataType::Array(inner) => match *inner {
+                            DataType::Any => {
+                                // Generic array with unknown inner type; create a
+                                // parametric inner type so it can be resolved later.
+                                let inner_id = scoped_generic_types.new_generic_id();
+                                scoped_generic_types.constrain_generic_type(
+                                    *id,
+                                    DataType::Array(Box::new(DataType::Generic(inner_id))),
+                                );
+                                DataType::Generic(inner_id)
+                            }
+                            other => other,
+                        },
+                        DataType::Any => {
+                            // Unconstrained generic; we now know it is used as an array.
+                            let inner_id = scoped_generic_types.new_generic_id();
+                            scoped_generic_types.constrain_generic_type(
+                                *id,
+                                DataType::Array(Box::new(DataType::Generic(inner_id))),
+                            );
+                            DataType::Generic(inner_id)
+                        }
+                        _ => {
+                            files.report_error(
+                                &file,
+                                &format!(
+                                    "Cannot index into value of type {}",
+                                    var_ty.to_string(scoped_generic_types)
+                                ),
+                                *var_span,
+                            );
+                            DataType::Any
+                        }
+                    }
+                }
+                DataType::Any => DataType::Any,
+                _ => {
+                    files.report_error(
+                        &file,
+                        &format!(
+                            "Cannot index into value of type {}",
+                            var_ty.to_string(scoped_generic_types)
+                        ),
+                        *var_span,
+                    );
+                    DataType::Any
+                }
+            };
+
+            let index_analysis = analyze_exp(
+                file_id,
+                file_version,
+                index_exp,
+                DataType::Int,
+                files,
+                scoped_generic_types,
+                contexts,
+            );
+
+            let exp_analysis = analyze_exp(
+                file_id,
+                file_version,
+                value_exp,
+                element_ty.clone(),
+                files,
+                scoped_generic_types,
+                contexts,
+            );
+
+            // Constrain the generic element type if we learned a concrete type.
+            if let DataType::Generic(id) = &element_ty {
+                scoped_generic_types.constrain_generic_type(*id, exp_analysis.exp_ty);
+            }
+
+            insert_symbol_reference(
+                var,
+                files,
+                &SymbolLocation {
+                    file,
+                    start: var_span.start,
+                    end: var_span.end,
+                },
+                scoped_generic_types,
+                contexts,
+            );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp_analysis.is_propagating_failure
+                    || index_analysis.is_propagating_failure,
+                return_ty: match (index_analysis.return_ty, exp_analysis.return_ty) {
+                    (Some(a), Some(b)) => Some(make_union_type(vec![a, b])),
+                    (Some(a), None) | (None, Some(a)) => Some(a),
+                    (None, None) => None,
+                },
+            }
+        }
         Statement::Break => {
             if !contexts.iter().any(|c| matches!(c, Context::Loop)) {
                 files.report_error(&file, "Break statement outside of loop", *span);

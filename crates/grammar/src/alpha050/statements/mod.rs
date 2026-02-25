@@ -9,6 +9,7 @@ use super::{
     Statement,
 };
 
+pub mod array_index_set;
 pub mod block;
 pub mod comment;
 pub mod const_init;
@@ -29,6 +30,7 @@ pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
             comment::comment_parser().map_with(|com, e| (Statement::Comment(com), e.span())),
             shebang::shebang_parser(),
             var_init::var_init_parser(stmnt.clone()),
+            array_index_set::array_index_set_parser(stmnt.clone()),
             var_set::var_set_parser(stmnt.clone()),
             block::block_parser_statement(stmnt.clone()),
             if_cond::if_chain_parser(stmnt.clone()),

@@ -357,3 +357,24 @@ fn test_modifiers() {
 
     assert_debug_snapshot!(parse(&tokenize(input)));
 }
+
+#[test]
+fn test_array_index_set() {
+    let input = r#"
+    let arr = [1, 2, 3]
+    arr[0] = 10
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_array_index_set_expression_index() {
+    let input = r#"
+    let arr = [1, 2, 3]
+    let i = 0
+    arr[i + 1] = 42
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}

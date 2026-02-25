@@ -567,6 +567,17 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
 
                 tokens
             }
+            Statement::ArrayIndexSet((_, var_span), index, value) => {
+                let mut tokens = vec![(
+                    hash_semantic_token_type(SemanticTokenType::VARIABLE),
+                    *var_span,
+                )];
+
+                tokens.extend(semantic_tokens_from_expr(index));
+                tokens.extend(semantic_tokens_from_expr(value));
+
+                tokens
+            }
             Statement::Error => vec![],
         })
         .collect()

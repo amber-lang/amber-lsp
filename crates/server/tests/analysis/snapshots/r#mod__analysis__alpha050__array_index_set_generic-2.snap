@@ -1,0 +1,12 @@
+---
+source: crates/server/tests/analysis/alpha050.rs
+expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_string(&generic_types)).collect::<Vec<String>>()"
+---
+[
+    "fun set_first(arr: [Any], value: Any): Null",
+    "arr: [Any]",
+    "value: Any",
+    "arr: [Any]",
+    "value: Any",
+    "fun set_first(arr: [Int], value: Int): Null",
+]

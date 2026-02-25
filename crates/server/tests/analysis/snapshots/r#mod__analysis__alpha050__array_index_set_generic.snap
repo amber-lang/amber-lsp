@@ -1,0 +1,144 @@
+---
+source: crates/server/tests/analysis/alpha050.rs
+expression: symbol_table.symbols
+---
+{
+    5..=14: SymbolInfo {
+        name: "set_first",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "arr",
+                            data_type: Any,
+                            is_optional: false,
+                            default_value_type: None,
+                            is_ref: false,
+                        },
+                        15..18,
+                    ),
+                    (
+                        FunctionArgument {
+                            name: "value",
+                            data_type: Any,
+                            is_optional: false,
+                            default_value_type: None,
+                            is_ref: false,
+                        },
+                        20..25,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Null,
+        is_definition: true,
+        undefined: false,
+        span: 5..14,
+        contexts: [],
+    },
+    15..=18: SymbolInfo {
+        name: "arr",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+        span: 15..18,
+        contexts: [],
+    },
+    20..=25: SymbolInfo {
+        name: "value",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: true,
+        undefined: false,
+        span: 20..25,
+        contexts: [],
+    },
+    33..=36: SymbolInfo {
+        name: "arr",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+        span: 33..36,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    42..=47: SymbolInfo {
+        name: "value",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Any,
+        is_definition: false,
+        undefined: false,
+        span: 42..47,
+        contexts: [
+            Function(
+                FunctionContext {
+                    compiler_flags: [],
+                },
+            ),
+        ],
+    },
+    51..=60: SymbolInfo {
+        name: "set_first",
+        symbol_type: Function(
+            FunctionSymbol {
+                arguments: [
+                    (
+                        FunctionArgument {
+                            name: "arr",
+                            data_type: [Int],
+                            is_optional: false,
+                            default_value_type: None,
+                            is_ref: false,
+                        },
+                        61..70,
+                    ),
+                    (
+                        FunctionArgument {
+                            name: "value",
+                            data_type: Int,
+                            is_optional: false,
+                            default_value_type: None,
+                            is_ref: false,
+                        },
+                        72..74,
+                    ),
+                ],
+                is_public: false,
+                compiler_flags: [],
+                docs: None,
+            },
+        ),
+        data_type: Null,
+        is_definition: false,
+        undefined: false,
+        span: 51..60,
+        contexts: [],
+    },
+}

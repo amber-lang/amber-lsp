@@ -1,0 +1,8 @@
+---
+source: crates/server/tests/analysis/alpha050.rs
+expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_string(&generic_types)).collect::<Vec<String>>()"
+---
+[
+    "x: Int",
+    "x: Int",
+]
