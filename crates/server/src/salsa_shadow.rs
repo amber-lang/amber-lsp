@@ -69,7 +69,7 @@ impl SalsaShadow {
         let file_index = db.new_file_index();
 
         // Register stdlib so imports resolve
-        let _stdlib_files = db.register_stdlib(amber_version.clone(), file_index);
+        db.register_stdlib(amber_version.clone(), file_index);
 
         SalsaShadow {
             db,

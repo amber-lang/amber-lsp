@@ -1,13 +1,15 @@
-use std::collections::{
-    HashMap,
-    HashSet,
-};
+use std::collections::HashSet;
 use std::fmt::{
     self,
     Display,
 };
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::SeqCst;
+
+use rustc_hash::{
+    FxHashMap,
+    FxHashSet,
+};
 
 use crate::file_version::FileVersion;
 use crate::paths::FileId;
@@ -294,19 +296,19 @@ impl Display for GenericsMap {
 /// fully deterministic — no atomic counters, no DashMaps.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct GenericsSnapshot {
-    pub constraints: HashMap<usize, DataType>,
-    pub inferred: HashSet<usize>,
+    pub constraints: FxHashMap<usize, DataType>,
+    pub inferred: FxHashSet<usize>,
 }
 
 impl GenericsSnapshot {
     /// Create a snapshot from the current state of a shared `GenericsMap`.
     pub fn from_generics_map(map: &GenericsMap) -> Self {
-        let constraints: HashMap<usize, DataType> = map
+        let constraints: FxHashMap<usize, DataType> = map
             .map
             .iter()
             .map(|entry| (*entry.key(), entry.value().clone()))
             .collect();
-        let inferred: HashSet<usize> = map.inferred.iter().map(|id| *id).collect();
+        let inferred: FxHashSet<usize> = map.inferred.iter().map(|id| *id).collect();
         Self {
             constraints,
             inferred,
@@ -335,32 +337,25 @@ impl GenericsSnapshot {
 /// IDs are seeded from a base offset (derived from a file path hash)
 /// so that IDs from different files never collide.
 #[derive(Debug, Clone)]
-pub struct LocalGenericsAllocator {
-    next_id: usize,
-    /// Base offset ensures IDs from different files don't collide.
-    base: usize,
-}
+pub struct LocalGenericsAllocator(usize);
 
 impl LocalGenericsAllocator {
     /// Create a new allocator with a base offset derived from a hash.
     pub fn new(base_hash: u64) -> Self {
-        // Use the hash truncated and multiplied to create a large, non-overlapping range.
+        // Use the hash truncated and multiplied to create a large, non-overlapping range (100k ids per file).
         let base = ((base_hash & 0x0000_FFFF_FFFF) as usize) * 100_000;
-        Self { next_id: 0, base }
+        Self(base)
     }
 
     /// Create a zero-offset allocator (for single-file tests).
     pub fn new_zero() -> Self {
-        Self {
-            next_id: 0,
-            base: 0,
-        }
+        Self(0)
     }
 
     /// Allocate the next deterministic generic ID.
     pub fn next_id(&mut self) -> usize {
-        let id = self.base + self.next_id;
-        self.next_id += 1;
+        let id = self.0;
+        self.0 += 1;
         id
     }
 }
@@ -374,15 +369,15 @@ impl LocalGenericsAllocator {
 /// - `Eq`-comparable (required by Salsa)
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct PureGenericsMap {
-    map: HashMap<usize, DataType>,
-    inferred: HashSet<usize>,
+    map: FxHashMap<usize, DataType>,
+    inferred: FxHashSet<usize>,
 }
 
 impl PureGenericsMap {
     pub fn new() -> Self {
         Self {
-            map: HashMap::new(),
-            inferred: HashSet::new(),
+            map: FxHashMap::default(),
+            inferred: FxHashSet::default(),
         }
     }
 
@@ -633,7 +628,6 @@ pub fn matches_type(expected: &DataType, given: &DataType, generics_map: &Generi
         (DataType::Error, _) | (_, DataType::Error) => false,
         (expected, DataType::Failable(given)) => matches_type(expected, given, generics_map),
         (DataType::Failable(expected), given) => matches_type(expected, given, generics_map),
-        (DataType::Number, DataType::Int) => true,
         (t1, t2) => *t1 == *t2,
     }
 }

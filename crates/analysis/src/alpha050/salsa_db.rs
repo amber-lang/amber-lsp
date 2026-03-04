@@ -347,12 +347,6 @@ pub fn analyze_file<'db>(
         SymbolTable,
     > = HashMap::new();
 
-    // Build a lookup from path → SourceFile for resolved imports
-    let _resolved_imports_by_path: HashMap<String, SourceFile> = imports
-        .iter()
-        .map(|sf| (sf.path(db).clone(), *sf))
-        .collect();
-
     // For each resolved import, analyze it and collect its symbol table
     for &imported_source in imports.iter() {
         let imported_analysis = analyze_file(db, imported_source, file_index);
