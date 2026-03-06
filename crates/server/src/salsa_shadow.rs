@@ -396,42 +396,6 @@ impl SalsaShadow {
             salsa_warning_count: salsa_warnings.len(),
         }
     }
-
-    /// Run analysis and compare with legacy output, logging any divergences.
-    ///
-    /// This is the main entry point called from `Backend::analyze_document`.
-    pub fn analyze_and_compare(
-        &self,
-        file_id: &FileId,
-        legacy_errors: &[(String, chumsky::span::SimpleSpan)],
-        legacy_warnings: &[(String, chumsky::span::SimpleSpan)],
-        legacy_symbol_table: &SymbolTable,
-    ) -> Option<ComparisonResult> {
-        let salsa_output = self.analyze(file_id)?;
-        let comparison = Self::compare(
-            legacy_errors,
-            legacy_warnings,
-            legacy_symbol_table,
-            &salsa_output,
-        );
-
-        if !comparison.diagnostics_match {
-            tracing::warn!(
-                "Salsa shadow: diagnostic divergence for {:?} — legacy: {} errors + {} warnings, salsa: {} errors + {} warnings",
-                file_id,
-                comparison.legacy_error_count,
-                comparison.legacy_warning_count,
-                comparison.salsa_error_count,
-                comparison.salsa_warning_count,
-            );
-        }
-
-        if !comparison.symbol_table_match {
-            tracing::warn!("Salsa shadow: symbol table divergence for {:?}", file_id,);
-        }
-
-        Some(comparison)
-    }
 }
 
 /// Info about an imported file resolved by Salsa.
