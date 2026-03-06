@@ -368,6 +368,17 @@ pub fn analyze_exp(
                 symbol_table
                     .fun_call_arg_scope
                     .insert(name_span.end..=function_call_scope_end, fun_symbol);
+
+                let ref_loc = SymbolLocation {
+                    file,
+                    start: name_span.start,
+                    end: name_span.end,
+                };
+                symbol_table
+                    .references
+                    .entry(name.clone())
+                    .or_default()
+                    .push(ref_loc);
             }
 
             let has_failure_handler = failable_handlers.iter().any(|(modifier, _)| {
