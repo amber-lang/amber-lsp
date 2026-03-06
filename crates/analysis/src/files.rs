@@ -30,6 +30,7 @@ pub struct Files {
     pub ast_map: FastDashMap<(FileId, FileVersion), Grammar>,
     pub errors: FastDashMap<(FileId, FileVersion), Vec<Spanned<String>>>,
     pub warnings: FastDashMap<(FileId, FileVersion), Vec<Spanned<String>>>,
+    pub unused_diagnostics: FastDashMap<(FileId, FileVersion), Vec<Spanned<String>>>,
     pub document_map: FastDashMap<(FileId, FileVersion), Rope>,
     pub semantic_token_map: FastDashMap<(FileId, FileVersion), Vec<SpannedSemanticToken>>,
     pub symbol_table: FastDashMap<(FileId, FileVersion), SymbolTable>,
@@ -48,6 +49,7 @@ impl Files {
             ast_map: FastDashMap::default(),
             errors: FastDashMap::default(),
             warnings: FastDashMap::default(),
+            unused_diagnostics: FastDashMap::default(),
             document_map: FastDashMap::default(),
             semantic_token_map: FastDashMap::default(),
             symbol_table: FastDashMap::default(),
@@ -89,6 +91,7 @@ impl Files {
         self.ast_map.remove(&(file_id, version));
         self.errors.remove(&(file_id, version));
         self.warnings.remove(&(file_id, version));
+        self.unused_diagnostics.remove(&(file_id, version));
         self.document_map.remove(&(file_id, version));
         self.semantic_token_map.remove(&(file_id, version));
         self.symbol_table.remove(&(file_id, version));
@@ -116,6 +119,11 @@ impl Files {
     pub fn report_warning(&self, file: &(FileId, FileVersion), msg: &str, span: SimpleSpan) {
         let mut warnings = self.warnings.entry(*file).or_default();
         warnings.push((msg.to_string(), span));
+    }
+
+    pub fn report_unused(&self, file: &(FileId, FileVersion), msg: &str, span: SimpleSpan) {
+        let mut unused = self.unused_diagnostics.entry(*file).or_default();
+        unused.push((msg.to_string(), span));
     }
 
     #[tracing::instrument(skip_all)]
