@@ -840,3 +840,48 @@ echo result
         "No unused import warning expected when symbol is used"
     );
 }
+
+#[test]
+async fn test_unused_variable_shadowing() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+let a = 23
+{
+    let a = 22
+    echo a
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    backend.open_document(&uri).await.unwrap();
+
+    // The outer `a` is shadowed by the inner `a` and never used.
+    // Only the outer `a` should be reported as unused.
+    assert_debug_snapshot!(backend.files.unused_diagnostics);
+}
