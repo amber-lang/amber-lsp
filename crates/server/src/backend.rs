@@ -1,6 +1,9 @@
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::Arc;
+use std::sync::{
+    Arc,
+    Mutex,
+};
 
 use chumsky::container::Seq;
 use ropey::Rope;
@@ -48,9 +51,10 @@ use amber_types::fs::{
 };
 use amber_types::paths::FileId;
 
+use crate::salsa_shadow::SalsaShadow;
+
 pub use amber_types::AmberVersion;
 
-#[derive(Debug)]
 pub struct Backend {
     pub client: Client,
     pub files: Files,
@@ -58,6 +62,17 @@ pub struct Backend {
     pub lsp_analysis: Box<dyn LSPAnalysis>,
     pub token_types: Box<[SemanticTokenType]>,
     pub amber_version: AmberVersion,
+    /// Salsa-based incremental analysis engine (Alpha050 only).
+    salsa: Option<Mutex<SalsaShadow>>,
+}
+
+impl std::fmt::Debug for Backend {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Backend")
+            .field("files", &self.files)
+            .field("amber_version", &self.amber_version)
+            .finish_non_exhaustive()
+    }
 }
 
 impl AnalysisHost for Backend {
@@ -75,8 +90,9 @@ impl AnalysisHost for Backend {
     ) -> Pin<Box<dyn Future<Output = Result<(FileId, FileVersion)>> + Send + 'a>> {
         Box::pin(async move {
             if let Some(file_id) = self.files.get(uri) {
-                let version = self.files.get_latest_version(file_id);
-                return Ok((file_id, version));
+                if let Some(version) = self.files.get_latest_version(file_id) {
+                    return Ok((file_id, version));
+                }
             }
 
             let file_path = match uri.to_file_path() {
@@ -124,6 +140,11 @@ impl Backend {
 
         files.generic_types.reset_counter();
 
+        let salsa = match &amber_version {
+            AmberVersion::Alpha050 => Some(Mutex::new(SalsaShadow::new(amber_version.clone()))),
+            _ => None,
+        };
+
         Self {
             client,
             files,
@@ -140,6 +161,7 @@ impl Backend {
                 AmberVersion::Alpha050 => Box::new(grammar::alpha050::semantic_tokens::LEGEND_TYPE),
             },
             amber_version,
+            salsa,
         }
     }
 
@@ -227,6 +249,170 @@ impl Backend {
 
         self.files.analyze_lock.insert((file_id, version), lock);
 
+        // ── Alpha050: use Salsa incremental engine ──────────────────
+        if let Some(salsa_mutex) = &self.salsa {
+            let text = rope.to_string();
+            let uri = self.files.lookup(&file_id);
+            let path = uri
+                .to_file_path()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|| uri.to_string());
+
+            // Feed text into Salsa
+            {
+                let mut salsa = salsa_mutex.lock().unwrap();
+                salsa.update_file(file_id, &path, &text, version.0);
+            }
+
+            // Discover and register local imported files so Salsa can resolve them.
+            // Loop until all transitive local imports are registered.
+            {
+                let mut paths_to_check = {
+                    let salsa = salsa_mutex.lock().unwrap();
+                    salsa.discover_unregistered_imports(&file_id)
+                };
+
+                let mut max_iterations = 20; // safety limit
+                while !paths_to_check.is_empty() && max_iterations > 0 {
+                    max_iterations -= 1;
+                    let mut newly_registered = Vec::new();
+
+                    for import_path in &paths_to_check {
+                        // Read the file from disk
+                        let file_path = std::path::Path::new(import_path);
+                        if let Ok(content) = self.files.fs.read(file_path).await {
+                            let mut salsa = salsa_mutex.lock().unwrap();
+                            if salsa.register_local_file(import_path, &content) {
+                                newly_registered.push(import_path.clone());
+                            }
+                        }
+                    }
+
+                    // Check newly registered files for their own imports
+                    paths_to_check.clear();
+                    for registered_path in &newly_registered {
+                        let salsa = salsa_mutex.lock().unwrap();
+                        let more = salsa.discover_unregistered_imports_by_path(registered_path);
+                        paths_to_check.extend(more);
+                    }
+                }
+            }
+
+            // Run Salsa analysis
+            let salsa_output = {
+                let salsa = salsa_mutex.lock().unwrap();
+                salsa.full_analyze(&file_id)
+            };
+
+            if let Some(mut output) = salsa_output {
+                // Register imported files in the Backend so cross-file features
+                // (goto-definition on imported symbols, autocomplete in imports)
+                // can resolve symbol tables and document content.
+                let mut file_key_mapping = {
+                    let salsa = salsa_mutex.lock().unwrap();
+                    salsa.build_file_key_mapping(file_id, version)
+                };
+
+                for imported in &mut output.imported_files {
+                    // Build a URI for this imported file.
+                    // For stdlib paths (e.g. "std/math.ab", "builtin.ab"),
+                    // map_import_path expects the path WITHOUT .ab because
+                    // resolve() appends it internally.
+                    // For local absolute paths, use as-is.
+                    let import_path_for_map =
+                        if imported.path.starts_with("std/") || imported.path == "builtin.ab" {
+                            imported.path.trim_end_matches(".ab").to_string()
+                        } else {
+                            imported.path.clone()
+                        };
+                    let imported_uri = analysis::map_import_path(
+                        &self.files.lookup(&file_id),
+                        &import_path_for_map,
+                        self,
+                    )
+                    .await;
+
+                    // Register in PathInterner and get a Backend FileId
+                    let imported_version = FileVersion(0);
+                    let imported_file_id = self.files.insert(imported_uri, imported_version);
+
+                    // Add to file key mapping so definitions pointing to this
+                    // file get their FileIds remapped correctly
+                    file_key_mapping.insert(
+                        imported.salsa_file_key,
+                        (imported_file_id, imported_version),
+                    );
+
+                    // Store the document rope so goto_definition can compute positions
+                    let imported_rope = Rope::from_str(&imported.text);
+                    self.files
+                        .document_map
+                        .insert((imported_file_id, imported_version), imported_rope);
+
+                    // Remap FileIds in the imported symbol table too
+                    remap_symbol_table_file_keys(&mut imported.symbol_table, &file_key_mapping);
+
+                    // Store the symbol table
+                    self.files.symbol_table.insert(
+                        (imported_file_id, imported_version),
+                        imported.symbol_table.clone(),
+                    );
+
+                    // Mark as analyzed
+                    let lock = Arc::new(RwLock::new(true));
+                    self.files
+                        .analyze_lock
+                        .insert((imported_file_id, imported_version), lock);
+                }
+
+                // Remap Salsa-generated FileIds to Backend FileIds in the main
+                // file's symbol table.
+                remap_symbol_table_file_keys(&mut output.symbol_table, &file_key_mapping);
+
+                // Write results into legacy Files state
+                self.files.errors.insert((file_id, version), output.errors);
+                self.files
+                    .warnings
+                    .insert((file_id, version), output.warnings);
+                self.files.ast_map.insert((file_id, version), output.ast);
+                self.files
+                    .semantic_token_map
+                    .insert((file_id, version), output.semantic_tokens);
+                self.files
+                    .symbol_table
+                    .insert((file_id, version), output.symbol_table);
+
+                // Load generics from snapshot into the shared GenericsMap
+                let generic_ids: Vec<usize> = output
+                    .generics_snapshot
+                    .constraints
+                    .keys()
+                    .copied()
+                    .collect();
+                for (id, ty) in &output.generics_snapshot.constraints {
+                    self.files
+                        .generic_types
+                        .constrain_generic_type(*id, ty.clone());
+                }
+                self.files
+                    .generic_types
+                    .insert(file_id, version, generic_ids);
+            }
+
+            *lock_w = true;
+            drop(lock_w);
+
+            // Dependencies are handled by Salsa's memoization, but we still
+            // need to trigger re-publish for files that depend on this one.
+            Box::pin(async {
+                self.analyze_dependencies(file_id, version).await;
+            })
+            .await;
+
+            return;
+        }
+
+        // ── Legacy path for Alpha034/035/040 ────────────────────────
         let tokens = self.lsp_analysis.tokenize(&rope.to_string());
 
         let ParserResponse {
@@ -264,10 +450,6 @@ impl Backend {
                 analysis::alpha040::global::analyze_global_stmnt(file_id, version, &ast, self)
                     .await;
             }
-            Grammar::Alpha050(Some(ast)) => {
-                analysis::alpha050::global::analyze_global_stmnt(file_id, version, &ast, self)
-                    .await;
-            }
             _ => {}
         }
 
@@ -299,7 +481,10 @@ impl Backend {
                 continue;
             }
 
-            let new_version = self.files.get_latest_version(file_id);
+            let new_version = match self.files.get_latest_version(file_id) {
+                Some(v) => v,
+                None => return,
+            };
             if file_version != new_version {
                 return;
             }
@@ -335,7 +520,7 @@ impl Backend {
         file_id: FileId,
         position: Position,
     ) -> Option<(SymbolInfo, usize)> {
-        let version = self.files.get_latest_version(file_id);
+        let version = self.files.get_latest_version(file_id)?;
         let file = (file_id, version);
 
         let offset = match self.position_to_offset(file, position).await {
@@ -755,23 +940,15 @@ impl LanguageServer for Backend {
             let response = match symbol_table.definitions.get(&symbol_info.name) {
                 Some(definitions) => match definitions.get(&offset) {
                     Some(definition) => {
-                        let definition_file_rope =
-                            match self.files.get_document_latest_version(definition.file.0) {
-                                Some((document, _)) => document.clone(),
-                                None => {
-                                    return Ok(None);
-                                }
-                            };
-
-                        let start_position =
-                            self.offset_to_position(definition.start, &definition_file_rope);
-                        let end_position =
-                            self.offset_to_position(definition.end, &definition_file_rope);
-
-                        let file_uri = self.files.lookup(&definition.file.0);
-
                         match symbol_info.symbol_type {
                             SymbolType::ImportPath => {
+                                // For import paths, resolve the target URI from the import
+                                // path string rather than from the definition's FileId.
+                                // The definition's FileId may be a Salsa-generated key that
+                                // isn't registered in the Backend's file system (e.g. stdlib).
+                                let target_uri =
+                                    analysis::map_import_path(&uri, &symbol_info.name, self).await;
+
                                 let selection_range = Range {
                                     start: self.offset_to_position(symbol_info.span.start, &rope),
                                     end: self.offset_to_position(symbol_info.span.end, &rope),
@@ -779,7 +956,7 @@ impl LanguageServer for Backend {
 
                                 Some(GotoDefinitionResponse::Link(vec![LocationLink {
                                     origin_selection_range: Some(selection_range),
-                                    target_uri: file_uri,
+                                    target_uri,
                                     target_range: Range {
                                         start: Position {
                                             line: 0,
@@ -802,13 +979,31 @@ impl LanguageServer for Backend {
                                     },
                                 }]))
                             }
-                            _ => Some(GotoDefinitionResponse::Scalar(Location::new(
-                                file_uri,
-                                Range {
-                                    start: start_position,
-                                    end: end_position,
-                                },
-                            ))),
+                            _ => {
+                                let definition_file_rope =
+                                    match self.files.get_document_latest_version(definition.file.0)
+                                    {
+                                        Some((document, _)) => document.clone(),
+                                        None => {
+                                            return Ok(None);
+                                        }
+                                    };
+
+                                let start_position = self
+                                    .offset_to_position(definition.start, &definition_file_rope);
+                                let end_position =
+                                    self.offset_to_position(definition.end, &definition_file_rope);
+
+                                let file_uri = self.files.lookup(&definition.file.0);
+
+                                Some(GotoDefinitionResponse::Scalar(Location::new(
+                                    file_uri,
+                                    Range {
+                                        start: start_position,
+                                        end: end_position,
+                                    },
+                                )))
+                            }
                         }
                     }
                     None => None,
@@ -845,7 +1040,10 @@ impl LanguageServer for Backend {
             }
         };
 
-        let version = self.files.get_latest_version(file_id);
+        let version = match self.files.get_latest_version(file_id) {
+            Some(v) => v,
+            None => return Ok(None),
+        };
 
         if !self.files.is_file_analyzed(&(file_id, version)).await {
             return Ok(None);
@@ -897,7 +1095,10 @@ impl LanguageServer for Backend {
             }
         };
 
-        let version = self.files.get_latest_version(file_id);
+        let version = match self.files.get_latest_version(file_id) {
+            Some(v) => v,
+            None => return Ok(None),
+        };
 
         if !self.files.is_file_analyzed(&(file_id, version)).await {
             return Ok(None);
@@ -934,7 +1135,14 @@ impl LanguageServer for Backend {
                     })
                     .collect();
 
-                let file_path = uri.to_file_path().unwrap().canonicalize().unwrap();
+                let file_path = match uri.to_file_path().and_then(|p| p.canonicalize().ok()) {
+                    Some(path) => path,
+                    None => {
+                        // Can't resolve the source file's path (e.g. MemoryFS).
+                        // Return stdlib completions only.
+                        return Ok(Some(CompletionResponse::Array(completions)));
+                    }
+                };
                 let mut searched_path = file_path.parent().unwrap().to_path_buf();
                 searched_path.push(symbol_info.name.clone());
 
@@ -1114,7 +1322,10 @@ impl LanguageServer for Backend {
             }
         };
 
-        let version = self.files.get_latest_version(file_id);
+        let version = match self.files.get_latest_version(file_id) {
+            Some(v) => v,
+            None => return Ok(None),
+        };
 
         if !self.files.is_file_analyzed(&(file_id, version)).await {
             return Ok(None);
@@ -1177,5 +1388,103 @@ impl LanguageServer for Backend {
             }
             _ => Ok(None),
         }
+    }
+}
+
+/// Rewrite FileIds in a symbol table from Salsa-generated keys to Backend keys.
+///
+/// The Salsa pipeline uses `file_key_for_path` to create `(FileId, FileVersion)`
+/// tuples by hashing path strings. These differ from the Backend's own FileIds
+/// (which come from URI hashing via `PathInterner`). After obtaining analysis
+/// output from Salsa, this function rewrites all `SymbolLocation.file` entries
+/// so that goto-definition, hover, and other features resolve correctly.
+fn remap_symbol_table_file_keys(
+    symbol_table: &mut SymbolTable,
+    mapping: &std::collections::HashMap<
+        (FileId, amber_analysis::files::FileVersion),
+        (FileId, amber_analysis::files::FileVersion),
+    >,
+) {
+    use rangemap::RangeInclusiveMap;
+
+    // Remap definitions (need to rebuild because RangeInclusiveMap has no iter_mut)
+    for (_name, range_map) in symbol_table.definitions.iter_mut() {
+        let entries: Vec<_> = range_map
+            .iter()
+            .map(|(range, loc)| {
+                let mut loc = loc.clone();
+                if let Some(new_key) = mapping.get(&loc.file) {
+                    loc.file = *new_key;
+                }
+                (range.clone(), loc)
+            })
+            .collect();
+        *range_map = RangeInclusiveMap::new();
+        for (range, loc) in entries {
+            range_map.insert(range, loc);
+        }
+    }
+
+    // Remap references
+    for (_name, refs) in symbol_table.references.iter_mut() {
+        for location in refs.iter_mut() {
+            if let Some(new_key) = mapping.get(&location.file) {
+                location.file = *new_key;
+            }
+        }
+    }
+
+    // Remap public_definitions
+    for (_name, location) in symbol_table.public_definitions.iter_mut() {
+        if let Some(new_key) = mapping.get(&location.file) {
+            location.file = *new_key;
+        }
+    }
+
+    // Remap FileIds inside SymbolInfo.contexts (ImportContext.public_definitions)
+    // Also rebuild symbols RangeInclusiveMap since it lacks iter_mut.
+    let symbol_entries: Vec<_> = symbol_table
+        .symbols
+        .iter()
+        .map(|(range, info)| {
+            let mut info = info.clone();
+            for ctx in info.contexts.iter_mut() {
+                if let Context::Import(import_ctx) = ctx {
+                    for (_name, location) in import_ctx.public_definitions.iter_mut() {
+                        if let Some(new_key) = mapping.get(&location.file) {
+                            location.file = *new_key;
+                        }
+                    }
+                }
+            }
+            (range.clone(), info)
+        })
+        .collect();
+    symbol_table.symbols = RangeInclusiveMap::new();
+    for (range, info) in symbol_entries {
+        symbol_table.symbols.insert(range, info);
+    }
+
+    // Remap fun_call_arg_scope as well
+    let fun_call_entries: Vec<_> = symbol_table
+        .fun_call_arg_scope
+        .iter()
+        .map(|(range, info)| {
+            let mut info = info.clone();
+            for ctx in info.contexts.iter_mut() {
+                if let Context::Import(import_ctx) = ctx {
+                    for (_name, location) in import_ctx.public_definitions.iter_mut() {
+                        if let Some(new_key) = mapping.get(&location.file) {
+                            location.file = *new_key;
+                        }
+                    }
+                }
+            }
+            (range.clone(), info)
+        })
+        .collect();
+    symbol_table.fun_call_arg_scope = RangeInclusiveMap::new();
+    for (range, info) in fun_call_entries {
+        symbol_table.fun_call_arg_scope.insert(range, info);
     }
 }
