@@ -1,0 +1,19 @@
+---
+source: crates/server/tests/analysis/alpha050.rs
+expression: backend.files.unused_diagnostics
+---
+{
+    (
+        FileId(
+            0,
+        ),
+        FileVersion(
+            1,
+        ),
+    ): [
+        (
+            "Unused import",
+            1..40,
+        ),
+    ],
+}

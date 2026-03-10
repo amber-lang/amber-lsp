@@ -102,6 +102,9 @@ pub enum Context {
 pub struct ImportContext {
     pub public_definitions: HashMap<String, SymbolLocation>,
     pub imported_symbols: Vec<String>,
+    /// Span of the entire import statement (`import ... from "..."`).
+    /// Used to flag the whole statement as unused when none of its symbols are referenced.
+    pub statement_span: Option<Span>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -192,6 +195,10 @@ pub struct SymbolTable {
     pub references: HashMap<String, Vec<SymbolLocation>>,
     pub public_definitions: HashMap<String, SymbolLocation>,
     pub fun_call_arg_scope: RangeInclusiveMap<usize, SymbolInfo>,
+    /// Tracks `import * from "..."` statements so the unused checker can detect
+    /// when none of the imported symbols are referenced.
+    /// Each entry is (statement_span, vec of (symbol_name, definition_location)).
+    pub import_all_statements: Vec<(Span, Vec<(String, SymbolLocation)>)>,
 }
 
 impl Default for SymbolTable {
@@ -202,6 +209,7 @@ impl Default for SymbolTable {
             references: HashMap::new(),
             public_definitions: HashMap::new(),
             fun_call_arg_scope: RangeInclusiveMap::new(),
+            import_all_statements: Vec::new(),
         }
     }
 }
