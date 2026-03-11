@@ -692,3 +692,414 @@ set_first([1, 2, 3], 42)
         .collect::<Vec<String>>());
     assert_debug_snapshot!(backend.files.errors);
 }
+
+#[test]
+async fn test_unused_import() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    // Create a library file with a public function
+    let lib_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\mylib")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/mylib")
+        }
+    };
+    let lib_uri = Uri::from_file_path(lib_file).unwrap();
+
+    vfs.write(
+        &lib_uri.to_file_path().unwrap(),
+        r#"
+pub fun helper(a) {
+    return a + 1
+}
+
+pub fun unused_helper(b) {
+    return b + 2
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    // Create main file that imports but does not use one of them
+    let main_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let main_uri = Uri::from_file_path(main_file).unwrap();
+
+    vfs.write(
+        &main_uri.to_file_path().unwrap(),
+        r#"
+import { helper, unused_helper } from "mylib"
+
+let result = helper(5)
+echo result
+"#,
+    )
+    .await
+    .unwrap();
+
+    backend.open_document(&main_uri).await.unwrap();
+
+    // unused_helper is imported but never used, so it should produce an
+    // "Unused import" diagnostic. helper IS used, so no diagnostic for it.
+    assert_debug_snapshot!(backend.files.unused_diagnostics);
+}
+
+#[test]
+async fn test_used_import_no_warning() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    // Create a library file with a public function
+    let lib_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\mylib")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/mylib")
+        }
+    };
+    let lib_uri = Uri::from_file_path(lib_file).unwrap();
+
+    vfs.write(
+        &lib_uri.to_file_path().unwrap(),
+        r#"
+pub fun helper(a) {
+    return a + 1
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    // Create main file that imports AND uses the function
+    let main_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let main_uri = Uri::from_file_path(main_file).unwrap();
+
+    vfs.write(
+        &main_uri.to_file_path().unwrap(),
+        r#"
+import { helper } from "mylib"
+
+let result = helper(5)
+echo result
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&main_uri).await.unwrap();
+
+    // helper is used, so the main file should have no unused import diagnostics
+    let unused = backend.files.unused_diagnostics.get(&file_id);
+    let has_unused_imports = unused
+        .map(|u| u.iter().any(|(msg, _)| msg.contains("Unused import")))
+        .unwrap_or(false);
+    assert!(
+        !has_unused_imports,
+        "No unused import warning expected when symbol is used"
+    );
+}
+
+#[test]
+async fn test_unused_variable_shadowing() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+let a = 23
+{
+    let a = 22
+    echo a
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    backend.open_document(&uri).await.unwrap();
+
+    // The outer `a` is shadowed by the inner `a` and never used.
+    // Only the outer `a` should be reported as unused.
+    assert_debug_snapshot!(backend.files.unused_diagnostics);
+}
+
+#[test]
+async fn test_unused_import_all_symbols_unused() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let lib_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\mylib")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/mylib")
+        }
+    };
+    let lib_uri = Uri::from_file_path(lib_file).unwrap();
+
+    vfs.write(
+        &lib_uri.to_file_path().unwrap(),
+        r#"
+pub fun helper(a) {
+    return a + 1
+}
+
+pub fun another(b) {
+    return b + 2
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    let main_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let main_uri = Uri::from_file_path(main_file).unwrap();
+
+    vfs.write(
+        &main_uri.to_file_path().unwrap(),
+        r#"
+import { helper, another } from "mylib"
+
+echo "hello"
+"#,
+    )
+    .await
+    .unwrap();
+
+    backend.open_document(&main_uri).await.unwrap();
+
+    // Both helper and another are unused → the whole import statement
+    // should be flagged as "Unused import", not individual symbols.
+    assert_debug_snapshot!(backend.files.unused_diagnostics);
+}
+
+#[test]
+async fn test_unused_import_star() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let lib_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\mylib")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/mylib")
+        }
+    };
+    let lib_uri = Uri::from_file_path(lib_file).unwrap();
+
+    vfs.write(
+        &lib_uri.to_file_path().unwrap(),
+        r#"
+pub fun helper(a) {
+    return a + 1
+}
+
+pub fun another(b) {
+    return b + 2
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    let main_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let main_uri = Uri::from_file_path(main_file).unwrap();
+
+    vfs.write(
+        &main_uri.to_file_path().unwrap(),
+        r#"
+import * from "mylib"
+
+echo "hello"
+"#,
+    )
+    .await
+    .unwrap();
+
+    backend.open_document(&main_uri).await.unwrap();
+
+    // import * brings in helper and another, but neither is used →
+    // the whole statement should be flagged as "Unused import".
+    assert_debug_snapshot!(backend.files.unused_diagnostics);
+}
+
+#[test]
+async fn test_import_star_used_no_warning() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let lib_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\mylib")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/mylib")
+        }
+    };
+    let lib_uri = Uri::from_file_path(lib_file).unwrap();
+
+    vfs.write(
+        &lib_uri.to_file_path().unwrap(),
+        r#"
+pub fun helper(a) {
+    return a + 1
+}
+
+pub fun another(b) {
+    return b + 2
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    let main_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let main_uri = Uri::from_file_path(main_file).unwrap();
+
+    vfs.write(
+        &main_uri.to_file_path().unwrap(),
+        r#"
+import * from "mylib"
+
+let result = helper(5)
+echo result
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&main_uri).await.unwrap();
+
+    // helper is used, so the import * statement should NOT produce
+    // an unused-import diagnostic.
+    let unused = backend.files.unused_diagnostics.get(&file_id);
+    let has_unused_imports = unused
+        .map(|u| u.iter().any(|(msg, _)| msg.contains("Unused import")))
+        .unwrap_or(false);
+    assert!(
+        !has_unused_imports,
+        "No unused import warning expected when symbol from import * is used"
+    );
+}

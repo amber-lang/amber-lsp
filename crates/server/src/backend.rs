@@ -205,6 +205,22 @@ impl Backend {
             diagnostics.extend(warning_diags);
         }
 
+        if let Some(unused) = self.files.unused_diagnostics.get(&(file_id, file_version)) {
+            let unused_diags = unused.iter().map(|(msg, span)| {
+                let start_position = self.offset_to_position(span.start, &rope);
+                let end_position = self.offset_to_position(span.end, &rope);
+
+                Diagnostic {
+                    range: Range::new(start_position, end_position),
+                    severity: Some(DiagnosticSeverity::WARNING),
+                    tags: Some(vec![DiagnosticTag::UNNECESSARY]),
+                    message: msg.to_string(),
+                    ..Default::default()
+                }
+            });
+            diagnostics.extend(unused_diags);
+        }
+
         self.publish_diagnostics(&file_id, diagnostics, Some(version))
             .await;
     }
@@ -267,6 +283,7 @@ impl Backend {
             Grammar::Alpha050(Some(ast)) => {
                 analysis::alpha050::global::analyze_global_stmnt(file_id, version, &ast, self)
                     .await;
+                analysis::alpha050::unused::check_unused_symbols(file_id, version, &self.files);
             }
             _ => {}
         }

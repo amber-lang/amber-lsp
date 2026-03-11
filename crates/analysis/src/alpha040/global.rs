@@ -415,6 +415,7 @@ pub async fn analyze_global_stmnt(
                                 .public_definitions
                                 .clone(),
                             imported_symbols: vec![],
+                            statement_span: None,
                         };
 
                         ident_list.iter().for_each(|(ident, span)| {
@@ -552,6 +553,7 @@ pub async fn analyze_global_stmnt(
                                             .public_definitions
                                             .clone(),
                                         imported_symbols: vec![],
+                                        statement_span: None,
                                     })],
                                     ..symbol_info.clone()
                                 },

@@ -17,6 +17,7 @@ use crate::{
     FunctionSymbol,
     ImportContext,
     SymbolInfo,
+    SymbolLocation,
     SymbolType,
     VariableSymbol,
 };
@@ -461,6 +462,7 @@ pub async fn analyze_global_stmnt(
                                 .public_definitions
                                 .clone(),
                             imported_symbols: vec![],
+                            statement_span: Some(*span),
                         };
 
                         ident_list.iter().for_each(|(ident, span)| {
@@ -567,45 +569,65 @@ pub async fn analyze_global_stmnt(
                             };
                         });
                     }
-                    ImportContent::ImportAll => imported_file_symbol_table
-                        .public_definitions
-                        .iter()
-                        .for_each(|(_, location)| {
-                            let definition_file_symbol_table =
-                                match backend.get_files().symbol_table.get(&location.file) {
-                                    Some(symbol_table) => symbol_table.clone(),
-                                    None => return,
-                                };
+                    ImportContent::ImportAll => {
+                        let mut all_imported: Vec<(String, SymbolLocation)> = Vec::new();
 
-                            let symbol_info =
-                                match definition_file_symbol_table.symbols.get(&location.start) {
-                                    Some(symbol_info) => symbol_info,
-                                    None => return,
-                                };
+                        imported_file_symbol_table
+                            .public_definitions
+                            .iter()
+                            .for_each(|(name, location)| {
+                                let definition_file_symbol_table =
+                                    match backend.get_files().symbol_table.get(&location.file) {
+                                        Some(symbol_table) => symbol_table.clone(),
+                                        None => return,
+                                    };
 
+                                let symbol_info =
+                                    match definition_file_symbol_table.symbols.get(&location.start)
+                                    {
+                                        Some(symbol_info) => symbol_info,
+                                        None => return,
+                                    };
+
+                                let mut symbol_table = backend
+                                    .get_files()
+                                    .symbol_table
+                                    .entry((file_id, file_version))
+                                    .or_default();
+
+                                import_symbol(
+                                    &mut symbol_table,
+                                    &SymbolInfo {
+                                        is_definition: false,
+                                        contexts: vec![Context::Import(ImportContext {
+                                            public_definitions: imported_file_symbol_table
+                                                .public_definitions
+                                                .clone(),
+                                            imported_symbols: vec![],
+                                            statement_span: Some(*span),
+                                        })],
+                                        ..symbol_info.clone()
+                                    },
+                                    None,
+                                    location,
+                                    *is_public_import,
+                                );
+
+                                all_imported.push((name.clone(), location.clone()));
+                            });
+
+                        if !*is_public_import {
                             let mut symbol_table = backend
                                 .get_files()
                                 .symbol_table
                                 .entry((file_id, file_version))
                                 .or_default();
 
-                            import_symbol(
-                                &mut symbol_table,
-                                &SymbolInfo {
-                                    is_definition: false,
-                                    contexts: vec![Context::Import(ImportContext {
-                                        public_definitions: imported_file_symbol_table
-                                            .public_definitions
-                                            .clone(),
-                                        imported_symbols: vec![],
-                                    })],
-                                    ..symbol_info.clone()
-                                },
-                                None,
-                                location,
-                                *is_public_import,
-                            );
-                        }),
+                            symbol_table
+                                .import_all_statements
+                                .push((*span, all_imported));
+                        }
+                    }
                 }
             }
             GlobalStatement::Main(_, args, (body, body_span)) => {
