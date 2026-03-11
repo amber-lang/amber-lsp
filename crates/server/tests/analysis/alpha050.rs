@@ -1103,3 +1103,325 @@ echo result
         "No unused import warning expected when symbol from import * is used"
     );
 }
+
+#[test]
+async fn test_unreachable_code_after_return() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun add(a, b) {
+    return a + b
+    echo \"unreachable\"
+    let x = 5
+}
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let warnings = backend.files.warnings.get(&file_id).unwrap();
+    let unreachable_warnings: Vec<_> = warnings
+        .iter()
+        .filter(|(msg, _)| msg == "Unreachable code")
+        .collect();
+
+    assert_eq!(
+        unreachable_warnings.len(),
+        2,
+        "Expected 2 unreachable code warnings after return"
+    );
+}
+
+#[test]
+async fn test_unreachable_code_after_fail() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+main {
+    fail 1
+    echo \"unreachable\"
+}
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let warnings = backend.files.warnings.get(&file_id).unwrap();
+    let unreachable_warnings: Vec<_> = warnings
+        .iter()
+        .filter(|(msg, _)| msg == "Unreachable code")
+        .collect();
+
+    assert_eq!(
+        unreachable_warnings.len(),
+        1,
+        "Expected 1 unreachable code warning after fail"
+    );
+}
+
+#[test]
+async fn test_unreachable_code_after_break() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+main {
+    loop {
+        break
+        echo \"unreachable\"
+    }
+}
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let warnings = backend.files.warnings.get(&file_id).unwrap();
+    let unreachable_warnings: Vec<_> = warnings
+        .iter()
+        .filter(|(msg, _)| msg == "Unreachable code")
+        .collect();
+
+    assert_eq!(
+        unreachable_warnings.len(),
+        1,
+        "Expected 1 unreachable code warning after break"
+    );
+}
+
+#[test]
+async fn test_unreachable_code_after_continue() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+main {
+    loop {
+        continue
+        echo \"unreachable\"
+    }
+}
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let warnings = backend.files.warnings.get(&file_id).unwrap();
+    let unreachable_warnings: Vec<_> = warnings
+        .iter()
+        .filter(|(msg, _)| msg == "Unreachable code")
+        .collect();
+
+    assert_eq!(
+        unreachable_warnings.len(),
+        1,
+        "Expected 1 unreachable code warning after continue"
+    );
+}
+
+#[test]
+async fn test_no_unreachable_warning_without_terminator() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun add(a, b) {
+    let result = a + b
+    echo result
+    return result
+}
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let warnings = backend.files.warnings.get(&file_id);
+    let unreachable_count = warnings
+        .map(|w| {
+            w.iter()
+                .filter(|(msg, _)| msg == "Unreachable code")
+                .count()
+        })
+        .unwrap_or(0);
+
+    assert_eq!(
+        unreachable_count, 0,
+        "No unreachable code warnings expected when return is the last statement"
+    );
+}
+
+#[test]
+async fn test_unreachable_code_comments_ignored() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun add(a, b) {
+    return a + b
+    // this is a comment
+}
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let warnings = backend.files.warnings.get(&file_id);
+    let unreachable_count = warnings
+        .map(|w| {
+            w.iter()
+                .filter(|(msg, _)| msg == "Unreachable code")
+                .count()
+        })
+        .unwrap_or(0);
+
+    assert_eq!(
+        unreachable_count, 0,
+        "Comments after return should not trigger unreachable code warnings"
+    );
+}

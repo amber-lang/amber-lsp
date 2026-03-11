@@ -1,4 +1,5 @@
 use crate::alpha050::exp::ExpAnalysisResult;
+use crate::alpha050::stmnts::is_terminating_statement;
 use crate::files::FileVersion;
 use crate::stdlib::is_builtin_file;
 use crate::types::{
@@ -216,7 +217,19 @@ pub async fn analyze_global_stmnt(
                     compiler_flags: vec![],
                 })];
 
+                let mut terminator_seen = false;
+
                 body.iter().for_each(|stmnt| {
+                    if terminator_seen
+                        && !matches!(stmnt.0, Statement::Comment(_) | Statement::Error)
+                    {
+                        backend.get_files().report_unused(
+                            &(file_id, file_version),
+                            "Unreachable code",
+                            stmnt.1,
+                        );
+                    }
+
                     let StmntAnalysisResult {
                         return_ty,
                         is_propagating_failure,
@@ -232,6 +245,11 @@ pub async fn analyze_global_stmnt(
 
                     is_propagating |= is_propagating_failure;
                     return_types.extend(return_ty);
+
+                    // Mark that we've seen a terminator in this block
+                    if !terminator_seen && is_terminating_statement(&stmnt.0) {
+                        terminator_seen = true;
+                    }
                 });
 
                 new_generic_types.iter().for_each(|generic_id| {
