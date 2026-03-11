@@ -1119,6 +1119,15 @@ fn handle_doc_strings(docs: &String, contexts: &mut Vec<Context>) -> StmntAnalys
     }
 }
 
+/// Returns `true` if the given statement unconditionally terminates
+/// the current block's control flow (return, fail, break, continue).
+pub fn is_terminating_statement(stmnt: &Statement) -> bool {
+    matches!(
+        stmnt,
+        Statement::Return(..) | Statement::Fail(..) | Statement::Break | Statement::Continue
+    )
+}
+
 pub fn analyze_block(
     file_id: FileId,
     file_version: FileVersion,
@@ -1138,7 +1147,18 @@ pub fn analyze_block(
                 modifiers: modifiers.iter().map(|(m, _)| m.clone()).collect(),
             }));
 
+            let mut terminator_seen = false;
+
             for stmnt in stmnt.iter() {
+                if terminator_seen
+                    && !matches!(
+                        stmnt.0,
+                        Statement::Comment(_) | Statement::Shebang(_) | Statement::Error
+                    )
+                {
+                    files.report_unused(&(file_id, file_version), "Unreachable code", stmnt.1);
+                }
+
                 let StmntAnalysisResult {
                     return_ty,
                     is_propagating_failure,
@@ -1157,6 +1177,10 @@ pub fn analyze_block(
                 }
 
                 is_propagating |= is_propagating_failure;
+
+                if !terminator_seen && is_terminating_statement(&stmnt.0) {
+                    terminator_seen = true;
+                }
             }
         }
         Block::Singleline(stmnt) => {
