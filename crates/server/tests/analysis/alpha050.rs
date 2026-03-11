@@ -1144,7 +1144,7 @@ fun add(a, b) {
 
     let file_id = backend.open_document(&uri).await.unwrap();
 
-    let warnings = backend.files.warnings.get(&file_id).unwrap();
+    let warnings = backend.files.unused_diagnostics.get(&file_id).unwrap();
     let unreachable_warnings: Vec<_> = warnings
         .iter()
         .filter(|(msg, _)| msg == "Unreachable code")
@@ -1196,7 +1196,7 @@ main {
 
     let file_id = backend.open_document(&uri).await.unwrap();
 
-    let warnings = backend.files.warnings.get(&file_id).unwrap();
+    let warnings = backend.files.unused_diagnostics.get(&file_id).unwrap();
     let unreachable_warnings: Vec<_> = warnings
         .iter()
         .filter(|(msg, _)| msg == "Unreachable code")
@@ -1250,7 +1250,7 @@ main {
 
     let file_id = backend.open_document(&uri).await.unwrap();
 
-    let warnings = backend.files.warnings.get(&file_id).unwrap();
+    let warnings = backend.files.unused_diagnostics.get(&file_id).unwrap();
     let unreachable_warnings: Vec<_> = warnings
         .iter()
         .filter(|(msg, _)| msg == "Unreachable code")
@@ -1304,7 +1304,7 @@ main {
 
     let file_id = backend.open_document(&uri).await.unwrap();
 
-    let warnings = backend.files.warnings.get(&file_id).unwrap();
+    let warnings = backend.files.unused_diagnostics.get(&file_id).unwrap();
     let unreachable_warnings: Vec<_> = warnings
         .iter()
         .filter(|(msg, _)| msg == "Unreachable code")
@@ -1357,7 +1357,7 @@ fun add(a, b) {
 
     let file_id = backend.open_document(&uri).await.unwrap();
 
-    let warnings = backend.files.warnings.get(&file_id);
+    let warnings = backend.files.unused_diagnostics.get(&file_id);
     let unreachable_count = warnings
         .map(|w| {
             w.iter()
@@ -1411,7 +1411,7 @@ fun add(a, b) {
 
     let file_id = backend.open_document(&uri).await.unwrap();
 
-    let warnings = backend.files.warnings.get(&file_id);
+    let warnings = backend.files.unused_diagnostics.get(&file_id);
     let unreachable_count = warnings
         .map(|w| {
             w.iter()
