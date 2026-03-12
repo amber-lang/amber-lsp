@@ -1425,3 +1425,276 @@ fun add(a, b) {
         "Comments after return should not trigger unreachable code warnings"
     );
 }
+
+#[test]
+async fn test_auto_import_completion_updates_existing_import() {
+    use tower_lsp_server::lsp_types::*;
+    use tower_lsp_server::LanguageServer;
+
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    // Create a library file with two public functions
+    let lib_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\mylib")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/mylib")
+        }
+    };
+    let lib_uri = Uri::from_file_path(lib_file).unwrap();
+
+    vfs.write(
+        &lib_uri.to_file_path().unwrap(),
+        r#"
+pub fun join(list: [Text], delimiter: Text): Text {
+    return ""
+}
+
+pub fun trim(text: Text): Text {
+    return text
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    // Create main file that imports only `join` from the library
+    let main_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let main_uri = Uri::from_file_path(main_file).unwrap();
+
+    // Source text: import { join } from "mylib"
+    // then on line 2: `trim` (the user is typing this function name)
+    let source = "import { join } from \"mylib\"\ntrim";
+    vfs.write(&main_uri.to_file_path().unwrap(), source)
+        .await
+        .unwrap();
+
+    backend.open_document(&main_uri).await.unwrap();
+
+    // Request completion at the end of "trim" (line 1, character 4)
+    let completion_params = CompletionParams {
+        text_document_position: TextDocumentPositionParams {
+            text_document: TextDocumentIdentifier {
+                uri: main_uri.clone(),
+            },
+            position: Position {
+                line: 1,
+                character: 4,
+            },
+        },
+        work_done_progress_params: WorkDoneProgressParams {
+            work_done_token: None,
+        },
+        partial_result_params: PartialResultParams {
+            partial_result_token: None,
+        },
+        context: None,
+    };
+
+    let result = backend.completion(completion_params).await.unwrap();
+
+    let completions = match result {
+        Some(CompletionResponse::Array(items)) => items,
+        _ => panic!("Expected CompletionResponse::Array"),
+    };
+
+    // Find the `trim` completion item with auto-import
+    let trim_completion = completions
+        .iter()
+        .find(|item| item.label == "trim" && item.additional_text_edits.is_some())
+        .expect("Should have a 'trim' completion item with additional_text_edits for auto-import");
+
+    // Verify the additional text edit adds ", trim" to the import statement
+    let edits = trim_completion.additional_text_edits.as_ref().unwrap();
+    assert_eq!(
+        edits.len(),
+        1,
+        "Should have exactly one additional text edit"
+    );
+
+    let edit = &edits[0];
+    assert_eq!(
+        edit.new_text, ", trim",
+        "Should insert ', trim' into the import list"
+    );
+
+    // The insertion point should be right after "join" in "import { join }"
+    // "join" ends at offset 13 (0-indexed) in "import { join } from \"mylib\""
+    // which is line 0, character 13
+    assert_eq!(edit.range.start.line, 0, "Edit should be on line 0");
+    assert_eq!(
+        edit.range.start, edit.range.end,
+        "Edit range should be a zero-width insertion"
+    );
+
+    // Verify the completion includes snippet text with arguments
+    assert!(
+        trim_completion.insert_text.is_some(),
+        "Should have insert_text"
+    );
+    let insert_text = trim_completion.insert_text.as_ref().unwrap();
+    assert!(
+        insert_text.contains("trim("),
+        "insert_text should contain function call: got {}",
+        insert_text
+    );
+
+    // Verify label details indicate auto-import
+    let label_details = trim_completion.label_details.as_ref().unwrap();
+    assert!(
+        label_details
+            .description
+            .as_ref()
+            .unwrap()
+            .contains("auto import"),
+        "label details should mention auto import"
+    );
+}
+
+#[test]
+async fn test_auto_import_completion_from_stdlib_no_existing_import() {
+    use tower_lsp_server::lsp_types::*;
+    use tower_lsp_server::LanguageServer;
+
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    // Save stdlib resources so the modules can be discovered and opened
+    amber_analysis::stdlib::save_resources(backend).await;
+
+    // Create a file with NO import statements at all – just a function call
+    let main_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let main_uri = Uri::from_file_path(main_file).unwrap();
+
+    // The user has typed `trim` with no imports anywhere in the file
+    let source = "trim";
+    vfs.write(&main_uri.to_file_path().unwrap(), source)
+        .await
+        .unwrap();
+
+    backend.open_document(&main_uri).await.unwrap();
+
+    // Request completion at the end of "trim" (line 0, character 4)
+    let completion_params = CompletionParams {
+        text_document_position: TextDocumentPositionParams {
+            text_document: TextDocumentIdentifier {
+                uri: main_uri.clone(),
+            },
+            position: Position {
+                line: 0,
+                character: 4,
+            },
+        },
+        work_done_progress_params: WorkDoneProgressParams {
+            work_done_token: None,
+        },
+        partial_result_params: PartialResultParams {
+            partial_result_token: None,
+        },
+        context: None,
+    };
+
+    let result = backend.completion(completion_params).await.unwrap();
+
+    let completions = match result {
+        Some(CompletionResponse::Array(items)) => items,
+        _ => panic!("Expected CompletionResponse::Array"),
+    };
+
+    // Find the `trim` completion item that auto-imports from std/text
+    let trim_completion = completions
+        .iter()
+        .find(|item| item.label == "trim" && item.additional_text_edits.is_some())
+        .expect(
+            "Should have a 'trim' completion from stdlib with additional_text_edits for auto-import",
+        );
+
+    // Verify the additional text edit inserts a new import line at the top
+    let edits = trim_completion.additional_text_edits.as_ref().unwrap();
+    assert_eq!(
+        edits.len(),
+        1,
+        "Should have exactly one additional text edit"
+    );
+
+    let edit = &edits[0];
+    assert!(
+        edit.new_text.contains("import"),
+        "Should insert an import statement, got: {}",
+        edit.new_text
+    );
+    assert!(
+        edit.new_text.contains("trim"),
+        "Import statement should mention 'trim', got: {}",
+        edit.new_text
+    );
+    assert!(
+        edit.new_text.contains("std/text"),
+        "Import should be from 'std/text', got: {}",
+        edit.new_text
+    );
+    // The edit should be at the very top of the file
+    assert_eq!(
+        edit.range.start,
+        Position {
+            line: 0,
+            character: 0
+        },
+        "Import line should be inserted at top of file"
+    );
+
+    // Verify the completion includes snippet text with arguments
+    let insert_text = trim_completion.insert_text.as_ref().unwrap();
+    assert!(
+        insert_text.contains("trim("),
+        "insert_text should contain function call: got {}",
+        insert_text
+    );
+
+    // Verify label details indicate auto-import from std/text
+    let label_details = trim_completion.label_details.as_ref().unwrap();
+    let desc = label_details.description.as_ref().unwrap();
+    assert!(
+        desc.contains("auto import") && desc.contains("std/text"),
+        "label details should mention auto import from std/text, got: {}",
+        desc
+    );
+}

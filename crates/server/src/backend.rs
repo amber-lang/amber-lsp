@@ -28,6 +28,7 @@ use amber_analysis::stdlib::{
 use amber_analysis::{
     self as analysis,
     get_symbol_definition_info,
+    map_import_path,
     AnalysisHost,
     Context,
     FunctionSymbol,
@@ -35,6 +36,10 @@ use amber_analysis::{
     SymbolTable,
     SymbolType,
     VariableSymbol,
+};
+use amber_grammar::alpha050::{
+    GlobalStatement as Alpha050GlobalStatement,
+    ImportContent as Alpha050ImportContent,
 };
 use amber_grammar::{
     self as grammar,
@@ -1058,6 +1063,10 @@ impl LanguageServer for Backend {
                         .collect::<Vec<SymbolInfo>>(),
                 };
 
+                // Collect names of in-scope definitions to avoid duplicates
+                let in_scope_names: std::collections::HashSet<String> =
+                    definitions.iter().map(|d| d.name.clone()).collect();
+
                 for symbol_info in definitions.iter() {
                     match symbol_info.symbol_type {
                         SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {
@@ -1111,6 +1120,319 @@ impl LanguageServer for Backend {
                         }
                         _ => continue,
                     };
+                }
+
+                // Auto-import: offer symbols from already-imported modules that
+                // have not been imported yet. Only for alpha050 and when we are
+                // NOT inside an import context.
+                if import_context.is_none() && self.amber_version == AmberVersion::Alpha050 {
+                    let rope = match self.files.document_map.get(&(file_id, version)) {
+                        Some(r) => r.clone(),
+                        None => Rope::from_str(""),
+                    };
+
+                    // Collect import paths already present in the file so we
+                    // can (a) update existing specific imports and (b) skip
+                    // those modules when offering brand-new imports.
+                    let mut already_imported_paths: std::collections::HashSet<String> =
+                        std::collections::HashSet::new();
+
+                    if let Some(ast) = self.files.ast_map.get(&(file_id, version)) {
+                        let ast = ast.clone();
+                        if let Grammar::Alpha050(Some(ref stmts)) = ast {
+                            for (global_stmt, _stmt_span) in stmts.iter() {
+                                // Only handle specific imports: import { a, b } from "path"
+                                if let Alpha050GlobalStatement::Import(
+                                    _is_pub,
+                                    _import_kw,
+                                    (
+                                        Alpha050ImportContent::ImportSpecific(ref ident_list),
+                                        ref _content_span,
+                                    ),
+                                    _from_kw,
+                                    (ref path, _path_span),
+                                ) = global_stmt
+                                {
+                                    already_imported_paths.insert(path.clone());
+
+                                    if ident_list.is_empty() {
+                                        continue;
+                                    }
+
+                                    // Resolve the import path to a URI
+                                    let imported_uri = map_import_path(&uri, path, self).await;
+
+                                    // Find the imported file and its symbol table
+                                    let imported_file_id = match self.files.get(&imported_uri) {
+                                        Some(fid) => fid,
+                                        None => continue,
+                                    };
+                                    let imported_version =
+                                        self.files.get_latest_version(imported_file_id);
+                                    let imported_sym_table = match self
+                                        .files
+                                        .symbol_table
+                                        .get(&(imported_file_id, imported_version))
+                                    {
+                                        Some(st) => st.clone(),
+                                        None => continue,
+                                    };
+
+                                    // Collect already-imported symbol names
+                                    let already_imported: std::collections::HashSet<String> =
+                                        ident_list.iter().map(|(name, _)| name.clone()).collect();
+
+                                    // Compute the insertion position: right after the
+                                    // last identifier in the import list.
+                                    let last_ident_span = &ident_list.last().unwrap().1;
+                                    let insert_offset = last_ident_span.end;
+                                    let insert_position =
+                                        self.offset_to_position(insert_offset, &rope);
+
+                                    // Offer each public definition that isn't already imported
+                                    // and isn't already in scope
+                                    for (pub_name, pub_location) in
+                                        imported_sym_table.public_definitions.iter()
+                                    {
+                                        if already_imported.contains(pub_name)
+                                            || in_scope_names.contains(pub_name)
+                                        {
+                                            continue;
+                                        }
+
+                                        let pub_sym_info = match get_symbol_definition_info(
+                                            &self.files,
+                                            pub_name,
+                                            &pub_location.file,
+                                            usize::MAX,
+                                        ) {
+                                            Some(info) => info,
+                                            None => continue,
+                                        };
+
+                                        let additional_edit = TextEdit {
+                                            range: Range {
+                                                start: insert_position,
+                                                end: insert_position,
+                                            },
+                                            new_text: format!(", {}", pub_name),
+                                        };
+
+                                        match pub_sym_info.symbol_type {
+                                            SymbolType::Function(FunctionSymbol {
+                                                ref arguments,
+                                                ..
+                                            }) => {
+                                                completions.push(CompletionItem {
+                                                    label: pub_name.clone(),
+                                                    insert_text: Some(format!(
+                                                        "{}({})",
+                                                        pub_name,
+                                                        arguments
+                                                            .iter()
+                                                            .enumerate()
+                                                            .map(|(idx, (arg, _))| format!(
+                                                                "${{{}:{}}}",
+                                                                idx + 1,
+                                                                arg.name
+                                                            ))
+                                                            .collect::<Vec<String>>()
+                                                            .join(", ")
+                                                    )),
+                                                    kind: Some(CompletionItemKind::METHOD),
+                                                    detail: Some(
+                                                        pub_sym_info
+                                                            .to_string(&self.files.generic_types),
+                                                    ),
+                                                    insert_text_format: Some(
+                                                        InsertTextFormat::SNIPPET,
+                                                    ),
+                                                    command: Some(Command {
+                                                        title: "triggerParameterHints".to_string(),
+                                                        command:
+                                                            "editor.action.triggerParameterHints"
+                                                                .to_string(),
+                                                        arguments: None,
+                                                    }),
+                                                    additional_text_edits: Some(vec![
+                                                        additional_edit,
+                                                    ]),
+                                                    label_details: Some(
+                                                        CompletionItemLabelDetails {
+                                                            description: Some(format!(
+                                                                "auto import from \"{}\"",
+                                                                path
+                                                            )),
+                                                            detail: None,
+                                                        },
+                                                    ),
+                                                    ..CompletionItem::default()
+                                                });
+                                            }
+                                            SymbolType::Variable(VariableSymbol { is_const }) => {
+                                                completions.push(CompletionItem {
+                                                    label: pub_name.clone(),
+                                                    kind: Some(if is_const {
+                                                        CompletionItemKind::CONSTANT
+                                                    } else {
+                                                        CompletionItemKind::VARIABLE
+                                                    }),
+                                                    label_details: Some(
+                                                        CompletionItemLabelDetails {
+                                                            description: Some(format!(
+                                                                "auto import from \"{}\"",
+                                                                path
+                                                            )),
+                                                            detail: None,
+                                                        },
+                                                    ),
+                                                    additional_text_edits: Some(vec![
+                                                        additional_edit,
+                                                    ]),
+                                                    ..CompletionItem::default()
+                                                });
+                                            }
+                                            _ => continue,
+                                        }
+                                    }
+                                }
+
+                                // Also track import * paths
+                                if let Alpha050GlobalStatement::Import(
+                                    _is_pub,
+                                    _import_kw,
+                                    (Alpha050ImportContent::ImportAll, _),
+                                    _from_kw,
+                                    (ref path, _path_span),
+                                ) = global_stmt
+                                {
+                                    already_imported_paths.insert(path.clone());
+                                }
+                            }
+                        }
+                    }
+
+                    // Offer symbols from stdlib modules that have NO import
+                    // statement at all.  A brand-new `import { sym } from "mod"`
+                    // line will be inserted at the top of the file.
+                    let stdlib_modules =
+                        amber_analysis::stdlib::list_stdlib_modules(&self.amber_version);
+
+                    for module_path in stdlib_modules {
+                        if already_imported_paths.contains(&module_path) {
+                            continue;
+                        }
+
+                        // Resolve and open/analyze the stdlib module
+                        let module_uri = map_import_path(&uri, &module_path, self).await;
+
+                        let module_file = match self.open_document(&module_uri).await {
+                            Ok(file) => file,
+                            Err(_) => continue,
+                        };
+
+                        let module_sym_table = match self.files.symbol_table.get(&module_file) {
+                            Some(st) => st.clone(),
+                            None => continue,
+                        };
+
+                        for (pub_name, pub_location) in module_sym_table.public_definitions.iter() {
+                            if in_scope_names.contains(pub_name) {
+                                continue;
+                            }
+
+                            let pub_sym_info = match get_symbol_definition_info(
+                                &self.files,
+                                pub_name,
+                                &pub_location.file,
+                                usize::MAX,
+                            ) {
+                                Some(info) => info,
+                                None => continue,
+                            };
+
+                            // Insert a new import line at the very beginning of
+                            // the file (line 0, character 0).
+                            let additional_edit = TextEdit {
+                                range: Range {
+                                    start: Position {
+                                        line: 0,
+                                        character: 0,
+                                    },
+                                    end: Position {
+                                        line: 0,
+                                        character: 0,
+                                    },
+                                },
+                                new_text: format!(
+                                    "import {{ {} }} from \"{}\"\n",
+                                    pub_name, module_path
+                                ),
+                            };
+
+                            match pub_sym_info.symbol_type {
+                                SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {
+                                    completions.push(CompletionItem {
+                                        label: pub_name.clone(),
+                                        insert_text: Some(format!(
+                                            "{}({})",
+                                            pub_name,
+                                            arguments
+                                                .iter()
+                                                .enumerate()
+                                                .map(|(idx, (arg, _))| format!(
+                                                    "${{{}:{}}}",
+                                                    idx + 1,
+                                                    arg.name
+                                                ))
+                                                .collect::<Vec<String>>()
+                                                .join(", ")
+                                        )),
+                                        kind: Some(CompletionItemKind::METHOD),
+                                        detail: Some(
+                                            pub_sym_info.to_string(&self.files.generic_types),
+                                        ),
+                                        insert_text_format: Some(InsertTextFormat::SNIPPET),
+                                        command: Some(Command {
+                                            title: "triggerParameterHints".to_string(),
+                                            command: "editor.action.triggerParameterHints"
+                                                .to_string(),
+                                            arguments: None,
+                                        }),
+                                        additional_text_edits: Some(vec![additional_edit]),
+                                        label_details: Some(CompletionItemLabelDetails {
+                                            description: Some(format!(
+                                                "auto import from \"{}\"",
+                                                module_path
+                                            )),
+                                            detail: None,
+                                        }),
+                                        ..CompletionItem::default()
+                                    });
+                                }
+                                SymbolType::Variable(VariableSymbol { is_const }) => {
+                                    completions.push(CompletionItem {
+                                        label: pub_name.clone(),
+                                        kind: Some(if is_const {
+                                            CompletionItemKind::CONSTANT
+                                        } else {
+                                            CompletionItemKind::VARIABLE
+                                        }),
+                                        label_details: Some(CompletionItemLabelDetails {
+                                            description: Some(format!(
+                                                "auto import from \"{}\"",
+                                                module_path
+                                            )),
+                                            detail: None,
+                                        }),
+                                        additional_text_edits: Some(vec![additional_edit]),
+                                        ..CompletionItem::default()
+                                    });
+                                }
+                                _ => continue,
+                            }
+                        }
+                    }
                 }
 
                 completions

@@ -253,3 +253,30 @@ pub async fn find_in_stdlib(backend: &impl AnalysisHost, path: &str) -> Vec<Stri
         }
     }
 }
+
+/// Returns all stdlib module paths (e.g. `["std/text", "std/array", ...]`)
+/// available for the current Amber version.  Excludes `builtin` since it is
+/// auto-imported.
+pub fn list_stdlib_modules(amber_version: &AmberVersion) -> Vec<String> {
+    let version_dir = match amber_version {
+        AmberVersion::Alpha034 => "alpha034",
+        AmberVersion::Alpha035 => "alpha035",
+        AmberVersion::Alpha040 => "alpha040",
+        AmberVersion::Alpha050 => "alpha050",
+    };
+
+    let std_dir_path = format!("{}/std", version_dir);
+    let std_dir = match STDLIB.get_dir(&std_dir_path) {
+        Some(dir) => dir,
+        None => return vec![],
+    };
+
+    std_dir
+        .files()
+        .filter_map(|file| {
+            let name = file.path().file_name()?.to_str()?;
+            let module_name = name.strip_suffix(".ab")?;
+            Some(format!("std/{}", module_name))
+        })
+        .collect()
+}
