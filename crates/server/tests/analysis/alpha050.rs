@@ -1698,3 +1698,50 @@ async fn test_auto_import_completion_from_stdlib_no_existing_import() {
         desc
     );
 }
+
+#[test]
+async fn test_echo_not_marked_as_unused_import() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    // Save stdlib resources so the builtin auto-import resolves
+    amber_analysis::stdlib::save_resources(backend).await;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(&uri.to_file_path().unwrap(), "echo 4\n")
+        .await
+        .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let unused = backend.files.unused_diagnostics.get(&file_id);
+    let has_unused_import = unused
+        .as_ref()
+        .map(|u| u.iter().any(|(msg, _)| msg.contains("Unused import")))
+        .unwrap_or(false);
+
+    assert!(
+        !has_unused_import,
+        "Builtin auto-import should not be flagged as unused, diagnostics: {:?}",
+        unused
+    );
+}
