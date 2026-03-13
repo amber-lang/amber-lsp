@@ -31,8 +31,6 @@ thiserror = "2.0.12"
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["yaml"] }
 criterion = { version = "0.5", features = ["html_reports"] }
-include_dir = "0.7.4"
-tokio = { version = "1.39.1", features = ["full"] }
 
 [build-dependencies]
 fs_extra = "1.3.0"

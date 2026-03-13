@@ -1,8 +1,15 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use amber_analysis::AnalysisHost;
-use amber_grammar::LSPAnalysis;
+use amber_analysis::files::DEFAULT_VERSION;
+use amber_analysis::{
+    AnalysisHost,
+    SymbolTable,
+};
+use amber_grammar::{
+    Grammar,
+    LSPAnalysis,
+};
 use amber_lsp::backend::{
     AmberVersion,
     Backend,
@@ -18,6 +25,7 @@ use include_dir::{
     include_dir,
     Dir,
 };
+use ropey::Rope;
 use tower_lsp_server::lsp_types::{
     CompletionContext,
     CompletionParams,
@@ -163,12 +171,18 @@ fn bench_analysis(c: &mut Criterion) {
         let line_count = source.lines().count();
         let amber_version = v.amber_version.clone();
 
+        // Pre-tokenize and pre-parse so the benchmark only measures analysis.
+        let tokens = v.compiler.tokenize(&source);
+        let parsed = v.compiler.parse(&tokens);
+        let pre_ast = parsed.ast;
+
+        let runtime = rt();
+
         group.bench_with_input(
             BenchmarkId::new(v.name, format!("{line_count} lines")),
             &source,
             |b, src| {
                 b.iter(|| {
-                    let runtime = rt();
                     runtime.block_on(async {
                         let (service, _) = tower_lsp_server::LspService::new(|client| {
                             Backend::new(
@@ -182,14 +196,62 @@ fn bench_analysis(c: &mut Criterion) {
                         let file = Path::new("/bench_main.ab");
                         let uri = Uri::from_file_path(file).unwrap();
 
+                        // Populate internal state without tokenizing/parsing.
+                        let file_id = backend.files.insert(uri.clone(), DEFAULT_VERSION);
                         backend
                             .files
-                            .fs
-                            .write(&uri.to_file_path().unwrap(), src)
-                            .await
-                            .unwrap();
+                            .document_map
+                            .insert((file_id, DEFAULT_VERSION), Rope::from_str(src));
+                        backend
+                            .files
+                            .symbol_table
+                            .insert((file_id, DEFAULT_VERSION), SymbolTable::default());
 
-                        let _file_id = backend.open_document(&uri).await.unwrap();
+                        // Run only the analysis dispatch.
+                        match &pre_ast {
+                            Grammar::Alpha034(Some(ast)) => {
+                                amber_analysis::alpha034::global::analyze_global_stmnt(
+                                    file_id,
+                                    DEFAULT_VERSION,
+                                    ast,
+                                    backend,
+                                )
+                                .await;
+                            }
+                            Grammar::Alpha035(Some(ast)) => {
+                                amber_analysis::alpha035::global::analyze_global_stmnt(
+                                    file_id,
+                                    DEFAULT_VERSION,
+                                    ast,
+                                    backend,
+                                )
+                                .await;
+                            }
+                            Grammar::Alpha040(Some(ast)) => {
+                                amber_analysis::alpha040::global::analyze_global_stmnt(
+                                    file_id,
+                                    DEFAULT_VERSION,
+                                    ast,
+                                    backend,
+                                )
+                                .await;
+                            }
+                            Grammar::Alpha050(Some(ast)) => {
+                                amber_analysis::alpha050::global::analyze_global_stmnt(
+                                    file_id,
+                                    DEFAULT_VERSION,
+                                    ast,
+                                    backend,
+                                )
+                                .await;
+                                amber_analysis::alpha050::unused::check_unused_symbols(
+                                    file_id,
+                                    DEFAULT_VERSION,
+                                    &backend.files,
+                                );
+                            }
+                            _ => {}
+                        }
                     });
                 });
             },
@@ -210,13 +272,13 @@ fn bench_end_to_end(c: &mut Criterion) {
         let source = load_stdlib_source(v.resource_dir);
         let line_count = source.lines().count();
         let amber_version = v.amber_version.clone();
+        let runtime = rt();
 
         group.bench_with_input(
             BenchmarkId::new(v.name, format!("{line_count} lines")),
             &source,
             |b, src| {
                 b.iter(|| {
-                    let runtime = rt();
                     runtime.block_on(async {
                         let (service, _) = tower_lsp_server::LspService::new(|client| {
                             Backend::new(
@@ -249,6 +311,25 @@ fn bench_end_to_end(c: &mut Criterion) {
 
 // ─── Autocomplete benchmarks ────────────────────────────────────────
 
+/// Sample source used by the autocomplete benchmarks. Defines some symbols
+/// then references `result` where the cursor is placed.
+const AUTOCOMPLETE_SOURCE: &str = r#"
+fun greet(name) {
+    echo "Hello {name}"
+}
+
+fun goodbye(name) {
+    echo "Bye {name}"
+}
+
+let result = greet("world")
+echo result
+"#;
+
+/// Cursor position inside [`AUTOCOMPLETE_SOURCE`] — on `result` in the echo
+/// line (line 10, col 5).
+const AUTOCOMPLETE_CURSOR: (u32, u32) = (10, 5);
+
 /// Benchmark the completion endpoint by opening a document with a partial
 /// function call and requesting completions at that position.
 fn bench_autocomplete(c: &mut Criterion) {
@@ -256,96 +337,22 @@ fn bench_autocomplete(c: &mut Criterion) {
 
     group.sample_size(30);
 
-    // Autocomplete test sources for each version.
-    // Each source defines some symbols then has a partial identifier the
-    // cursor sits on. We place the cursor on the `result` variable after
-    // assignment — a position where the symbol table has definitions to
-    // offer completions from.
-    let autocomplete_sources: Vec<(&str, AmberVersion, &str, u32, u32)> = vec![
-        (
-            "alpha034",
-            AmberVersion::Alpha034,
-            r#"
-fun greet(name) {
-    echo "Hello {name}"
-}
-
-fun goodbye(name) {
-    echo "Bye {name}"
-}
-
-let result = greet("world")
-echo result
-"#,
-            // cursor on `result` in the echo line (line 10, col 5)
-            10,
-            5,
-        ),
-        (
-            "alpha035",
-            AmberVersion::Alpha035,
-            r#"
-fun greet(name) {
-    echo "Hello {name}"
-}
-
-fun goodbye(name) {
-    echo "Bye {name}"
-}
-
-let result = greet("world")
-echo result
-"#,
-            10,
-            5,
-        ),
-        (
-            "alpha040",
-            AmberVersion::Alpha040,
-            r#"
-fun greet(name) {
-    echo "Hello {name}"
-}
-
-fun goodbye(name) {
-    echo "Bye {name}"
-}
-
-let result = greet("world")
-echo result
-"#,
-            10,
-            5,
-        ),
-        (
-            "alpha050",
-            AmberVersion::Alpha050,
-            r#"
-fun greet(name) {
-    echo "Hello {name}"
-}
-
-fun goodbye(name) {
-    echo "Bye {name}"
-}
-
-let result = greet("world")
-echo result
-"#,
-            10,
-            5,
-        ),
+    let autocomplete_versions: Vec<(&str, AmberVersion)> = vec![
+        ("alpha034", AmberVersion::Alpha034),
+        ("alpha035", AmberVersion::Alpha035),
+        ("alpha040", AmberVersion::Alpha040),
+        ("alpha050", AmberVersion::Alpha050),
     ];
 
-    for (name, amber_version, source, cursor_line, cursor_char) in &autocomplete_sources {
+    for (name, amber_version) in &autocomplete_versions {
         let amber_version = amber_version.clone();
-        let source = source.to_string();
-        let cursor_line = *cursor_line;
-        let cursor_char = *cursor_char;
+        let source = AUTOCOMPLETE_SOURCE.to_string();
+        let (cursor_line, cursor_char) = AUTOCOMPLETE_CURSOR;
+
+        let runtime = rt();
 
         group.bench_function(BenchmarkId::new(*name, "completion"), |b| {
             b.iter(|| {
-                let runtime = rt();
                 runtime.block_on(async {
                     let (service, _) = tower_lsp_server::LspService::new(|client| {
                         Backend::new(
