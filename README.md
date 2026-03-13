@@ -48,6 +48,8 @@ We require 80% code coverage.
 
 [![codecov](https://codecov.io/gh/amber-lang/amber-lsp/graph/badge.svg?token=DWX5GL9U8O)](https://codecov.io/gh/amber-lang/amber-lsp)
 
+Benchmarks are available here: https://amber-lang.github.io/amber-lsp/dev/bench/
+
 ### Running lsp
 
 To run the server just use command `cargo run` or build the project with `cargo build` and find the `amber-lsp` executable in the `target` directory.
