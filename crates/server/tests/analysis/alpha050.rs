@@ -1745,3 +1745,163 @@ async fn test_echo_not_marked_as_unused_import() {
         unused
     );
 }
+
+#[test]
+async fn test_imported_generic_not_narrowed_across_calls() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    // Create a library file with a generic function (like builtin len)
+    let lib_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\mylib")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/mylib")
+        }
+    };
+    let lib_uri = Uri::from_file_path(lib_file).unwrap();
+
+    vfs.write(
+        &lib_uri.to_file_path().unwrap(),
+        r#"pub fun my_len(value): Int {}
+"#,
+    )
+    .await
+    .unwrap();
+
+    // Create a second library that imports my_len, calls it with a generic
+    // param, AND indexes into the same param. This triggers the bug:
+    // array indexing constrains the generic chain (G_arr → G_len) in the
+    // scoped map and propagate_nested_generics leaks the scoped constraint
+    // on G_len back to the global map, permanently narrowing len's param.
+    let lib2_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\mylib2")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/mylib2")
+        }
+    };
+    let lib2_uri = Uri::from_file_path(lib2_file).unwrap();
+
+    vfs.write(
+        &lib2_uri.to_file_path().unwrap(),
+        r#"import { my_len } from "mylib"
+
+pub fun first(array) {
+    if my_len(array) == 0:
+        fail 1
+    return array[0]
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    // Create main file that imports from both libs and calls my_len with different types
+    let main_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let main_uri = Uri::from_file_path(main_file).unwrap();
+
+    vfs.write(
+        &main_uri.to_file_path().unwrap(),
+        r#"import { my_len } from "mylib"
+import { first } from "mylib2"
+
+my_len("asd")
+my_len([1, 2])
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&main_uri).await.unwrap();
+
+    // There should be no type-mismatch errors: my_len's parameter is generic (Any)
+    // and should accept both Text and [Int] without narrowing across call sites.
+    let errors = backend.files.errors.get(&file_id);
+    let error_list: Vec<_> = errors
+        .iter()
+        .flat_map(|e| e.iter().cloned())
+        .filter(|(msg, _)| msg.contains("Expected type"))
+        .collect();
+    assert!(
+        error_list.is_empty(),
+        "Expected no type-mismatch errors when calling imported generic with different types, got: {:?}",
+        error_list,
+    );
+}
+
+#[test]
+async fn test_local_generic_not_narrowed_across_calls() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"fun my_len(value): Int {}
+
+my_len("asd")
+my_len([1, 2])
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    // There should be no type-mismatch errors on the function calls.
+    // (there may be a "returns Null but expected Int" on the empty body - ignore it)
+    let errors = backend.files.errors.get(&file_id);
+    let error_list: Vec<_> = errors
+        .iter()
+        .flat_map(|e| e.iter().cloned())
+        .filter(|(msg, _)| msg.contains("Expected type"))
+        .collect();
+    assert!(
+        error_list.is_empty(),
+        "Expected no type-mismatch errors when calling local generic with different types, got: {:?}",
+        error_list,
+    );
+}

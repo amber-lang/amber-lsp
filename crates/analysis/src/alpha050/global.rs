@@ -43,9 +43,18 @@ use super::stmnts::{
 
 /// Walk a type tree and propagate any nested `Generic(id)` entries from `from` into `to`,
 /// marking them as inferred so they can be resolved at call sites.
+///
+/// Only propagates generics that are **not yet inferred** in `to`.  A generic
+/// that was already marked inferred belongs to a different function definition's
+/// scope (e.g. a builtin function's parameter) and must not be overwritten with the
+/// constraint that was accumulated in the current scope.
 fn propagate_nested_generics(ty: &DataType, from: &GenericsMap, to: &GenericsMap) {
     match ty {
         DataType::Generic(id) => {
+            // Skip generics already established by their own function's analysis.
+            if to.is_inferred(*id) {
+                return;
+            }
             let inner_ty = from.get(*id);
             to.constrain_generic_type(*id, inner_ty.clone());
             to.mark_as_inferred(*id);
