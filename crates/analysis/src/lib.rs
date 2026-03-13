@@ -6,6 +6,7 @@ use amber_types::{
 use rangemap::RangeInclusiveMap;
 use std::collections::HashMap;
 use std::ops::RangeInclusive;
+use std::sync::Arc;
 use tower_lsp_server::lsp_types::Uri;
 use tower_lsp_server::UriExt;
 
@@ -100,7 +101,7 @@ pub enum Context {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ImportContext {
-    pub public_definitions: HashMap<String, SymbolLocation>,
+    pub public_definitions: Arc<HashMap<String, SymbolLocation>>,
     pub imported_symbols: Vec<String>,
     /// Span of the entire import statement (`import ... from "..."`).
     /// Used to flag the whole statement as unused when none of its symbols are referenced.
@@ -193,7 +194,7 @@ pub struct SymbolTable {
     pub symbols: RangeInclusiveMap<usize, SymbolInfo>,
     pub definitions: HashMap<String, RangeInclusiveMap<usize, SymbolLocation>>,
     pub references: HashMap<String, Vec<SymbolLocation>>,
-    pub public_definitions: HashMap<String, SymbolLocation>,
+    pub public_definitions: Arc<HashMap<String, SymbolLocation>>,
     pub fun_call_arg_scope: RangeInclusiveMap<usize, SymbolInfo>,
     /// Tracks `import * from "..."` statements so the unused checker can detect
     /// when none of the imported symbols are referenced.
@@ -207,7 +208,7 @@ impl Default for SymbolTable {
             symbols: RangeInclusiveMap::new(),
             definitions: HashMap::new(),
             references: HashMap::new(),
-            public_definitions: HashMap::new(),
+            public_definitions: Arc::new(HashMap::new()),
             fun_call_arg_scope: RangeInclusiveMap::new(),
             import_all_statements: Vec::new(),
         }
@@ -261,8 +262,7 @@ pub fn insert_symbol_definition(
     symbol_definitions.insert(definition_scope, definition_location.clone());
 
     if is_public {
-        symbol_table
-            .public_definitions
+        Arc::make_mut(&mut symbol_table.public_definitions)
             .insert(symbol_info.name.to_string(), definition_location.clone());
     }
 }
@@ -313,8 +313,7 @@ pub fn import_symbol(
     symbol_definitions.insert(0..=usize::MAX, definition_location.clone());
 
     if is_public {
-        symbol_table
-            .public_definitions
+        Arc::make_mut(&mut symbol_table.public_definitions)
             .insert(symbol.to_string(), definition_location.clone());
     }
 }
@@ -333,6 +332,7 @@ pub fn insert_symbol_reference(
         return;
     }
 
+    // Look up definition info first (acquires and releases read locks internally).
     let symbol_info = get_symbol_definition_info(
         files,
         symbol,
@@ -340,20 +340,29 @@ pub fn insert_symbol_reference(
         reference_location.start,
     );
 
+    // Report error before acquiring write lock (report_error writes to a separate DashMap).
+    if symbol_info.is_none() {
+        files.report_error(
+            &reference_location.file,
+            &format!("\"{symbol}\" is not defined"),
+            (reference_location.start..reference_location.end).into(),
+        );
+    }
+
+    // Acquire a single write lock for ALL mutations (was 3 separate lock acquisitions).
+    let mut current_file_symbol_table = match files.symbol_table.get_mut(&reference_location.file) {
+        Some(symbol_table) => symbol_table,
+        None => {
+            tracing::error!(
+                "Symbol table for file {:?} not found",
+                reference_location.file
+            );
+            return;
+        }
+    };
+
     match symbol_info {
         Some(symbol_info) => {
-            let mut current_file_symbol_table =
-                match files.symbol_table.get_mut(&reference_location.file) {
-                    Some(symbol_table) => symbol_table,
-                    None => {
-                        tracing::error!(
-                            "Symbol table for file {:?} not found",
-                            reference_location.file
-                        );
-                        return;
-                    }
-                };
-
             // If generic is already inferred, use the inferred type
             // if not, use generic as a pointer to the inferred type in the map
             let data_type = match symbol_info.data_type {
@@ -412,24 +421,6 @@ pub fn insert_symbol_reference(
             );
         }
         None => {
-            files.report_error(
-                &reference_location.file,
-                &format!("\"{symbol}\" is not defined"),
-                (reference_location.start..reference_location.end).into(),
-            );
-
-            let mut current_file_symbol_table =
-                match files.symbol_table.get_mut(&reference_location.file) {
-                    Some(symbol_table) => symbol_table,
-                    None => {
-                        tracing::error!(
-                            "Symbol table for file {:?} not found",
-                            reference_location.file
-                        );
-                        return;
-                    }
-                };
-
             current_file_symbol_table.symbols.insert(
                 span.clone(),
                 SymbolInfo {
@@ -445,35 +436,12 @@ pub fn insert_symbol_reference(
         }
     }
 
-    let mut current_file_symbol_table = match files.symbol_table.get_mut(&reference_location.file) {
-        Some(symbol_table) => symbol_table,
-        None => {
-            tracing::error!(
-                "Symbol table for file {:?} not found",
-                reference_location.file
-            );
-            return;
-        }
-    };
-
-    let symbol_references = match current_file_symbol_table.references.get_mut(symbol) {
-        Some(symbol_references) => symbol_references,
-        None => {
-            current_file_symbol_table
-                .references
-                .insert(symbol.to_string(), vec![]);
-
-            match current_file_symbol_table.references.get_mut(symbol) {
-                Some(references) => references,
-                None => {
-                    tracing::error!("Failed to insert symbol reference");
-                    return;
-                }
-            }
-        }
-    };
-
-    symbol_references.push(reference_location.clone());
+    // Insert reference using the same write lock.
+    current_file_symbol_table
+        .references
+        .entry(symbol.to_string())
+        .or_default()
+        .push(reference_location.clone());
 }
 
 #[tracing::instrument(skip_all)]
@@ -483,42 +451,39 @@ pub fn get_symbol_definition_info(
     file: &(FileId, FileVersion),
     position: usize,
 ) -> Option<SymbolInfo> {
-    let current_file_symbol_table = match files.symbol_table.get(file) {
-        Some(symbol_table) => symbol_table.clone(),
-        None => return None,
-    };
+    // Use DashMap read guard directly instead of cloning the entire SymbolTable.
+    let current_file_symbol_table = files.symbol_table.get(file)?;
 
-    let symbol_definition = match current_file_symbol_table.definitions.get(symbol) {
-        Some(symbol_definitions) => symbol_definitions.get(&position).cloned(),
-        None => return None,
-    };
+    let symbol_definition = current_file_symbol_table
+        .definitions
+        .get(symbol)
+        .and_then(|defs| defs.get(&position).cloned())?;
 
-    match symbol_definition {
-        Some(definition) => {
-            if definition.file == *file {
-                current_file_symbol_table
-                    .symbols
-                    .get(&definition.start)
-                    .cloned()
-            } else {
-                let definition_file_symbol_table = match files
-                    .symbol_table
-                    .get_mut(&definition.file)
-                {
-                    Some(symbol_table) => symbol_table,
-                    None => {
-                        tracing::error!("Symbol table for file {:?} not found", definition.file);
-                        return None;
-                    }
-                };
+    if symbol_definition.file == *file {
+        current_file_symbol_table
+            .symbols
+            .get(&symbol_definition.start)
+            .cloned()
+    } else {
+        // Drop the current file guard before acquiring cross-file guard
+        // to avoid potential lock ordering issues with DashMap shards.
+        drop(current_file_symbol_table);
 
-                definition_file_symbol_table
-                    .symbols
-                    .get(&definition.start)
-                    .cloned()
+        let definition_file_symbol_table = match files.symbol_table.get(&symbol_definition.file) {
+            Some(symbol_table) => symbol_table,
+            None => {
+                tracing::error!(
+                    "Symbol table for file {:?} not found",
+                    symbol_definition.file
+                );
+                return None;
             }
-        }
-        None => None,
+        };
+
+        definition_file_symbol_table
+            .symbols
+            .get(&symbol_definition.start)
+            .cloned()
     }
 }
 
