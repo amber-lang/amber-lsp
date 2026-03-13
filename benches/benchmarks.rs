@@ -182,26 +182,27 @@ fn bench_analysis(c: &mut Criterion) {
             BenchmarkId::new(v.name, format!("{line_count} lines")),
             &source,
             |b, src| {
+                // Setup once: create backend and populate file state.
+                let (service, _) = tower_lsp_server::LspService::new(|client| {
+                    Backend::new(
+                        client,
+                        amber_version.clone(),
+                        Some(Arc::new(MemoryFS::new())),
+                    )
+                });
+                let backend = service.inner();
+
+                let file = Path::new("/bench_main.ab");
+                let uri = Uri::from_file_path(file).unwrap();
+                let file_id = backend.files.insert(uri.clone(), DEFAULT_VERSION);
+                backend
+                    .files
+                    .document_map
+                    .insert((file_id, DEFAULT_VERSION), Rope::from_str(src));
+
                 b.iter(|| {
                     runtime.block_on(async {
-                        let (service, _) = tower_lsp_server::LspService::new(|client| {
-                            Backend::new(
-                                client,
-                                amber_version.clone(),
-                                Some(Arc::new(MemoryFS::new())),
-                            )
-                        });
-                        let backend = service.inner();
-
-                        let file = Path::new("/bench_main.ab");
-                        let uri = Uri::from_file_path(file).unwrap();
-
-                        // Populate internal state without tokenizing/parsing.
-                        let file_id = backend.files.insert(uri.clone(), DEFAULT_VERSION);
-                        backend
-                            .files
-                            .document_map
-                            .insert((file_id, DEFAULT_VERSION), Rope::from_str(src));
+                        // Reset symbol table for a clean analysis pass.
                         backend
                             .files
                             .symbol_table
@@ -250,7 +251,12 @@ fn bench_analysis(c: &mut Criterion) {
                                     &backend.files,
                                 );
                             }
-                            _ => {}
+                            other => {
+                                panic!(
+                                    "unexpected or empty Grammar variant for analysis benchmark: \
+                                     {other:?}"
+                                );
+                            }
                         }
                     });
                 });
