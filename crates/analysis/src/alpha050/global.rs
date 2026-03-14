@@ -476,18 +476,18 @@ pub async fn analyze_global_stmnt(
                     .get_files()
                     .add_file_dependency(&(file_id, file_version), imported_file.0);
 
-                let imported_file_symbol_table =
+                // Extract only the public definitions (Arc clone) instead of
+                // cloning the entire SymbolTable.
+                let imported_public_defs =
                     match backend.get_files().symbol_table.get(&imported_file) {
-                        Some(symbol_table_ref) => symbol_table_ref.clone(),
+                        Some(symbol_table_ref) => symbol_table_ref.public_definitions.clone(),
                         None => continue,
                     };
 
                 match import_content {
                     ImportContent::ImportSpecific(ident_list) => {
                         let mut import_context = ImportContext {
-                            public_definitions: imported_file_symbol_table
-                                .public_definitions
-                                .clone(),
+                            public_definitions: imported_public_defs.clone(),
                             imported_symbols: vec![],
                             statement_span: Some(*span),
                         };
@@ -523,26 +523,27 @@ pub async fn analyze_global_stmnt(
                                 return;
                             }
 
-                            let symbol_definition =
-                                imported_file_symbol_table.public_definitions.get(ident);
+                            let symbol_definition = imported_public_defs.get(ident);
 
                             match symbol_definition {
                                 Some(definition_location) => {
-                                    let definition_file_symbol_table = match backend
-                                        .get_files()
-                                        .symbol_table
-                                        .get(&definition_location.file)
-                                    {
-                                        Some(symbol_table) => symbol_table.clone(),
-                                        None => return,
-                                    };
-
-                                    let symbol_info = match definition_file_symbol_table
-                                        .symbols
-                                        .get(&definition_location.start)
-                                    {
-                                        Some(symbol_info) => symbol_info,
-                                        None => return,
+                                    // Use DashMap guard directly instead of cloning entire SymbolTable.
+                                    let symbol_info = {
+                                        let definition_file_st = match backend
+                                            .get_files()
+                                            .symbol_table
+                                            .get(&definition_location.file)
+                                        {
+                                            Some(st) => st,
+                                            None => return,
+                                        };
+                                        match definition_file_st
+                                            .symbols
+                                            .get(&definition_location.start)
+                                        {
+                                            Some(si) => si.clone(),
+                                            None => return,
+                                        }
                                     };
 
                                     let mut symbol_table = backend
@@ -556,7 +557,7 @@ pub async fn analyze_global_stmnt(
                                         &SymbolInfo {
                                             is_definition: false,
                                             contexts: vec![Context::Import(import_context.clone())],
-                                            ..symbol_info.clone()
+                                            ..symbol_info
                                         },
                                         Some(span.start..=span.end),
                                         definition_location,
@@ -599,49 +600,44 @@ pub async fn analyze_global_stmnt(
                     ImportContent::ImportAll => {
                         let mut all_imported: Vec<(String, SymbolLocation)> = Vec::new();
 
-                        imported_file_symbol_table
-                            .public_definitions
-                            .iter()
-                            .for_each(|(name, location)| {
-                                let definition_file_symbol_table =
+                        imported_public_defs.iter().for_each(|(name, location)| {
+                            // Use DashMap guard directly instead of cloning entire SymbolTable.
+                            let symbol_info = {
+                                let definition_file_st =
                                     match backend.get_files().symbol_table.get(&location.file) {
-                                        Some(symbol_table) => symbol_table.clone(),
+                                        Some(st) => st,
                                         None => return,
                                     };
+                                match definition_file_st.symbols.get(&location.start) {
+                                    Some(si) => si.clone(),
+                                    None => return,
+                                }
+                            };
 
-                                let symbol_info =
-                                    match definition_file_symbol_table.symbols.get(&location.start)
-                                    {
-                                        Some(symbol_info) => symbol_info,
-                                        None => return,
-                                    };
+                            let mut symbol_table = backend
+                                .get_files()
+                                .symbol_table
+                                .entry((file_id, file_version))
+                                .or_default();
 
-                                let mut symbol_table = backend
-                                    .get_files()
-                                    .symbol_table
-                                    .entry((file_id, file_version))
-                                    .or_default();
+                            import_symbol(
+                                &mut symbol_table,
+                                &SymbolInfo {
+                                    is_definition: false,
+                                    contexts: vec![Context::Import(ImportContext {
+                                        public_definitions: imported_public_defs.clone(),
+                                        imported_symbols: vec![],
+                                        statement_span: Some(*span),
+                                    })],
+                                    ..symbol_info
+                                },
+                                None,
+                                location,
+                                *is_public_import,
+                            );
 
-                                import_symbol(
-                                    &mut symbol_table,
-                                    &SymbolInfo {
-                                        is_definition: false,
-                                        contexts: vec![Context::Import(ImportContext {
-                                            public_definitions: imported_file_symbol_table
-                                                .public_definitions
-                                                .clone(),
-                                            imported_symbols: vec![],
-                                            statement_span: Some(*span),
-                                        })],
-                                        ..symbol_info.clone()
-                                    },
-                                    None,
-                                    location,
-                                    *is_public_import,
-                                );
-
-                                all_imported.push((name.clone(), location.clone()));
-                            });
+                            all_imported.push((name.clone(), location.clone()));
+                        });
 
                         if !*is_public_import {
                             let mut symbol_table = backend
