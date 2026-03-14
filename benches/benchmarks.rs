@@ -1,6 +1,5 @@
 use std::path::Path;
 use std::sync::Arc;
-use std::time::Duration;
 
 use amber_analysis::files::DEFAULT_VERSION;
 use amber_analysis::{
@@ -164,9 +163,6 @@ fn bench_parse(c: &mut Criterion) {
 
 fn bench_analysis(c: &mut Criterion) {
     let mut group = c.benchmark_group("analysis");
-
-    group.sample_size(30);
-    group.measurement_time(Duration::from_secs(45));
 
     for v in versions() {
         let source = load_stdlib_source(v.resource_dir);

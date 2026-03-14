@@ -12,13 +12,18 @@ use amber_types::{
     DataType,
     Spanned,
 };
+use std::cell::RefCell;
+
 use chumsky::error::Rich;
 use chumsky::extra::Err;
 use chumsky::input::{
     Input,
     MappedInput,
 };
-use chumsky::Parser;
+use chumsky::{
+    Boxed,
+    Parser,
+};
 use semantic_tokens::semantic_tokens_from_ast;
 
 pub mod expressions;
@@ -269,6 +274,13 @@ pub enum GlobalStatement {
 #[derive(Debug)]
 pub struct AmberCompiler {}
 
+type CachedParserType =
+    Boxed<'static, 'static, AmberInput<'static>, Vec<Spanned<GlobalStatement>>, RichError<'static>>;
+
+thread_local! {
+    static PARSER_CACHE: RefCell<Option<CachedParserType>> = const { RefCell::new(None) };
+}
+
 impl Default for AmberCompiler {
     fn default() -> Self {
         Self::new()
@@ -283,6 +295,27 @@ impl AmberCompiler {
     pub fn parser<'a>(&self) -> impl AmberParser<'a, Vec<Spanned<GlobalStatement>>> {
         global::global_statement_parser()
     }
+
+    /// Returns a cached boxed parser, constructing it on first call per thread.
+    /// Subsequent calls return a cheap `Rc::clone` of the cached parser.
+    fn cached_parser<'a>(
+    ) -> Boxed<'a, 'a, AmberInput<'a>, Vec<Spanned<GlobalStatement>>, RichError<'a>> {
+        PARSER_CACHE.with(|cell| {
+            let mut cache = cell.borrow_mut();
+            if cache.is_none() {
+                *cache = Some(global::global_statement_parser().boxed());
+            }
+            let static_parser = cache.as_ref().unwrap().clone();
+            // SAFETY: The parser combinator tree is built entirely from owned data (Token
+            // strings, closures capturing owned values). It contains no actual references
+            // with 'static lifetime. The 'src parameter in chumsky's Parser trait is a
+            // phantom lifetime used to tie the parser to its input type at compile time;
+            // it does not affect runtime representation. Lifetimes are erased at runtime,
+            // so transmuting Boxed<'static, ...> to Boxed<'a, ...> is a no-op that
+            // changes only compile-time type information.
+            unsafe { std::mem::transmute(static_parser) }
+        })
+    }
 }
 
 impl LSPAnalysis for AmberCompiler {
@@ -296,9 +329,8 @@ impl LSPAnalysis for AmberCompiler {
     fn parse<'a>(&self, tokens: &'a [Spanned<Token>]) -> ParserResponse<'a> {
         let len = tokens.last().map(|t| t.1.end).unwrap_or(0);
 
-        let result = self
-            .parser()
-            .parse(Input::map(tokens, Span::from(len..len), |(t, s)| (t, s)));
+        let result =
+            Self::cached_parser().parse(Input::map(tokens, Span::from(len..len), |(t, s)| (t, s)));
 
         let semantic_tokens = semantic_tokens_from_ast(result.output());
 
