@@ -138,8 +138,6 @@ fn bench_tokenize(c: &mut Criterion) {
 fn bench_parse(c: &mut Criterion) {
     let mut group = c.benchmark_group("parse");
 
-    group.sample_size(30);
-
     for v in versions() {
         let source = load_stdlib_source(v.resource_dir);
         let line_count = source.lines().count();
@@ -163,8 +161,6 @@ fn bench_parse(c: &mut Criterion) {
 
 fn bench_analysis(c: &mut Criterion) {
     let mut group = c.benchmark_group("analysis");
-
-    group.sample_size(10);
 
     for v in versions() {
         let source = load_stdlib_source(v.resource_dir);
@@ -272,8 +268,6 @@ fn bench_analysis(c: &mut Criterion) {
 fn bench_end_to_end(c: &mut Criterion) {
     let mut group = c.benchmark_group("end_to_end");
 
-    group.sample_size(10);
-
     for v in versions() {
         let source = load_stdlib_source(v.resource_dir);
         let line_count = source.lines().count();
@@ -341,8 +335,6 @@ const AUTOCOMPLETE_CURSOR: (u32, u32) = (10, 5);
 fn bench_autocomplete(c: &mut Criterion) {
     let mut group = c.benchmark_group("autocomplete");
 
-    group.sample_size(30);
-
     let autocomplete_versions: Vec<(&str, AmberVersion)> = vec![
         ("alpha034", AmberVersion::Alpha034),
         ("alpha035", AmberVersion::Alpha035),
@@ -358,29 +350,33 @@ fn bench_autocomplete(c: &mut Criterion) {
         let runtime = rt();
 
         group.bench_function(BenchmarkId::new(*name, "completion"), |b| {
+            // Setup: create backend and pre-analyze document once (outside the benchmark loop).
+            let (service, _) = tower_lsp_server::LspService::new(|client| {
+                Backend::new(
+                    client,
+                    amber_version.clone(),
+                    Some(Arc::new(MemoryFS::new())),
+                )
+            });
+            let backend = service.inner();
+
+            let file = Path::new("/bench_complete.ab");
+            let uri = Uri::from_file_path(file).unwrap();
+
+            runtime.block_on(async {
+                backend
+                    .files
+                    .fs
+                    .write(&uri.to_file_path().unwrap(), &source)
+                    .await
+                    .unwrap();
+
+                let _file_id = backend.open_document(&uri).await.unwrap();
+            });
+
+            // Benchmark: only measure the completion call itself.
             b.iter(|| {
                 runtime.block_on(async {
-                    let (service, _) = tower_lsp_server::LspService::new(|client| {
-                        Backend::new(
-                            client,
-                            amber_version.clone(),
-                            Some(Arc::new(MemoryFS::new())),
-                        )
-                    });
-                    let backend = service.inner();
-
-                    let file = Path::new("/bench_complete.ab");
-                    let uri = Uri::from_file_path(file).unwrap();
-
-                    backend
-                        .files
-                        .fs
-                        .write(&uri.to_file_path().unwrap(), &source)
-                        .await
-                        .unwrap();
-
-                    let _file_id = backend.open_document(&uri).await.unwrap();
-
                     let params = CompletionParams {
                         text_document_position: TextDocumentPositionParams {
                             text_document: TextDocumentIdentifier { uri: uri.clone() },
