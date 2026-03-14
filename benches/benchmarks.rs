@@ -138,8 +138,6 @@ fn bench_tokenize(c: &mut Criterion) {
 fn bench_parse(c: &mut Criterion) {
     let mut group = c.benchmark_group("parse");
 
-    group.sample_size(30);
-
     for v in versions() {
         let source = load_stdlib_source(v.resource_dir);
         let line_count = source.lines().count();
@@ -270,8 +268,6 @@ fn bench_analysis(c: &mut Criterion) {
 fn bench_end_to_end(c: &mut Criterion) {
     let mut group = c.benchmark_group("end_to_end");
 
-    group.sample_size(10);
-
     for v in versions() {
         let source = load_stdlib_source(v.resource_dir);
         let line_count = source.lines().count();
@@ -338,8 +334,6 @@ const AUTOCOMPLETE_CURSOR: (u32, u32) = (10, 5);
 /// function call and requesting completions at that position.
 fn bench_autocomplete(c: &mut Criterion) {
     let mut group = c.benchmark_group("autocomplete");
-
-    group.sample_size(30);
 
     let autocomplete_versions: Vec<(&str, AmberVersion)> = vec![
         ("alpha034", AmberVersion::Alpha034),
