@@ -1145,17 +1145,13 @@ impl LanguageServer for Backend {
                                     _import_kw,
                                     (
                                         Alpha050ImportContent::ImportSpecific(ref ident_list),
-                                        ref _content_span,
+                                        ref content_span,
                                     ),
                                     _from_kw,
                                     (ref path, _path_span),
                                 ) = global_stmt
                                 {
                                     already_imported_paths.insert(path.clone());
-
-                                    if ident_list.is_empty() {
-                                        continue;
-                                    }
 
                                     // Resolve the import path to a URI
                                     let imported_uri = map_import_path(&uri, path, self).await;
@@ -1180,10 +1176,16 @@ impl LanguageServer for Backend {
                                     let already_imported: std::collections::HashSet<String> =
                                         ident_list.iter().map(|(name, _)| name.clone()).collect();
 
-                                    // Compute the insertion position: right after the
-                                    // last identifier in the import list.
-                                    let last_ident_span = &ident_list.last().unwrap().1;
-                                    let insert_offset = last_ident_span.end;
+                                    // Compute the insertion position and text prefix.
+                                    // When the import list is empty (`import { } from "mod"`)
+                                    // insert right after `{` with a space prefix; otherwise
+                                    // insert after the last identifier with a ", " prefix.
+                                    let (insert_offset, import_prefix) = if ident_list.is_empty() {
+                                        (content_span.start + 1, " ")
+                                    } else {
+                                        let last_ident_span = &ident_list.last().unwrap().1;
+                                        (last_ident_span.end, ", ")
+                                    };
                                     let insert_position =
                                         self.offset_to_position(insert_offset, &rope);
 
@@ -1213,7 +1215,7 @@ impl LanguageServer for Backend {
                                                 start: insert_position,
                                                 end: insert_position,
                                             },
-                                            new_text: format!(", {}", pub_name),
+                                            new_text: format!("{}{}", import_prefix, pub_name),
                                         };
 
                                         match pub_sym_info.symbol_type {
