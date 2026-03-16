@@ -24,5 +24,27 @@
           "AMBER_LSP_RESOURCES_DIR": ""
         }
       },
+      {
+        // Used for testing the extension with a local build of the LSP server (in `target/release`).
+        "name": "Run Extension (Dev Build)",
+        "type": "extensionHost",
+        "request": "launch",
+        "runtimeExecutable": "${execPath}",
+        "args": [
+          "--disable-extensions",
+          "--extensionDevelopmentPath=${workspaceFolder}/clients/vscode"
+        ],
+        "outFiles": [
+          "${workspaceFolder}/clients/vscode/out/**/*.js"
+        ],
+        "preLaunchTask": "Build Server and Extension",
+        "skipFiles": [
+          "<node_internals>/**/*.js"
+        ],
+        "env": {
+          "SERVER_PATH": "${workspaceFolder}/target/release/amber-lsp",
+          "AMBER_LSP_RESOURCES_DIR": ""
+        }
+      },
     ],
   }
