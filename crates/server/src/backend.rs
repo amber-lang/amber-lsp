@@ -112,6 +112,7 @@ impl Backend {
         };
 
         let files = Files::new(fs);
+        files.generic_types.reset_counter();
 
         Self {
             client,

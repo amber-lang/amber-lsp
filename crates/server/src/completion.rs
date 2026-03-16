@@ -102,8 +102,15 @@ async fn import_path_completions(
         })
         .collect();
 
-    let file_path = uri.to_file_path().unwrap().canonicalize().unwrap();
-    let mut searched_path = file_path.parent().unwrap().to_path_buf();
+    let file_path = match uri.to_file_path().and_then(|p| p.canonicalize().ok()) {
+        Some(p) => p,
+        None => return completions,
+    };
+    let parent = match file_path.parent() {
+        Some(p) => p,
+        None => return completions,
+    };
+    let mut searched_path = parent.to_path_buf();
     searched_path.push(symbol_info.name.clone());
 
     if let Ok(path) = searched_path.canonicalize() {
@@ -115,15 +122,17 @@ async fn import_path_completions(
     let dir_to_search = if symbol_info.name.ends_with("/") || searched_path.is_dir() {
         searched_path.as_path()
     } else {
-        searched_path.parent().unwrap()
+        match searched_path.parent() {
+            Some(p) => p,
+            None => return completions,
+        }
     };
 
     for entry_path in backend.files.fs.read_dir(dir_to_search).await {
-        let entry_name = entry_path
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
+        let entry_name = match entry_path.file_name() {
+            Some(name) => name.to_string_lossy().to_string(),
+            None => continue,
+        };
 
         let entry_kind = if entry_path.is_symlink() {
             match entry_path.read_link() {
@@ -136,11 +145,14 @@ async fn import_path_completions(
             CompletionItemKind::FILE
         };
 
-        let absolute_entry_path = entry_path.canonicalize().unwrap();
+        let absolute_entry_path = match entry_path.canonicalize() {
+            Ok(p) => p,
+            Err(_) => continue,
+        };
 
         if absolute_entry_path != file_path
             && (entry_path.is_dir()
-                || entry_path.extension().map(|ext| ext.to_str().unwrap()) == Some("ab"))
+                || entry_path.extension().and_then(|ext| ext.to_str()) == Some("ab"))
         {
             completions.push(CompletionItem {
                 label: entry_name.clone(),

@@ -51,11 +51,10 @@ pub async fn handle_goto_definition(
     let definition = match symbol_table.definitions.get(&symbol_info.name) {
         Some(definitions) => match definitions.get(&offset) {
             Some(definition) => {
-                let definition_file_rope =
-                    match backend.files.get_document_latest_version(definition.file.0) {
-                        Some((document, _)) => document.clone(),
-                        None => return Ok(None),
-                    };
+                let definition_file_rope = match backend.files.document_map.get(&definition.file) {
+                    Some(document) => document.clone(),
+                    None => return Ok(None),
+                };
 
                 let start_position =
                     backend.offset_to_position(definition.start, &definition_file_rope);

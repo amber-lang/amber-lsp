@@ -27,7 +27,8 @@ fn map_semantic_tokens(
 
             // If a range filter is provided, skip tokens outside the range.
             if let Some(range) = range_filter {
-                if !(line >= range.start.line
+                if !((line > range.start.line
+                    || (line == range.start.line && start >= range.start.character))
                     && (line < range.end.line
                         || (line == range.end.line && start <= range.end.character)))
                 {
