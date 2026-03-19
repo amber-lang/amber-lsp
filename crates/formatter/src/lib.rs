@@ -4,11 +4,16 @@ use amber_types::{Spanned, token::Span};
 mod alpha040;
 mod format;
 mod fragments;
+mod line_wrapping;
 
 pub use format::format;
 
 /// The content of an indentation.
 const INDENT: &str = "    ";
+/// The desired line width to try keep formatting under.
+const DESIRED_WIDTH: usize = 100;
+/// The newline character to use.
+const NEWLINE: &str = "\n";
 
 const WHITESPACE: [char; 4] = [' ', '\n', '\r', '\t'];
 const WHITESPACE_BYTES: [u8; 4] = {

@@ -1,7 +1,8 @@
 use super::{INDENT, SpanTextOutput, WHITESPACE_BYTES};
 use crate::{
-    TextOutput,
+    NEWLINE, TextOutput,
     fragments::{CommentVariant, Fragment, Indentation},
+    line_wrapping::{Wrap, WrapPoint, WrapStyle, handle_wrapping},
 };
 use amber_types::token::Span;
 use std::{ops::RangeBounds, panic::Location, string::FromUtf8Error};
@@ -98,6 +99,16 @@ pub struct FmtContext<'a, T> {
     source_newlines: Box<[usize]>,
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum FormattingError {
+    /// The span does not exist within the source file.
+    #[error("Invalid span. Starts: {start}; Ends: {end}")]
+    SpanDoesntExist { start: usize, end: usize },
+    /// The span cannot be converted into UTF8 text.
+    #[error(transparent)]
+    InvalidSpan(#[from] FromUtf8Error),
+}
+
 impl<'a, T> FmtContext<'a, T> {
     /// Moves the context to the next top level statement.
     fn increment(&mut self) {
@@ -131,16 +142,6 @@ impl<'a, T> FmtContext<'a, T> {
     }
 }
 
-#[derive(thiserror::Error, Debug)]
-pub enum FormattingError {
-    /// The span does not exist within the source file.
-    #[error("Invalid span. Starts: {start}; Ends: {end}")]
-    SpanDoesntExist { start: usize, end: usize },
-    /// The span cannot be converted into UTF8 text.
-    #[error(transparent)]
-    InvalidSpan(#[from] FromUtf8Error),
-}
-
 impl Output {
     pub fn new() -> Self {
         Self { buffer: Vec::new() }
@@ -158,8 +159,13 @@ impl Output {
         self.span(span);
     }
 
-    pub(crate) fn space(&mut self) -> &mut Self {
-        self.buffer.push(Fragment::Space);
+    pub(crate) fn space(&mut self, wrapping: Wrap) -> &mut Self {
+        self.buffer.push(Fragment::Space(wrapping));
+        self
+    }
+
+    pub(crate) fn wrap(&mut self, wrapping: Wrap) -> &mut Self {
+        self.buffer.push(Fragment::Wrap(wrapping));
         self
     }
 
@@ -208,10 +214,6 @@ impl Output {
     pub(crate) fn span(&mut self, span: &Span) -> &mut Self {
         self.buffer.push(Fragment::Span(span.into()));
         self
-    }
-
-    pub(crate) fn end_space(&mut self) {
-        self.buffer.push(Fragment::Space);
     }
 
     pub(crate) fn end_newline(&mut self) {
@@ -265,7 +267,8 @@ impl Output {
 
     /// Removes the last fragment from the buffer if it is a space.
     pub(crate) fn remove_space(&mut self) -> &mut Self {
-        self.buffer.pop_if(|last| matches!(last, Fragment::Space));
+        self.buffer
+            .pop_if(|last| matches!(last, Fragment::Space(..)));
         self
     }
 
@@ -284,7 +287,7 @@ impl Output {
         let is_text = |last: &mut Fragment| {
             matches!(
                 last,
-                Fragment::IndentationChange(..) | Fragment::Space | Fragment::Newline
+                Fragment::IndentationChange(..) | Fragment::Space(..) | Fragment::Newline
             )
         };
 
@@ -301,7 +304,10 @@ impl Output {
     fn format(mut self, file_content: &str) -> Result<String, FormattingError> {
         self.remove_trailing_whitespace();
 
-        let mut text = String::new();
+        let mut output = String::new();
+
+        let mut current = String::new();
+        let mut wrap_points = Vec::new();
         let mut indentation = String::new();
         let mut consecutive_newlines = 0;
 
@@ -314,13 +320,34 @@ impl Output {
             }
 
             match fragment {
-                Fragment::Space => text.push(' '),
+                Fragment::Space(wrapping) => {
+                    current.push(' ');
+                    wrap_points.push(WrapPoint::new(
+                        WrapStyle::Character,
+                        wrapping,
+                        current.len(),
+                        indentation.clone(),
+                    ));
+                }
+                Fragment::Wrap(wrap) => {
+                    wrap_points.push(WrapPoint::new(
+                        WrapStyle::Between,
+                        wrap,
+                        current.len(),
+                        indentation.clone(),
+                    ));
+                }
                 Fragment::Newline => {
                     if consecutive_newlines > 2 {
                         continue;
                     }
-                    text.push('\n');
-                    text.push_str(&indentation);
+
+                    output.push_str(&handle_wrapping(current, wrap_points));
+                    output.push_str(NEWLINE);
+                    output.push_str(&indentation);
+
+                    current = String::new();
+                    wrap_points = Vec::new();
                 }
                 Fragment::IndentationChange(indent) => match indent {
                     Indentation::Increase => indentation += INDENT,
@@ -328,7 +355,7 @@ impl Output {
                         indentation.truncate(indentation.len().saturating_sub(INDENT.len()));
                     }
                 },
-                Fragment::Text(frag_text) => text.push_str(&frag_text),
+                Fragment::Text(frag_text) => current.push_str(&frag_text),
                 Fragment::Span(span) => {
                     let span = file_content
                         .as_bytes()
@@ -339,7 +366,7 @@ impl Output {
                         })?;
 
                     let span_text = String::from_utf8(span.to_vec())?;
-                    text.push_str(&span_text);
+                    current.push_str(&span_text);
                 }
                 Fragment::ParseError(span) => {
                     let span = file_content
@@ -352,7 +379,7 @@ impl Output {
 
                     let span_text = String::from_utf8(span.to_vec())?;
                     eprintln!("Unable to parse '{span_text}'. Failing back to sourcefile content");
-                    text.push_str(&span_text);
+                    current.push_str(&span_text);
                 }
                 Fragment::Comment {
                     variant,
@@ -360,27 +387,27 @@ impl Output {
                     start_index: _,
                 } => {
                     // Ensure that there is a space between the comment and previous code
-                    if let Some(previous) = text.as_bytes().last()
+                    if let Some(previous) = current.as_bytes().last()
                         && !WHITESPACE_BYTES.contains(previous)
                     {
-                        text.push(' ');
+                        current.push(' ');
                     }
 
-                    text.push_str(variant.denoted_by());
-                    text.push(' ');
-                    text.push_str(&comment);
+                    current.push_str(variant.denoted_by());
+                    current.push(' ');
+                    current.push_str(&comment);
 
                     if let Some(Fragment::Comment { variant, .. }) = iter.peek()
                         && *variant == CommentVariant::Doc
                         && matches!(variant, CommentVariant::Doc)
                     {
-                        text.push('\n');
+                        current.push('\n');
                     }
                 }
             }
         }
 
-        Ok(text)
+        Ok(output + &current)
     }
 }
 

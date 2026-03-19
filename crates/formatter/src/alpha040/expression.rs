@@ -2,6 +2,7 @@ use crate::{
     SpanTextOutput, TextOutput,
     alpha040::Gen,
     format::{FmtContext, Output},
+    line_wrapping::Wrap,
 };
 use amber_grammar::{Span, alpha040::Expression};
 
@@ -15,9 +16,9 @@ impl TextOutput<Gen> for Expression {
             lhs: &impl SpanTextOutput<Gen>,
         ) {
             output.output(ctx, rhs);
-            output.space();
+            output.space(Wrap::LAST);
             output.char(middle);
-            output.space();
+            output.space(Wrap::LAST);
             output.output(ctx, lhs);
         }
 
@@ -29,9 +30,9 @@ impl TextOutput<Gen> for Expression {
             lhs: &impl SpanTextOutput<Gen>,
         ) {
             output.output(ctx, rhs);
-            output.space();
+            output.space(Wrap::LAST);
             output.text(middle);
-            output.space();
+            output.space(Wrap::LAST);
             output.output(ctx, lhs);
         }
 
@@ -43,9 +44,9 @@ impl TextOutput<Gen> for Expression {
             lhs: &impl SpanTextOutput<Gen>,
         ) {
             output.output(ctx, rhs);
-            output.space();
+            output.space(Wrap::LAST);
             output.output(ctx, middle);
-            output.space();
+            output.space(Wrap::LAST);
             output.output(ctx, lhs);
         }
 
@@ -83,39 +84,42 @@ impl TextOutput<Gen> for Expression {
             Expression::Neq(rhs, lhs) => string_separated(output, ctx, rhs, "!=", lhs),
             Expression::Not(not, lhs) => {
                 output.output(ctx, not);
-                output.space();
+                output.space(Wrap::LAST);
                 output.output(ctx, lhs);
             }
             Expression::Ternary(condition, then, if_then, r#else, if_else) => {
-                // TODO(tye-exe): Allow single line ternary if short enough. Use given span to measure length?
                 output.increase_indentation();
                 output.output(ctx, condition);
-                output.newline();
+                output.space(Wrap::WITH_FIRST);
                 output.output(ctx, then);
-                output.space();
+                output.space(Wrap::NEVER);
                 output.output(ctx, if_then);
-                output.newline();
+                output.space(Wrap::WITH_FIRST);
                 output.output(ctx, r#else);
-                output.space();
+                output.space(Wrap::NEVER);
                 output.output(ctx, if_else);
+                output.newline();
                 output.decrease_indentation();
             }
             Expression::FunctionInvocation(modifiers, function_name, args, failure_handler) => {
                 for modifier in modifiers {
                     output.output(ctx, modifier);
-                    output.space();
+                    output.space(Wrap::LAST);
                 }
 
-                output.output(ctx, function_name).char('(');
+                output
+                    .output(ctx, function_name)
+                    .char('(')
+                    .wrap(Wrap::WITH_MIDDLE);
 
                 for arg in args.iter().take(args.len().saturating_sub(1)) {
-                    output.output(ctx, arg).char(',').space();
+                    output.output(ctx, arg).char(',').space(Wrap::WITH_MIDDLE);
                 }
                 if let Some(arg) = args.last() {
                     output.output(ctx, arg);
                 }
 
-                output.char(')');
+                output.wrap(Wrap::WITH_MIDDLE).char(')');
 
                 if let Some(failure_handler) = failure_handler {
                     output.output(ctx, failure_handler);
@@ -124,7 +128,7 @@ impl TextOutput<Gen> for Expression {
             Expression::Command(modifiers, commands, failure_handler) => {
                 for modifier in modifiers {
                     output.output(ctx, modifier);
-                    output.space();
+                    output.space(Wrap::LAST);
                 }
 
                 // Do not format bash commands
@@ -133,18 +137,18 @@ impl TextOutput<Gen> for Expression {
                 }
 
                 if let Some(failure_handler) = failure_handler {
-                    output.space().output(ctx, failure_handler);
+                    output.space(Wrap::NEVER).output(ctx, failure_handler);
                 }
             }
             Expression::Array(array) => {
-                output.char('[');
+                output.char('[').wrap(Wrap::WITH_FIRST);
                 for expression in array {
-                    output.output(ctx, expression);
-                    output.char(',');
-                    output.space();
+                    output
+                        .output(ctx, expression)
+                        .char(',')
+                        .space(Wrap::WITH_FIRST);
                 }
-                output.remove_space();
-                output.char(']');
+                output.remove_space().wrap(Wrap::WITH_FIRST).char(']');
             }
             Expression::Range(lhs, rhs) => {
                 output.output(ctx, lhs);
@@ -160,15 +164,15 @@ impl TextOutput<Gen> for Expression {
             }
             Expression::Nameof(name_of, variable) => {
                 output.output(ctx, name_of);
-                output.space();
+                output.space(Wrap::NEVER);
                 output.output(ctx, variable);
             }
             Expression::Is(lhs, is, rhs) => {
                 output
                     .output(ctx, lhs)
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, is)
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, rhs);
             }
             Expression::ArrayIndex(array, index) => output
@@ -180,7 +184,7 @@ impl TextOutput<Gen> for Expression {
                 output.output(ctx, exit);
 
                 if let Some(value) = value {
-                    output.space().output(ctx, value);
+                    output.space(Wrap::NEVER).output(ctx, value);
                 }
             }
             Expression::Error => {

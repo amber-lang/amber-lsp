@@ -1,4 +1,6 @@
-use crate::{FmtContext, Output, SpanTextOutput, TextOutput, fragments::CommentVariant};
+use crate::{
+    FmtContext, Output, SpanTextOutput, TextOutput, fragments::CommentVariant, line_wrapping::Wrap,
+};
 use amber_grammar::{
     CommandModifier, CompilerFlag,
     alpha040::{
@@ -22,13 +24,13 @@ impl TextOutput<Gen> for ImportContent {
                 output.char('*');
             }
             ImportContent::ImportSpecific(items) => {
-                output.text("{ ");
+                output.text("{").space(Wrap::WITH_FIRST);
 
                 for identifier in items.iter().take(items.len().saturating_sub(1)) {
-                    output.output(ctx, identifier).char(',').space();
+                    output.output(ctx, identifier).char(',').space(Wrap::MIDDLE);
                 }
                 if let Some(item) = items.last() {
-                    output.output(ctx, item).end_space();
+                    output.output(ctx, item).space(Wrap::WITH_FIRST);
                 }
 
                 output.char('}');
@@ -43,7 +45,7 @@ impl TextOutput<Gen> for FunctionArgument {
             FunctionArgument::Generic(is_ref, text) => {
                 if is_ref.0 {
                     output.text("ref");
-                    output.space();
+                    output.space(Wrap::NEVER);
                 }
                 output.output(ctx, text);
             }
@@ -51,28 +53,32 @@ impl TextOutput<Gen> for FunctionArgument {
                 let is_ref = is_ref.0;
                 if is_ref {
                     output.text("ref");
-                    output.space();
+                    output.space(Wrap::NEVER);
                 }
 
                 output.output(ctx, text);
 
                 if let Some(data_type) = data_type {
-                    output.char(':').space().output(ctx, data_type);
+                    output.char(':').space(Wrap::NEVER).output(ctx, data_type);
                 }
 
-                output.space().char('=').space().output(ctx, expression);
+                output
+                    .space(Wrap::NEVER)
+                    .char('=')
+                    .space(Wrap::NEVER)
+                    .output(ctx, expression);
             }
             FunctionArgument::Typed(is_ref, text, data_type) => {
                 let is_ref = is_ref.0;
                 if is_ref {
                     output.text("ref");
-                    output.space();
+                    output.space(Wrap::NEVER);
                 }
 
                 output
                     .output(ctx, text)
                     .char(':')
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, data_type);
             }
             FunctionArgument::Error => {
@@ -107,7 +113,7 @@ impl TextOutput<Gen> for Block {
                 output.char('{').increase_indentation().end_newline();
 
                 for modifier in modifiers {
-                    output.output(ctx, modifier).end_space();
+                    output.output(ctx, modifier).space(Wrap::NEVER);
                 }
                 for statement in statements {
                     output.output(ctx, statement).end_newline();
@@ -152,14 +158,15 @@ impl TextOutput<Gen> for Comment {
 impl TextOutput<Gen> for IfCondition {
     fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
-            IfCondition::IfCondition(condition, block) => {
-                output.output(ctx, condition).space().end_output(ctx, block)
-            }
+            IfCondition::IfCondition(condition, block) => output
+                .output(ctx, condition)
+                .space(Wrap::NEVER)
+                .end_output(ctx, block),
             IfCondition::InlineIfCondition(condition, statement) => {
                 output
                     .output(ctx, condition)
                     .char(':')
-                    .space()
+                    .space(Wrap::FIRST)
                     .output(ctx, statement);
             }
             IfCondition::Comment(comment) => output.end_output(ctx, comment),
@@ -186,7 +193,7 @@ impl TextOutput<Gen> for FailureHandler {
             }
             FailureHandler::Handle(failed, statements) => {
                 output.output(ctx, failed);
-                output.space();
+                output.space(Wrap::NEVER);
                 output.char('{');
                 output.increase_indentation();
                 output.newline();

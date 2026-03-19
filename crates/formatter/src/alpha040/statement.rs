@@ -2,6 +2,7 @@ use crate::{
     SpanTextOutput, TextOutput,
     alpha040::Gen,
     format::{FmtContext, Output},
+    line_wrapping::Wrap,
 };
 use amber_grammar::{Span, alpha040::Statement};
 
@@ -16,9 +17,9 @@ impl TextOutput<Gen> for Statement {
         ) {
             output
                 .output(ctx, variable)
-                .space()
+                .space(Wrap::LAST)
                 .text(separator)
-                .space()
+                .space(Wrap::LAST)
                 .output(ctx, expression);
         }
 
@@ -29,33 +30,36 @@ impl TextOutput<Gen> for Statement {
             Statement::VariableInit(keyword, name, init) => {
                 output
                     .output(ctx, keyword)
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, name)
-                    .space()
+                    .space(Wrap::NEVER)
                     .char('=')
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, init);
             }
             Statement::ConstInit(keyword, name, init) => {
                 output
                     .output(ctx, keyword)
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, name)
-                    .space()
+                    .space(Wrap::NEVER)
                     .char('=')
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, init);
             }
             Statement::VariableSet(name, new_value) => {
                 output
                     .output(ctx, name)
-                    .space()
+                    .space(Wrap::NEVER)
                     .char('=')
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, new_value);
             }
             Statement::IfCondition(r#if, condition, comments, else_condition) => {
-                output.output(ctx, r#if).space().output(ctx, condition);
+                output
+                    .output(ctx, r#if)
+                    .space(Wrap::NEVER)
+                    .output(ctx, condition);
 
                 if let Some(comment) = comments.first() {
                     ctx.allow_newline(output, condition.1.end..=comment.1.start);
@@ -67,13 +71,13 @@ impl TextOutput<Gen> for Statement {
                 }
 
                 if let Some(else_condition) = else_condition {
-                    output.space().output(ctx, else_condition);
+                    output.space(Wrap::NEVER).output(ctx, else_condition);
                 }
             }
             Statement::IfChain(r#if, items) => {
                 output
                     .output(ctx, r#if)
-                    .space()
+                    .space(Wrap::NEVER)
                     .char('{')
                     .increase_indentation();
 
@@ -95,18 +99,21 @@ impl TextOutput<Gen> for Statement {
                 shorthand(output, ctx, variable, "%=", expr)
             }
             Statement::InfiniteLoop(r#loop, block) => {
-                output.output(ctx, r#loop).space().output(ctx, block);
+                output
+                    .output(ctx, r#loop)
+                    .space(Wrap::NEVER)
+                    .output(ctx, block);
             }
             Statement::IterLoop(r#for, element, r#in, expr, block) => {
                 output
                     .output(ctx, r#for)
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, element)
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, r#in)
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, expr)
-                    .space()
+                    .space(Wrap::NEVER)
                     .end_output(ctx, block);
             }
             Statement::Break => output.end_text("break"),
@@ -115,32 +122,40 @@ impl TextOutput<Gen> for Statement {
                 output.end_output(ctx, r#return);
 
                 if let Some(expr) = expr {
-                    output.space().end_output(ctx, expr);
+                    output.space(Wrap::NEVER).end_output(ctx, expr);
                 }
             }
             Statement::Fail(fail, expr) => {
                 output.end_output(ctx, fail);
 
                 if let Some(expr) = expr {
-                    output.space().end_output(ctx, expr);
+                    output.space(Wrap::NEVER).end_output(ctx, expr);
                 }
             }
-            Statement::Echo(echo, text) => output.output(ctx, echo).space().end_output(ctx, text),
-            Statement::Cd(cd, text) => output.output(ctx, cd).space().end_output(ctx, text),
+            Statement::Echo(echo, text) => output
+                .output(ctx, echo)
+                .space(Wrap::NEVER)
+                .end_output(ctx, text),
+            Statement::Cd(cd, text) => output
+                .output(ctx, cd)
+                .space(Wrap::NEVER)
+                .end_output(ctx, text),
             Statement::MoveFiles(modifiers, mv, source, destination, failure_handler) => {
                 for modifier in modifiers {
-                    output.output(ctx, modifier).space();
+                    output.output(ctx, modifier).space(Wrap::NEVER);
                 }
 
                 output
                     .output(ctx, mv)
-                    .space()
+                    .space(Wrap::WITH_LOW_MIDDLE)
                     .output(ctx, source)
-                    .space()
+                    .space(Wrap::WITH_LOW_MIDDLE)
                     .output(ctx, destination);
 
                 if let Some(failure_handler) = failure_handler {
-                    output.space().output(ctx, failure_handler);
+                    output
+                        .space(Wrap::WITH_LOW_MIDDLE)
+                        .output(ctx, failure_handler);
                 }
             }
             Statement::Block(block) => output.end_output(ctx, block),

@@ -2,6 +2,7 @@ use crate::{
     TextOutput,
     alpha040::Gen,
     format::{FmtContext, Output},
+    line_wrapping::Wrap,
 };
 use amber_grammar::{
     Span,
@@ -18,11 +19,11 @@ impl TextOutput<Gen> for GlobalStatement {
 
                 output
                     .output(ctx, import)
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, content)
-                    .space()
+                    .space(Wrap::NEVER)
                     .output(ctx, from)
-                    .space()
+                    .space(Wrap::NEVER)
                     .char('"')
                     .output(ctx, path)
                     .char('"')
@@ -63,9 +64,10 @@ impl TextOutput<Gen> for GlobalStatement {
                     output.text("pub ");
                 }
 
-                output.output(ctx, function_keyword);
-                output.space();
-                output.output(ctx, name);
+                output
+                    .output(ctx, function_keyword)
+                    .space(Wrap::NEVER)
+                    .output(ctx, name);
 
                 output.char('(');
                 // Handle adding variables with proper spacing
@@ -73,7 +75,7 @@ impl TextOutput<Gen> for GlobalStatement {
                     for arg in args.iter().take(args.len().saturating_sub(1)) {
                         output.output(ctx, arg);
                         output.char(',');
-                        output.space();
+                        output.space(Wrap::WITH_MIDDLE);
                     }
 
                     if let Some(arg) = args.last() {
@@ -83,10 +85,14 @@ impl TextOutput<Gen> for GlobalStatement {
                 output.char(')');
 
                 if let Some(returns) = return_type {
-                    output.char(':').space().output(ctx, returns);
+                    output.char(':').space(Wrap::NEVER).output(ctx, returns);
                 }
 
-                output.space().char('{').increase_indentation().newline();
+                output
+                    .space(Wrap::NEVER)
+                    .char('{')
+                    .increase_indentation()
+                    .newline();
 
                 let mut last_span_end = None;
                 for content in contents {
@@ -124,7 +130,11 @@ impl TextOutput<Gen> for GlobalStatement {
                 if let Some(args) = args {
                     output.char('(').output(ctx, args).char(')');
                 }
-                output.space().char('{').increase_indentation().newline();
+                output
+                    .space(Wrap::NEVER)
+                    .char('{')
+                    .increase_indentation()
+                    .newline();
 
                 let mut last_span_end = None;
                 for statement in statements {

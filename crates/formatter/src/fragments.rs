@@ -1,3 +1,4 @@
+use crate::line_wrapping::Wrap;
 use amber_types::token::Span;
 
 #[derive(Debug)]
@@ -36,7 +37,8 @@ impl From<&Span> for FragmentSpan {
 
 #[derive(Debug)]
 pub enum Fragment {
-    Space,
+    Space(Wrap),
+    Wrap(Wrap),
     Newline,
     /// Denotes an indentation change.
     /// This has no output in its current position, but will change the indentation after every newline.
