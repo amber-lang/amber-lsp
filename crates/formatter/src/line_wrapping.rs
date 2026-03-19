@@ -35,8 +35,9 @@ pub fn handle_wrapping(current_line: String, mut wraps: Vec<WrapPoint>) -> Strin
 
     let mut group = false;
     for point in wraps {
-        if group {
-            group = point.wrap.wrap_type == WrapType::WrapWith;
+        let wrap_with = point.wrap.wrap_type == WrapType::WrapWith;
+        if group && wrap_with {
+            group = wrap_with;
             wrapped_line.wrap(point);
             continue;
         }
@@ -108,6 +109,7 @@ pub enum WrapType {
     WrapAlone,
 }
 
+#[derive(Debug)]
 pub struct WrapPoint {
     style: WrapStyle,
     wrap: Wrap,
@@ -126,6 +128,7 @@ impl WrapPoint {
     }
 }
 
+#[derive(Debug)]
 pub enum WrapStyle {
     /// Replace the character with a newline.
     Character,
@@ -193,5 +196,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn short_no_wrap() {}
+    fn wrapping() {
+        let line = r#"import { is_available_locally, is_available_remotely, download, execute_script } from "../lib/amber_manager.ab""#;
+        let wraps = vec![
+            WrapPoint::new(WrapStyle::Character, Wrap::WITH_FIRST, 9, "  ".to_owned()),
+            WrapPoint::new(WrapStyle::Character, Wrap::MIDDLE, 31, "  ".to_owned()),
+            WrapPoint::new(WrapStyle::Character, Wrap::MIDDLE, 54, "  ".to_owned()),
+            WrapPoint::new(WrapStyle::Character, Wrap::MIDDLE, 64, "  ".to_owned()),
+            WrapPoint::new(WrapStyle::Character, Wrap::WITH_FIRST, 79, "".to_owned()),
+        ];
+
+        let wrapped = handle_wrapping(line.to_owned(), wraps);
+        assert_eq!(
+            wrapped,
+            "import {\n  is_available_locally, is_available_remotely, download, execute_script\n} from \"../lib/amber_manager.ab\""
+        )
+    }
 }

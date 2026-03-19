@@ -350,7 +350,7 @@ impl Output {
                     wrap_points = Vec::new();
                 }
                 Fragment::IndentationChange(indent) => match indent {
-                    Indentation::Increase => indentation += INDENT,
+                    Indentation::Increase => indentation.push_str(INDENT),
                     Indentation::Decrease => {
                         indentation.truncate(indentation.len().saturating_sub(INDENT.len()));
                     }

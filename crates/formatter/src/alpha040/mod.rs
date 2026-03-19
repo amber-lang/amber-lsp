@@ -24,13 +24,19 @@ impl TextOutput<Gen> for ImportContent {
                 output.char('*');
             }
             ImportContent::ImportSpecific(items) => {
-                output.text("{").space(Wrap::WITH_FIRST);
+                output
+                    .text("{")
+                    .increase_indentation()
+                    .space(Wrap::WITH_FIRST);
 
                 for identifier in items.iter().take(items.len().saturating_sub(1)) {
                     output.output(ctx, identifier).char(',').space(Wrap::MIDDLE);
                 }
                 if let Some(item) = items.last() {
-                    output.output(ctx, item).space(Wrap::WITH_FIRST);
+                    output
+                        .output(ctx, item)
+                        .decrease_indentation()
+                        .space(Wrap::WITH_FIRST);
                 }
 
                 output.char('}');
