@@ -107,6 +107,7 @@ pub fn failable_handlers_parser<'a>(
         exited_parser(stmnts),
     ))
     .separated_by(comment_parser().or_not())
+    .allow_leading()
     .collect()
     .boxed()
     .labelled("failure handler (?, failed, exited, succeeded)")
