@@ -98,22 +98,16 @@ fn exited_parser<'a>(
         .labelled("exited handler")
 }
 
-fn comment_parser_in_failable<'a>() -> impl AmberParser<'a, Spanned<FailableHandler>> {
-    comment_parser()
-        .map_with(|comment, e| (FailableHandler::Comment(comment), e.span()))
-        .boxed()
-}
-
 pub fn failable_handlers_parser<'a>(
     stmnts: impl AmberParser<'a, Spanned<Statement>>,
 ) -> impl AmberParser<'a, Vec<Spanned<FailableHandler>>> {
     choice((
-        comment_parser_in_failable(),
         failure_parser(stmnts.clone()),
         succeeded_parser(stmnts.clone()),
         exited_parser(stmnts),
     ))
-    .repeated()
+    .separated_by(comment_parser().or_not())
+    .allow_leading()
     .collect()
     .boxed()
     .labelled("failure handler (?, failed, exited, succeeded)")

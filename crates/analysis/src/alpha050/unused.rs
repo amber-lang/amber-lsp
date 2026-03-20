@@ -145,6 +145,12 @@ pub fn check_unused_symbols(file_id: FileId, file_version: FileVersion, files: &
 
     // ── Pass 3: report unused import * statements ────────────────────────
     for (stmt_span, imported_symbols) in &symbol_table.import_all_statements {
+        // Skip synthetic imports (e.g. the auto-inserted `import * from "builtin"`)
+        // which have a zero-length span at position 0.
+        if stmt_span.start == stmt_span.end {
+            continue;
+        }
+
         let all_unused = imported_symbols
             .iter()
             .all(|(name, def_loc)| !used_defs.contains(&def_key(name, def_loc)));

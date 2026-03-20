@@ -1,5 +1,5 @@
 ---
-source: tests/grammar/alpha050.rs
+source: crates/server/tests/grammar/alpha050.rs
 expression: parse(&tokenize(input))
 ---
 (
@@ -178,26 +178,31 @@ expression: parse(&tokenize(input))
                                             ),
                                             57..82,
                                         ),
-                                        (
-                                            Comment(
-                                                (
-                                                    Comment(
-                                                        "should succeed",
-                                                    ),
-                                                    83..101,
-                                                ),
-                                            ),
-                                            83..101,
-                                        ),
                                     ],
                                 ),
-                                54..101,
+                                54..82,
                             ),
                         ),
-                        54..101,
+                        54..82,
                     ),
                 ),
-                54..101,
+                54..82,
+            ),
+            (
+                Statement(
+                    (
+                        Comment(
+                            (
+                                Comment(
+                                    "should succeed",
+                                ),
+                                83..101,
+                            ),
+                        ),
+                        83..101,
+                    ),
+                ),
+                83..101,
             ),
             (
                 Statement(
@@ -264,26 +269,31 @@ expression: parse(&tokenize(input))
                                             ),
                                             109..132,
                                         ),
-                                        (
-                                            Comment(
-                                                (
-                                                    Comment(
-                                                        "should succeed",
-                                                    ),
-                                                    133..151,
-                                                ),
-                                            ),
-                                            133..151,
-                                        ),
                                     ],
                                 ),
-                                106..151,
+                                106..132,
                             ),
                         ),
-                        106..151,
+                        106..132,
                     ),
                 ),
-                106..151,
+                106..132,
+            ),
+            (
+                Statement(
+                    (
+                        Comment(
+                            (
+                                Comment(
+                                    "should succeed",
+                                ),
+                                133..151,
+                            ),
+                        ),
+                        133..151,
+                    ),
+                ),
+                133..151,
             ),
             (
                 Statement(
@@ -352,26 +362,31 @@ expression: parse(&tokenize(input))
                                             ),
                                             158..179,
                                         ),
-                                        (
-                                            Comment(
-                                                (
-                                                    Comment(
-                                                        "should succeed",
-                                                    ),
-                                                    180..198,
-                                                ),
-                                            ),
-                                            180..198,
-                                        ),
                                     ],
                                 ),
-                                155..198,
+                                155..179,
                             ),
                         ),
-                        155..198,
+                        155..179,
                     ),
                 ),
-                155..198,
+                155..179,
+            ),
+            (
+                Statement(
+                    (
+                        Comment(
+                            (
+                                Comment(
+                                    "should succeed",
+                                ),
+                                180..198,
+                            ),
+                        ),
+                        180..198,
+                    ),
+                ),
+                180..198,
             ),
             (
                 Statement(
@@ -431,26 +446,31 @@ expression: parse(&tokenize(input))
                                             ),
                                             206..229,
                                         ),
-                                        (
-                                            Comment(
-                                                (
-                                                    Comment(
-                                                        "should succeed",
-                                                    ),
-                                                    230..248,
-                                                ),
-                                            ),
-                                            230..248,
-                                        ),
                                     ],
                                 ),
-                                203..248,
+                                203..229,
                             ),
                         ),
-                        203..248,
+                        203..229,
                     ),
                 ),
-                203..248,
+                203..229,
+            ),
+            (
+                Statement(
+                    (
+                        Comment(
+                            (
+                                Comment(
+                                    "should succeed",
+                                ),
+                                230..248,
+                            ),
+                        ),
+                        230..248,
+                    ),
+                ),
+                230..248,
             ),
             (
                 Statement(
@@ -570,17 +590,6 @@ expression: parse(&tokenize(input))
                                     ],
                                     [
                                         (
-                                            Comment(
-                                                (
-                                                    Comment(
-                                                        "succeeded",
-                                                    ),
-                                                    302..315,
-                                                ),
-                                            ),
-                                            302..315,
-                                        ),
-                                        (
                                             Succeeded(
                                                 (
                                                     "succeeded",
@@ -618,17 +627,6 @@ expression: parse(&tokenize(input))
                                                 ),
                                             ),
                                             319..344,
-                                        ),
-                                        (
-                                            Comment(
-                                                (
-                                                    Comment(
-                                                        "failed",
-                                                    ),
-                                                    349..359,
-                                                ),
-                                            ),
-                                            349..359,
                                         ),
                                         (
                                             Failure(

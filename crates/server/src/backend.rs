@@ -2,7 +2,6 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use chumsky::container::Seq;
 use ropey::Rope;
 use tokio::sync::RwLock;
 use tower_lsp_server::jsonrpc::{
@@ -21,20 +20,12 @@ use amber_analysis::files::{
     Files,
     DEFAULT_VERSION,
 };
-use amber_analysis::stdlib::{
-    find_in_stdlib,
-    save_resources,
-};
+use amber_analysis::stdlib::save_resources;
 use amber_analysis::{
     self as analysis,
-    get_symbol_definition_info,
     AnalysisHost,
-    Context,
-    FunctionSymbol,
     SymbolInfo,
     SymbolTable,
-    SymbolType,
-    VariableSymbol,
 };
 use amber_grammar::{
     self as grammar,
@@ -121,7 +112,6 @@ impl Backend {
         };
 
         let files = Files::new(fs);
-
         files.generic_types.reset_counter();
 
         Self {
@@ -167,59 +157,8 @@ impl Backend {
             return;
         }
 
-        let mut diagnostics: Vec<Diagnostic> = vec![];
-
-        if let Some(errors) = self.files.errors.get(&(file_id, file_version)) {
-            let error_diags = errors.iter().map(|(msg, span)| {
-                let start_position = self.offset_to_position(span.start, &rope);
-                let end_position = self.offset_to_position(span.end, &rope);
-
-                Diagnostic::new(
-                    Range::new(start_position, end_position),
-                    Some(DiagnosticSeverity::ERROR),
-                    None,
-                    None,
-                    msg.to_string(),
-                    None,
-                    None,
-                )
-            });
-            diagnostics.extend(error_diags);
-        }
-
-        if let Some(warnings) = self.files.warnings.get(&(file_id, file_version)) {
-            let warning_diags = warnings.iter().map(|(msg, span)| {
-                let start_position = self.offset_to_position(span.start, &rope);
-                let end_position = self.offset_to_position(span.end, &rope);
-
-                Diagnostic::new(
-                    Range::new(start_position, end_position),
-                    Some(DiagnosticSeverity::WARNING),
-                    None,
-                    None,
-                    msg.to_string(),
-                    None,
-                    None,
-                )
-            });
-            diagnostics.extend(warning_diags);
-        }
-
-        if let Some(unused) = self.files.unused_diagnostics.get(&(file_id, file_version)) {
-            let unused_diags = unused.iter().map(|(msg, span)| {
-                let start_position = self.offset_to_position(span.start, &rope);
-                let end_position = self.offset_to_position(span.end, &rope);
-
-                Diagnostic {
-                    range: Range::new(start_position, end_position),
-                    severity: Some(DiagnosticSeverity::WARNING),
-                    tags: Some(vec![DiagnosticTag::UNNECESSARY]),
-                    message: msg.to_string(),
-                    ..Default::default()
-                }
-            });
-            diagnostics.extend(unused_diags);
-        }
+        let diagnostics =
+            crate::diagnostics::collect_diagnostics(self, file_id, file_version, &rope);
 
         self.publish_diagnostics(&file_id, diagnostics, Some(version))
             .await;
@@ -326,7 +265,7 @@ impl Backend {
         }
     }
 
-    async fn position_to_offset(
+    pub(crate) async fn position_to_offset(
         &self,
         file: (FileId, FileVersion),
         position: Position,
@@ -347,7 +286,7 @@ impl Backend {
         Some(char + position.character as usize)
     }
 
-    async fn get_symbol_at_position(
+    pub(crate) async fn get_symbol_at_position(
         &self,
         file_id: FileId,
         position: Position,
@@ -575,76 +514,7 @@ impl LanguageServer for Backend {
         &self,
         params: SemanticTokensParams,
     ) -> Result<Option<SemanticTokensResult>> {
-        let file_id = match self.files.get(&params.text_document.uri) {
-            Some(file_id) => file_id,
-            None => {
-                return Ok(None);
-            }
-        };
-
-        let (rope, file_version) = match self.files.get_document_latest_version(file_id) {
-            Some(document) => document,
-            None => return Ok(None),
-        };
-
-        if !self.files.is_file_analyzed(&(file_id, file_version)).await {
-            return Ok(None);
-        }
-
-        let semantic_tokens = match self.files.semantic_token_map.get(&(file_id, file_version)) {
-            Some(tokens) => tokens,
-            None => {
-                return Ok(None);
-            }
-        };
-
-        let mut pre_line = 0;
-        let mut pre_start = 0;
-
-        let data = semantic_tokens
-            .iter()
-            .filter_map(|(token, span)| {
-                if span.start > span.end {
-                    return None;
-                }
-
-                let length = span.end - span.start;
-                // Get the line number of the token
-                let line = rope.try_byte_to_line(span.start).ok()? as u32;
-                // Get the first character of the line
-                let first = rope.try_line_to_char(line as usize).ok()? as u32;
-                // Get the start position of the token relative to the line
-                let start = rope.try_byte_to_char(span.start).ok()? as u32 - first;
-
-                // Calculate the delta line and delta start
-                let delta_line = line - pre_line;
-
-                // If the token is on the same line as the previous token
-                // calculate the delta start relative to the previous token
-                // otherwise calculate the delta start relative to the first character of the line
-                let delta_start = if delta_line == 0 {
-                    start - pre_start
-                } else {
-                    start
-                };
-
-                let ret = Some(SemanticToken {
-                    delta_line,
-                    delta_start,
-                    length: length as u32,
-                    token_type: *token as u32,
-                    token_modifiers_bitset: 0,
-                });
-                pre_line = line;
-                pre_start = start;
-                ret
-            })
-            .collect();
-
-        Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
-            result_id: None,
-            data,
-        })))
+        crate::semantic_tokens::handle_semantic_tokens_full(self, params).await
     }
 
     #[tracing::instrument(skip_all)]
@@ -652,191 +522,14 @@ impl LanguageServer for Backend {
         &self,
         params: SemanticTokensRangeParams,
     ) -> Result<Option<SemanticTokensRangeResult>> {
-        let file_id = match self.files.get(&params.text_document.uri) {
-            Some(file_id) => file_id,
-            None => {
-                return Ok(None);
-            }
-        };
-
-        let (rope, file_version) = match self.files.get_document_latest_version(file_id) {
-            Some(document) => document,
-            None => return Ok(None),
-        };
-
-        if !self.files.is_file_analyzed(&(file_id, file_version)).await {
-            return Ok(None);
-        }
-
-        let requested_range = params.range;
-
-        let semantic_tokens = match self.files.semantic_token_map.get(&(file_id, file_version)) {
-            Some(tokens) => tokens,
-            None => {
-                return Ok(None);
-            }
-        };
-
-        let mut pre_line = 0;
-        let mut pre_start = 0;
-
-        let data = semantic_tokens
-            .iter()
-            .filter_map(|(token, span)| {
-                let line = rope.try_byte_to_line(span.start).ok()? as u32;
-                let first = rope.try_line_to_char(line as usize).ok()? as u32;
-                let start = rope.try_byte_to_char(span.start).ok()? as u32 - first;
-
-                if !(line >= requested_range.start.line
-                    && (line < requested_range.end.line
-                        || (line == requested_range.end.line
-                            && start <= requested_range.end.character)))
-                {
-                    return None;
-                }
-
-                if span.start > span.end {
-                    return None;
-                }
-
-                let length = span.end - span.start;
-                let delta_line = line - pre_line;
-                let delta_start = if delta_line == 0 {
-                    start - pre_start
-                } else {
-                    start
-                };
-
-                let ret = Some(SemanticToken {
-                    delta_line,
-                    delta_start,
-                    length: length as u32,
-                    token_type: *token as u32,
-                    token_modifiers_bitset: 0,
-                });
-                pre_line = line;
-                pre_start = start;
-                ret
-            })
-            .collect();
-
-        Ok(Some(SemanticTokensRangeResult::Tokens(SemanticTokens {
-            result_id: None,
-            data,
-        })))
+        crate::semantic_tokens::handle_semantic_tokens_range(self, params).await
     }
 
     async fn goto_definition(
         &self,
         params: GotoDefinitionParams,
     ) -> Result<Option<GotoDefinitionResponse>> {
-        let definition = {
-            let uri = params.text_document_position_params.text_document.uri;
-            let file_id = match self.files.get(&uri) {
-                Some(file_id) => file_id,
-                None => return Ok(None),
-            };
-
-            let (rope, version) = match self.files.get_document_latest_version(file_id) {
-                Some(document) => document,
-                None => return Ok(None),
-            };
-
-            if !self.files.is_file_analyzed(&(file_id, version)).await {
-                return Ok(None);
-            }
-
-            let position = params.text_document_position_params.position;
-            let char = rope
-                .try_line_to_char(position.line as usize)
-                .ok()
-                .unwrap_or(rope.len_chars());
-            let offset = char + position.character as usize;
-
-            let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
-                Some(symbol_table) => symbol_table.clone(),
-                None => return Ok(None),
-            };
-
-            let symbol_info = match symbol_table.symbols.get(&offset) {
-                Some(symbol) => symbol.clone(),
-                None => return Ok(None),
-            };
-
-            if symbol_info.symbol_type != SymbolType::ImportPath
-                && (symbol_info.undefined || symbol_info.is_definition)
-            {
-                return Ok(None);
-            }
-
-            let response = match symbol_table.definitions.get(&symbol_info.name) {
-                Some(definitions) => match definitions.get(&offset) {
-                    Some(definition) => {
-                        let definition_file_rope =
-                            match self.files.get_document_latest_version(definition.file.0) {
-                                Some((document, _)) => document.clone(),
-                                None => {
-                                    return Ok(None);
-                                }
-                            };
-
-                        let start_position =
-                            self.offset_to_position(definition.start, &definition_file_rope);
-                        let end_position =
-                            self.offset_to_position(definition.end, &definition_file_rope);
-
-                        let file_uri = self.files.lookup(&definition.file.0);
-
-                        match symbol_info.symbol_type {
-                            SymbolType::ImportPath => {
-                                let selection_range = Range {
-                                    start: self.offset_to_position(symbol_info.span.start, &rope),
-                                    end: self.offset_to_position(symbol_info.span.end, &rope),
-                                };
-
-                                Some(GotoDefinitionResponse::Link(vec![LocationLink {
-                                    origin_selection_range: Some(selection_range),
-                                    target_uri: file_uri,
-                                    target_range: Range {
-                                        start: Position {
-                                            line: 0,
-                                            character: 0,
-                                        },
-                                        end: Position {
-                                            line: 0,
-                                            character: 0,
-                                        },
-                                    },
-                                    target_selection_range: Range {
-                                        start: Position {
-                                            line: 0,
-                                            character: 0,
-                                        },
-                                        end: Position {
-                                            line: 0,
-                                            character: 0,
-                                        },
-                                    },
-                                }]))
-                            }
-                            _ => Some(GotoDefinitionResponse::Scalar(Location::new(
-                                file_uri,
-                                Range {
-                                    start: start_position,
-                                    end: end_position,
-                                },
-                            ))),
-                        }
-                    }
-                    None => None,
-                },
-                None => None,
-            };
-
-            response
-        };
-
-        Ok(definition)
+        crate::goto_definition::handle_goto_definition(self, params).await
     }
 
     async fn did_change_configuration(&self, _: DidChangeConfigurationParams) {
@@ -852,347 +545,15 @@ impl LanguageServer for Backend {
     }
 
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
-        let file_id = match self
-            .files
-            .get(&params.text_document_position_params.text_document.uri)
-        {
-            Some(file_id) => file_id,
-            None => {
-                return Ok(None);
-            }
-        };
-
-        let version = self.files.get_latest_version(file_id);
-
-        if !self.files.is_file_analyzed(&(file_id, version)).await {
-            return Ok(None);
-        }
-
-        let position = params.text_document_position_params.position;
-
-        let symbol_info = match self.get_symbol_at_position(file_id, position).await {
-            Some((symbol_info, _)) if !symbol_info.undefined => symbol_info,
-            _ => {
-                return Ok(None);
-            }
-        };
-
-        Ok(Some(Hover {
-            contents: HoverContents::Markup(MarkupContent {
-                kind: MarkupKind::Markdown,
-                value: format!(
-                    "```amber\n{}\n```{}",
-                    symbol_info.to_string(&self.files.generic_types),
-                    match symbol_info.symbol_type {
-                        SymbolType::Function(FunctionSymbol { ref docs, .. }) if docs.is_some() =>
-                            format!("\n{}", docs.clone().unwrap()),
-                        _ => "".to_string(),
-                    },
-                ),
-            }),
-            range: Some(Range {
-                start: Position {
-                    line: position.line,
-                    character: position.character,
-                },
-                end: Position {
-                    line: position.line,
-                    character: position.character,
-                },
-            }),
-        }))
+        crate::hover::handle_hover(self, params).await
     }
 
     #[tracing::instrument(skip_all)]
     async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
-        let uri = params.text_document_position.text_document.uri;
-
-        let file_id = match self.files.get(&uri) {
-            Some(file_id) => file_id,
-            None => {
-                return Ok(None);
-            }
-        };
-
-        let version = self.files.get_latest_version(file_id);
-
-        if !self.files.is_file_analyzed(&(file_id, version)).await {
-            return Ok(None);
-        }
-
-        let position = params.text_document_position.position;
-
-        let symbol_info = match self.get_symbol_at_position(file_id, position).await {
-            Some((symbol_info, _)) => symbol_info,
-            None => {
-                return Ok(None);
-            }
-        };
-
-        let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
-            Some(symbol_table) => symbol_table.clone(),
-            None => return Ok(None),
-        };
-
-        let completions = match symbol_info.symbol_type {
-            SymbolType::ImportPath => {
-                let stdlib_paths = find_in_stdlib(self, &symbol_info.name).await;
-
-                if stdlib_paths.contains(&symbol_info.name) {
-                    return Ok(None);
-                }
-
-                let mut completions: Vec<CompletionItem> = stdlib_paths
-                    .iter()
-                    .map(|file| CompletionItem {
-                        label: file.clone(),
-                        kind: Some(CompletionItemKind::MODULE),
-                        ..CompletionItem::default()
-                    })
-                    .collect();
-
-                let file_path = uri.to_file_path().unwrap().canonicalize().unwrap();
-                let mut searched_path = file_path.parent().unwrap().to_path_buf();
-                searched_path.push(symbol_info.name.clone());
-
-                if let Ok(path) = searched_path.canonicalize() {
-                    if path.is_file() {
-                        return Ok(None);
-                    }
-                }
-
-                let dir_to_search = if symbol_info.name.ends_with("/") || searched_path.is_dir() {
-                    searched_path.as_path()
-                } else {
-                    searched_path.parent().unwrap()
-                };
-
-                for entry_path in self.files.fs.read_dir(dir_to_search).await {
-                    let entry_name = entry_path
-                        .file_name()
-                        .unwrap()
-                        .to_string_lossy()
-                        .to_string();
-
-                    let entry_kind = if entry_path.is_symlink() {
-                        let target = entry_path.read_link();
-
-                        match target {
-                            Ok(target) if target.is_dir() => CompletionItemKind::FOLDER,
-                            _ => CompletionItemKind::FILE,
-                        }
-                    } else if entry_path.is_dir() {
-                        CompletionItemKind::FOLDER
-                    } else {
-                        CompletionItemKind::FILE
-                    };
-
-                    let absolute_entry_path = entry_path.canonicalize().unwrap();
-
-                    if absolute_entry_path != file_path
-                        && (entry_path.is_dir()
-                            || entry_path.extension().map(|ext| ext.to_str().unwrap())
-                                == Some("ab"))
-                    {
-                        completions.push(CompletionItem {
-                            label: entry_name.clone(),
-                            kind: Some(entry_kind),
-                            text_edit: Some(CompletionTextEdit::Edit(TextEdit {
-                                range: Range {
-                                    start: Position {
-                                        line: position.line,
-                                        character: position.character
-                                            - symbol_info.name.split("/").last().unwrap_or("").len()
-                                                as u32, // Move back by prefix length
-                                    },
-                                    end: Position {
-                                        line: position.line,
-                                        character: position.character,
-                                    },
-                                },
-                                new_text: entry_name,
-                            })),
-                            ..CompletionItem::default()
-                        });
-                    }
-                }
-
-                completions
-            }
-            SymbolType::Variable(_) | SymbolType::Function(_) => {
-                let mut completions = vec![];
-
-                let import_context = symbol_info
-                    .contexts
-                    .iter()
-                    .find(|ctx| matches!(ctx, Context::Import(_)));
-
-                let definitions = match import_context {
-                    Some(Context::Import(import_ctx)) => import_ctx
-                        .public_definitions
-                        .iter()
-                        .filter_map(|(name, location)| {
-                            if import_ctx.imported_symbols.contains(name) {
-                                return None;
-                            }
-
-                            get_symbol_definition_info(
-                                &self.files,
-                                name,
-                                &location.file,
-                                usize::MAX,
-                            )
-                        })
-                        .collect::<Vec<SymbolInfo>>(),
-                    _ => symbol_table
-                        .definitions
-                        .iter()
-                        .filter_map(|(name, _)| {
-                            get_symbol_definition_info(
-                                &self.files,
-                                name,
-                                &(file_id, version),
-                                symbol_info.span.start,
-                            )
-                        })
-                        .collect::<Vec<SymbolInfo>>(),
-                };
-
-                for symbol_info in definitions.iter() {
-                    match symbol_info.symbol_type {
-                        SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {
-                            completions.push(CompletionItem {
-                                label: symbol_info.name.clone(),
-                                insert_text: if import_context.is_some() {
-                                    Some(symbol_info.name.clone())
-                                } else {
-                                    Some(format!(
-                                        "{}({})",
-                                        symbol_info.name,
-                                        arguments
-                                            .iter()
-                                            .enumerate()
-                                            .map(|(idx, (arg, _))| format!(
-                                                "${{{}:{}}}",
-                                                idx + 1,
-                                                arg.name
-                                            ))
-                                            .collect::<Vec<String>>()
-                                            .join(", ")
-                                    ))
-                                },
-                                kind: Some(CompletionItemKind::METHOD),
-                                detail: Some(symbol_info.to_string(&self.files.generic_types)),
-                                insert_text_format: Some(InsertTextFormat::SNIPPET),
-                                command: Some(Command {
-                                    title: "triggerParameterHints".to_string(),
-                                    command: "editor.action.triggerParameterHints".to_string(),
-                                    arguments: None,
-                                }),
-                                ..CompletionItem::default()
-                            });
-                        }
-                        SymbolType::Variable(VariableSymbol { is_const }) => {
-                            completions.push(CompletionItem {
-                                label: symbol_info.name.clone(),
-                                kind: Some(if is_const {
-                                    CompletionItemKind::CONSTANT
-                                } else {
-                                    CompletionItemKind::VARIABLE
-                                }),
-                                label_details: Some(CompletionItemLabelDetails {
-                                    description: Some(
-                                        symbol_info.data_type.to_string(&self.files.generic_types),
-                                    ),
-                                    detail: None,
-                                }),
-                                ..CompletionItem::default()
-                            });
-                        }
-                        _ => continue,
-                    };
-                }
-
-                completions
-            }
-        };
-
-        Ok(Some(CompletionResponse::Array(completions)))
+        crate::completion::handle_completion(self, params).await
     }
 
     async fn signature_help(&self, params: SignatureHelpParams) -> Result<Option<SignatureHelp>> {
-        let file_id = match self
-            .files
-            .get(&params.text_document_position_params.text_document.uri)
-        {
-            Some(file_id) => file_id,
-            None => {
-                return Ok(None);
-            }
-        };
-
-        let version = self.files.get_latest_version(file_id);
-
-        if !self.files.is_file_analyzed(&(file_id, version)).await {
-            return Ok(None);
-        }
-
-        let symbol_table = match self.files.symbol_table.get(&(file_id, version)) {
-            Some(symbol_table) => symbol_table.clone(),
-            None => return Ok(None),
-        };
-
-        let position = params.text_document_position_params.position;
-
-        let offset = match self.position_to_offset((file_id, version), position).await {
-            Some(offset) => offset,
-            None => return Ok(None),
-        };
-
-        let symbol_info = match symbol_table.fun_call_arg_scope.get(&offset) {
-            Some(symbol_info) => symbol_info.clone(),
-            None => {
-                return Ok(None);
-            }
-        };
-
-        match symbol_info.symbol_type {
-            SymbolType::Function(FunctionSymbol { ref arguments, .. }) => {
-                let mut active_parameter = None;
-
-                arguments.iter().enumerate().for_each(|(idx, (_, span))| {
-                    let start = span.start;
-                    let end = span.end;
-
-                    if offset >= start && offset <= end {
-                        active_parameter = Some(idx as u32);
-                    }
-                });
-
-                Ok(Some(SignatureHelp {
-                    signatures: vec![SignatureInformation {
-                        label: symbol_info.to_string(&self.files.generic_types),
-                        documentation: None,
-                        parameters: Some(
-                            arguments
-                                .iter()
-                                .map(|(arg, _)| ParameterInformation {
-                                    label: ParameterLabel::Simple(format!(
-                                        "{}: {}",
-                                        arg.name,
-                                        arg.data_type.to_string(&self.files.generic_types)
-                                    )),
-                                    documentation: None,
-                                })
-                                .collect::<Vec<ParameterInformation>>(),
-                        ),
-                        active_parameter,
-                    }],
-                    active_signature: Some(0),
-                    active_parameter,
-                }))
-            }
-            _ => Ok(None),
-        }
+        crate::hover::handle_signature_help(self, params).await
     }
 }

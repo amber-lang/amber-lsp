@@ -58,6 +58,12 @@ impl MemoryFS {
             files: Arc::new(Mutex::new(HashMap::new())),
         }
     }
+
+    /// Normalize a path to a canonical string key so that forward-slash and
+    /// back-slash variants of the same path map to the same entry.
+    fn key(path: &Path) -> String {
+        path.to_string_lossy().replace('\\', "/")
+    }
 }
 
 impl FS for MemoryFS {
@@ -66,8 +72,14 @@ impl FS for MemoryFS {
         path: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Result<String>> + Send + 'a>> {
         Box::pin(async move {
+            let key = Self::key(path);
             let files = self.files.lock().unwrap();
-            Ok(files.get(path.to_str().unwrap()).unwrap().clone())
+            files.get(&key).cloned().ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("file not found: {key}"),
+                )
+            })
         })
     }
 
@@ -78,7 +90,7 @@ impl FS for MemoryFS {
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
         Box::pin(async move {
             let mut files = self.files.lock().unwrap();
-            files.insert(path.to_string_lossy().to_string(), content.to_string());
+            files.insert(Self::key(path), content.to_string());
 
             Ok(())
         })
@@ -86,8 +98,9 @@ impl FS for MemoryFS {
 
     fn exists<'a>(&'a self, path: &'a Path) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>> {
         Box::pin(async move {
+            let key = Self::key(path);
             let files = self.files.lock().unwrap();
-            files.contains_key(path.to_str().unwrap())
+            files.contains_key(&key)
         })
     }
 
@@ -98,9 +111,10 @@ impl FS for MemoryFS {
         Box::pin(async move {
             let files = self.files.lock().unwrap();
 
+            let key = Self::key(path);
             let mut entries = Vec::new();
             for (file, _) in files.iter() {
-                if file.starts_with(path.to_str().unwrap()) {
+                if file.starts_with(&key) {
                     entries.push(PathBuf::from(file));
                 }
             }

@@ -184,7 +184,7 @@ impl GenericsMap {
 
     pub fn deref_type(&self, ty: &DataType) -> DataType {
         match ty {
-            DataType::Generic(id) if self.is_inferred(*id) => self.get_recursive(*id),
+            DataType::Generic(id) if self.is_inferred(*id) => self.deref_type(&self.get(*id)),
             DataType::Union(types) => {
                 DataType::Union(types.iter().map(|ty| self.deref_type(ty)).collect())
             }

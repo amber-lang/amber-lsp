@@ -22,8 +22,20 @@
       "problemMatcher": "$rustc"
     },
 		{
+      "label": "Build Server",
+      "group": "build",
+      "type": "shell",
+      "command": "cargo build",
+      "problemMatcher": "$rustc"
+    },
+		{
       "label": "Build Server (Release) and Extension",
       "dependsOn": ["Build Server (Release)", "Build Extension"],
+      "problemMatcher": "$rustc"
+    },
+		{
+      "label": "Build Server and Extension",
+      "dependsOn": ["Build Server", "Build Extension"],
       "problemMatcher": "$rustc"
     }
 	]
