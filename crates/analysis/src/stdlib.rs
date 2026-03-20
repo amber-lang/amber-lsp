@@ -265,7 +265,7 @@ pub fn list_stdlib_modules(amber_version: &AmberVersion) -> Vec<String> {
         AmberVersion::Alpha050 => "alpha050",
     };
 
-    let std_dir_path = format!("{}/std", version_dir);
+    let std_dir_path = PathBuf::from(version_dir).join("std");
     let std_dir = match STDLIB.get_dir(&std_dir_path) {
         Some(dir) => dir,
         None => return vec![],
