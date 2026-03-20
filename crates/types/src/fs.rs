@@ -66,8 +66,14 @@ impl FS for MemoryFS {
         path: &'a Path,
     ) -> Pin<Box<dyn Future<Output = Result<String>> + Send + 'a>> {
         Box::pin(async move {
+            let key = path.to_string_lossy();
             let files = self.files.lock().unwrap();
-            Ok(files.get(path.to_str().unwrap()).unwrap().clone())
+            files.get(key.as_ref()).cloned().ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("file not found: {key}"),
+                )
+            })
         })
     }
 
@@ -86,8 +92,9 @@ impl FS for MemoryFS {
 
     fn exists<'a>(&'a self, path: &'a Path) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>> {
         Box::pin(async move {
+            let key = path.to_string_lossy();
             let files = self.files.lock().unwrap();
-            files.contains_key(path.to_str().unwrap())
+            files.contains_key(key.as_ref())
         })
     }
 
@@ -98,9 +105,10 @@ impl FS for MemoryFS {
         Box::pin(async move {
             let files = self.files.lock().unwrap();
 
+            let key = path.to_string_lossy();
             let mut entries = Vec::new();
             for (file, _) in files.iter() {
-                if file.starts_with(path.to_str().unwrap()) {
+                if file.starts_with(key.as_ref()) {
                     entries.push(PathBuf::from(file));
                 }
             }
