@@ -303,7 +303,7 @@ impl AmberCompiler {
         PARSER_CACHE.with(|cell| {
             let mut cache = cell.borrow_mut();
             if cache.is_none() {
-                *cache = Some(global::global_statement_parser().boxed());
+                *cache = Some(global::global_statement_parser().memoized().boxed());
             }
             let static_parser = cache.as_ref().unwrap().clone();
             // SAFETY: The parser combinator tree is built entirely from owned data (Token
