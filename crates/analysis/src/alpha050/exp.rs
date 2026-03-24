@@ -216,6 +216,8 @@ pub fn analyze_exp(
                 }
             };
 
+            let mut generics_to_restore: Vec<(usize, DataType)> = vec![];
+
             args.iter().enumerate().for_each(|(idx, arg)| {
                 if let Some((ty, _, is_ref, _)) = expected_types.get(idx) {
                     match (is_ref, arg.0.clone()) {
@@ -247,6 +249,9 @@ pub fn analyze_exp(
                     let arg_result = analyze_expr!(arg, ty.clone());
 
                     if let DataType::Generic(id) = ty {
+                        if scoped_generic_types.is_inferred(*id) {
+                            generics_to_restore.push((*id, scoped_generic_types.get(*id)));
+                        }
                         scoped_generic_types.constrain_generic_type(*id, arg_result.exp_ty.clone());
                     }
                 } else {
@@ -277,6 +282,9 @@ pub fn analyze_exp(
                     .filter(|(_, is_optional, ..)| *is_optional)
                     .for_each(|(ty, _, _, default_type)| {
                         if let DataType::Generic(id) = ty {
+                            if scoped_generic_types.is_inferred(*id) {
+                                generics_to_restore.push((*id, scoped_generic_types.get(*id)));
+                            }
                             scoped_generic_types
                                 .constrain_generic_type(*id, default_type.clone().unwrap());
                         }
@@ -381,10 +389,9 @@ pub fn analyze_exp(
                     .push(ref_loc);
             }
 
-            let has_failure_handler = failable_handlers.iter().any(|(modifier, _)| {
-                matches!(modifier, FailableHandler::Failure(_))
-                    || matches!(modifier, FailableHandler::Exited(_, _, _))
-            });
+            let has_failure_handler = failable_handlers
+                .iter()
+                .any(|(modifier, _)| !matches!(modifier, FailableHandler::Comment(_)));
 
             if matches!(
                 scoped_generic_types.deref_type(&exp_ty),
@@ -403,6 +410,12 @@ pub fn analyze_exp(
                     "Failable function must be handled with a failure handler or marked with `trust` modifier",
                     *name_span,
                 );
+            }
+
+            // Restore foreign-function generics to their pre-call values so
+            // constraints from this call don't leak into subsequent calls.
+            for (id, saved_ty) in generics_to_restore {
+                scoped_generic_types.restore_generic_type(id, saved_ty);
             }
 
             exp_ty
@@ -504,10 +517,9 @@ pub fn analyze_exp(
             is_propagating_failure |= is_prop;
             return_types.extend(failure_return_ty);
 
-            let has_failure_handler = failable_handlers.iter().any(|(modifier, _)| {
-                matches!(modifier, FailableHandler::Failure(_))
-                    || matches!(modifier, FailableHandler::Exited(_, _, _))
-            });
+            let has_failure_handler = failable_handlers
+                .iter()
+                .any(|(modifier, _)| !matches!(modifier, FailableHandler::Comment(_)));
 
             if !has_failure_handler
                 && !modifiers.iter().any(|(modifier, _)| {

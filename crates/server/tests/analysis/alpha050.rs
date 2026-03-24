@@ -1905,3 +1905,109 @@ my_len([1, 2])
         error_list,
     );
 }
+
+#[test]
+async fn test_builtin_generic_not_narrowed_inside_function_body() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"pub fun foo() {
+    len("asd")
+    len([1, 2, 3])
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    // The second len() call should NOT get a type error: len's generic
+    // param must be reset between calls so it accepts both Text and [Int].
+    let errors = backend.files.errors.get(&file_id);
+    let error_list: Vec<_> = errors
+        .iter()
+        .flat_map(|e| e.iter().cloned())
+        .filter(|(msg, _)| msg.contains("Expected type"))
+        .collect();
+    assert!(
+        error_list.is_empty(),
+        "Expected no type-mismatch errors for len() with different types inside a function body, got: {:?}",
+        error_list,
+    );
+}
+
+#[test]
+async fn test_user_generic_not_narrowed_inside_function_body() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"fun my_len(value): Int {}
+
+pub fun foo() {
+    my_len("asd")
+    my_len([1, 2, 3])
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let errors = backend.files.errors.get(&file_id);
+    let error_list: Vec<_> = errors
+        .iter()
+        .flat_map(|e| e.iter().cloned())
+        .filter(|(msg, _)| msg.contains("Expected type"))
+        .collect();
+    assert!(
+        error_list.is_empty(),
+        "Expected no type-mismatch errors for user generic function with different types inside a function body, got: {:?}",
+        error_list,
+    );
+}
