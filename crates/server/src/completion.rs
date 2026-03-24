@@ -231,6 +231,11 @@ async fn symbol_completions(
         }
     }
 
+    // Keyword completions: only when NOT inside an import context.
+    if import_context.is_none() && backend.amber_version == AmberVersion::Alpha050 {
+        completions.extend(keyword_completions(&symbol_info.contexts))
+    }
+
     // Auto-import: only for alpha050 and when NOT inside an import context.
     if import_context.is_none() && backend.amber_version == AmberVersion::Alpha050 {
         auto_import_existing(
@@ -522,4 +527,101 @@ fn symbol_to_completion_item(
         }),
         _ => None,
     }
+}
+
+/// Build keyword [`CompletionItem`]s appropriate for the given context stack.
+fn keyword_completions(contexts: &[Context]) -> Vec<CompletionItem> {
+    let in_loop = contexts.iter().any(|c| matches!(c, Context::Loop));
+    let in_function = contexts.iter().any(|c| matches!(c, Context::Function(_)));
+    let in_main = contexts.contains(&Context::Main);
+
+    // (label, description, optional snippet)
+    let mut keywords: Vec<(&str, &str, Option<&str>)> = vec![
+        // Statement-level keywords (always available in statement position)
+        (
+            "if",
+            "Conditional branch",
+            Some("if ${1:condition} {\n\t$0\n}"),
+        ),
+        ("loop", "Infinite loop", Some("loop {\n\t$0\n}")),
+        (
+            "for",
+            "Iterator loop",
+            Some("for ${1:item} in ${2:iterable} {\n\t$0\n}"),
+        ),
+        ("let", "Variable declaration", Some("let ${1:name} = $0")),
+        (
+            "const",
+            "Constant declaration",
+            Some("const ${1:name} = $0"),
+        ),
+        ("echo", "Print to stdout", Some("echo $0")),
+        ("unsafe", "Suppress failure handling", None),
+        ("silent", "Suppress command output", None),
+        ("trust", "Trust command result", None),
+        ("sudo", "Run with elevated privileges", None),
+        ("exit", "Exit the script", Some("exit $0")),
+        (
+            "failed",
+            "Handle command failure",
+            Some("failed {\n\t$0\n}"),
+        ),
+        (
+            "succeeded",
+            "Handle command success",
+            Some("succeeded {\n\t$0\n}"),
+        ),
+        (
+            "exited",
+            "Handle command exit with status code",
+            Some("exited(${1:code}) {\n\t$0\n}"),
+        ),
+        // Top-level keywords
+        (
+            "fun",
+            "Function definition",
+            Some("fun ${1:name}($2) {\n\t$0\n}"),
+        ),
+        ("pub", "Public modifier", None),
+        ("import", "Import module", Some("import { $2 } from \"$1\"")),
+        ("main", "Main block", Some("main {\n\t$0\n}")),
+        // Value literals
+        ("true", "Boolean true", None),
+        ("false", "Boolean false", None),
+        ("null", "Null value", None),
+    ];
+
+    // Loop-only keywords
+    if in_loop {
+        keywords.extend([
+            ("break", "Exit the current loop", None),
+            ("continue", "Skip to the next loop iteration", None),
+        ]);
+    }
+
+    // Function-only keywords
+    if in_function {
+        keywords.push((
+            "return",
+            "Return from the current function",
+            Some("return $0"),
+        ));
+    }
+
+    // Fail: available in function or main context
+    if in_function || in_main {
+        keywords.push(("fail", "Propagate a failure", Some("fail $0")));
+    }
+
+    keywords
+        .into_iter()
+        .map(|(kw, desc, snippet)| CompletionItem {
+            label: kw.to_string(),
+            kind: Some(CompletionItemKind::KEYWORD),
+            detail: Some(desc.to_string()),
+            insert_text: snippet.map(|s| s.to_string()),
+            insert_text_format: snippet.map(|_| InsertTextFormat::SNIPPET),
+            ..CompletionItem::default()
+        })
+        .collect()
 }
