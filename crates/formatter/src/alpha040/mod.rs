@@ -122,15 +122,9 @@ impl TextOutput<Gen> for Block {
                     output.output(ctx, modifier).space(Wrap::NEVER);
                 }
 
-                let mut last_span_end = None;
-                for statement in statements {
-                    if let Some(last_span_end) = last_span_end {
-                        ctx.preserve_newline(output, last_span_end..=statement.1.start);
-                    }
-
-                    output.output(ctx, statement).end_newline();
-                    last_span_end = Some(statement.1.end);
-                }
+                output.preserve_newlines_in(ctx, statements, |output, ctx, statement| {
+                    output.output(ctx, statement).end_newline()
+                });
 
                 output
                     .remove_newline()

@@ -296,6 +296,30 @@ impl Output {
         self
     }
 
+    /// Preserves user inserted newlines for a sequence of [`TextOutput`]s.
+    ///
+    /// You have to manually handle inserting the [`TextOutput`] and "end of statement" newlines.
+    pub(crate) fn preserve_newlines_in<'a, Iter, TOut, Global, Func>(
+        &mut self,
+        ctx: &mut FmtContext<Global>,
+        iter: Iter,
+        func: Func,
+    ) where
+        Iter: IntoIterator<Item = &'a (TOut, Span)>,
+        TOut: TextOutput<Global> + 'a,
+        Func: Fn(&mut Output, &mut FmtContext<Global>, &'a (TOut, Span)),
+    {
+        let mut last_span_end = None;
+        for tout in iter {
+            if let Some(last_span_end) = last_span_end {
+                ctx.preserve_newline(self, last_span_end..=tout.1.start);
+            }
+
+            func(self, ctx, tout);
+            last_span_end = Some(tout.1.end)
+        }
+    }
+
     fn format(mut self, file_content: &str) -> Result<String, FormattingError> {
         self.remove_trailing_whitespace();
 
