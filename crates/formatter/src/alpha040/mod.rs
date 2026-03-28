@@ -116,11 +116,11 @@ impl TextOutput<Gen> for Block {
     fn output(&self, span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
         match self {
             Block::Block(modifiers, statements) => {
-                output.char('{').increase_indentation().end_newline();
-
                 for modifier in modifiers {
                     output.output(ctx, modifier).space(Wrap::NEVER);
                 }
+
+                output.char('{').increase_indentation().end_newline();
 
                 output.preserve_newlines_in(ctx, statements, |output, ctx, statement| {
                     output.output(ctx, statement).end_newline()
