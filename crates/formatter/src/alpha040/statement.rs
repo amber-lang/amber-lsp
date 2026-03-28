@@ -81,8 +81,14 @@ impl TextOutput<Gen> for Statement {
                     .char('{')
                     .increase_indentation();
 
+                let mut last_span_end = None;
                 for ele in items {
+                    if let Some(last_span_end) = last_span_end {
+                        ctx.preserve_newline(output, last_span_end..=ele.1.start);
+                    }
+
                     output.newline().output(ctx, ele);
+                    last_span_end = Some(ele.1.end)
                 }
 
                 output.decrease_indentation();

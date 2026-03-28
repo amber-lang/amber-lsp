@@ -180,3 +180,26 @@ fn allow_spacing_in_ifs() {
 
     test_format(input, output);
 }
+
+#[test]
+fn allow_spacing_in_ifchains() {
+    let input = r#"fun some() {
+    if {
+        true == true: echo "a"
+        true == true: echo "a"
+
+        true == true: echo "a"
+    }
+}"#;
+
+    let output = r#"fun some() {
+    if {
+        true == true: echo "a"
+        true == true: echo "a"
+
+        true == true: echo "a"
+    }
+}"#;
+
+    test_format(input, output);
+}
