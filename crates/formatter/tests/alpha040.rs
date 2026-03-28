@@ -203,3 +203,21 @@ fn allow_spacing_in_ifchains() {
 
     test_format(input, output);
 }
+
+#[test]
+fn if_chain_wrap_indentation() {
+    let input = r#"fun some() {
+    if {
+        true == true: echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+}"#;
+
+    let output = r#"fun some() {
+    if {
+        true == true:
+            echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+}"#;
+
+    test_format(input, output);
+}

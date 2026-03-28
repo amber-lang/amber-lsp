@@ -16,9 +16,9 @@ pub fn format<AmberStatement>(
     file_content: &str,
 ) -> Result<String, FormattingError>
 where
-    AmberStatement: TextOutput<(AmberStatement, Span)> + std::fmt::Debug,
+    AmberStatement: TextOutput<(AmberStatement, Span)>,
 {
-    eprintln!("{items:?}");
+    // eprintln!("{items:?}");
     let mut output = Output::new();
     let consecutive_newlines = consecutive_newlines(file_content);
     let source_newlines = file_content

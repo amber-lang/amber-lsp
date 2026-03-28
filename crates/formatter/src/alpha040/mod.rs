@@ -187,7 +187,9 @@ impl TextOutput<Gen> for IfCondition {
                 output
                     .output(ctx, condition)
                     .char(':')
+                    .increase_indentation()
                     .space(Wrap::FIRST)
+                    .decrease_indentation()
                     .output(ctx, statement);
             }
             IfCondition::Comment(comment) => output.end_output(ctx, comment),
