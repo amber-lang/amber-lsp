@@ -184,7 +184,7 @@ impl WrappedLine {
                 ),
                 WrapStyle::Between => self
                     .current_line
-                    .insert_str(wrap.location, &format!("{NEWLINE}{}", wrap.location)),
+                    .insert_str(wrap.location, &format!("{NEWLINE}{}", wrap.indentation)),
             }
         }
         self.current_line
@@ -210,6 +210,23 @@ mod tests {
         assert_eq!(
             wrapped,
             "import {\n  is_available_locally, is_available_remotely, download, execute_script\n} from \"../lib/amber_manager.ab\""
+        )
+    }
+
+    #[test]
+    fn wrap_between() {
+        let line = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
+        let wraps = vec![WrapPoint::new(
+            WrapStyle::Between,
+            Wrap::WITH_FIRST,
+            50,
+            "  ".to_owned(),
+        )];
+
+        let wrapped = handle_wrapping(line.to_owned(), wraps);
+        assert_eq!(
+            wrapped,
+            "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwx\n  yzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
         )
     }
 }
