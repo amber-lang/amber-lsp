@@ -308,7 +308,10 @@ impl Output {
 
         let mut current = String::new();
         let mut wrap_points = Vec::new();
+
         let mut indentation = String::new();
+        let mut previous_indentation = String::new();
+
         let mut consecutive_newlines = 0;
 
         let mut iter = self.buffer.into_iter().peekable();
@@ -342,12 +345,16 @@ impl Output {
                         continue;
                     }
 
-                    output.push_str(&handle_wrapping(current, wrap_points));
+                    if !current.chars().all(|letter| letter.is_whitespace()) {
+                        output.push_str(&previous_indentation);
+                        output.push_str(&handle_wrapping(current, wrap_points));
+                    }
+
                     output.push_str(NEWLINE);
-                    output.push_str(&indentation);
 
                     current = String::new();
                     wrap_points = Vec::new();
+                    previous_indentation = indentation.clone();
                 }
                 Fragment::IndentationChange(indent) => match indent {
                     Indentation::Increase => indentation.push_str(INDENT),
