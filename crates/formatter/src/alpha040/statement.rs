@@ -62,7 +62,7 @@ impl TextOutput<Gen> for Statement {
                     .output(ctx, condition);
 
                 if let Some(comment) = comments.first() {
-                    ctx.allow_newline(output, condition.1.end..=comment.1.start);
+                    ctx.preserve_newline(output, condition.1.end..=comment.1.start);
                     output.output(ctx, comment);
                 }
 

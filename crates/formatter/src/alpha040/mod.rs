@@ -121,8 +121,15 @@ impl TextOutput<Gen> for Block {
                 for modifier in modifiers {
                     output.output(ctx, modifier).space(Wrap::NEVER);
                 }
+
+                let mut last_span_end = None;
                 for statement in statements {
+                    if let Some(last_span_end) = last_span_end {
+                        ctx.preserve_newline(output, last_span_end..=statement.1.start);
+                    }
+
                     output.output(ctx, statement).end_newline();
+                    last_span_end = Some(statement.1.end);
                 }
 
                 output
@@ -137,14 +144,28 @@ impl TextOutput<Gen> for Block {
 }
 
 impl TextOutput<Gen> for IfChainContent {
-    fn output(&self, span: &Span, output: &mut Output, _ctx: &mut FmtContext<Gen>) {
-        output.span(span);
+    fn output(&self, _span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+        match self {
+            IfChainContent::IfCondition(condition) => output.end_output(ctx, condition),
+            IfChainContent::Else(else_condition) => output.end_output(ctx, else_condition),
+            IfChainContent::Comment(comment) => output.end_output(ctx, comment),
+        }
     }
 }
 
 impl TextOutput<Gen> for ElseCondition {
-    fn output(&self, span: &Span, output: &mut Output, _ctx: &mut FmtContext<Gen>) {
-        output.span(span);
+    fn output(&self, _span: &Span, output: &mut Output, ctx: &mut FmtContext<Gen>) {
+        match self {
+            ElseCondition::Else(r#else, block) => output
+                .output(ctx, r#else)
+                .space(Wrap::NEVER)
+                .end_output(ctx, block),
+            ElseCondition::InlineElse(r#else, statement) => output
+                .output(ctx, r#else)
+                .char(':')
+                .space(Wrap::NEVER)
+                .end_output(ctx, statement),
+        }
     }
 }
 

@@ -125,7 +125,8 @@ impl<'a, T> FmtContext<'a, T> {
         self.items.get(self.index.checked_add(1)?)
     }
 
-    pub fn allow_newline<R: RangeBounds<usize>>(&self, output: &mut Output, range: R) {
+    /// Adds a newline to output if there is a newline in the source at the given byte range.
+    pub fn preserve_newline<R: RangeBounds<usize>>(&self, output: &mut Output, range: R) {
         if self
             .consecutive_newlines
             .iter()
@@ -133,12 +134,6 @@ impl<'a, T> FmtContext<'a, T> {
         {
             output.end_newline();
         }
-    }
-
-    pub fn source_has_newline<R: RangeBounds<usize>>(&self, range: R) -> bool {
-        self.source_newlines
-            .iter()
-            .any(|newline| range.contains(newline))
     }
 }
 

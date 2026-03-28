@@ -39,7 +39,7 @@ impl TextOutput<Gen> for GlobalStatement {
                 if let Some(next_global) = ctx.next_global()
                     && matches!(next_global.0, GlobalStatement::Import(..))
                 {
-                    ctx.allow_newline(output, span.end..=next_global.1.start);
+                    ctx.preserve_newline(output, span.end..=next_global.1.start);
                 }
             }
             GlobalStatement::FunctionDefinition(
@@ -97,13 +97,11 @@ impl TextOutput<Gen> for GlobalStatement {
                 let mut last_span_end = None;
                 for content in contents {
                     if let Some(last_span_end) = last_span_end {
-                        if !matches!(content.0, Statement::Comment(..))
-                            || ctx.source_has_newline(last_span_end..=content.1.start)
-                        {
+                        if !matches!(content.0, Statement::Comment(..)) {
                             output.end_newline()
                         }
 
-                        ctx.allow_newline(output, last_span_end..=content.1.start);
+                        ctx.preserve_newline(output, last_span_end..=content.1.start);
                     }
 
                     output.end_output(ctx, content);
@@ -139,13 +137,11 @@ impl TextOutput<Gen> for GlobalStatement {
                 let mut last_span_end = None;
                 for statement in statements {
                     if let Some(last_span_end) = last_span_end {
-                        if !matches!(statement.0, Statement::Comment(..))
-                            || ctx.source_has_newline(last_span_end..=statement.1.start)
-                        {
+                        if !matches!(statement.0, Statement::Comment(..)) {
                             output.end_newline()
                         }
 
-                        ctx.allow_newline(output, last_span_end..=statement.1.start);
+                        ctx.preserve_newline(output, last_span_end..=statement.1.start);
                     }
 
                     output.output(ctx, statement);
@@ -168,7 +164,7 @@ impl TextOutput<Gen> for GlobalStatement {
                 if let Some(next_global) = ctx.next_global()
                     && matches!(next_global.0, GlobalStatement::Statement(..))
                 {
-                    ctx.allow_newline(output, span.end..=next_global.1.start);
+                    ctx.preserve_newline(output, span.end..=next_global.1.start);
                 }
             }
         }

@@ -157,3 +157,26 @@ fn function_args() {
         "fun some(arg1, arg2: Num, arg3 = 10, arg4: Num = 10): Num {\n    2\n}",
     );
 }
+
+#[test]
+fn allow_spacing_in_ifs() {
+    let input = r#"fun some() {
+    if true {
+        let a = 2
+        let c = 1
+
+        let b = 3
+    }
+}"#;
+
+    let output = r#"fun some() {
+    if true {
+        let a = 2
+        let c = 1
+
+        let b = 3
+    }
+}"#;
+
+    test_format(input, output);
+}
