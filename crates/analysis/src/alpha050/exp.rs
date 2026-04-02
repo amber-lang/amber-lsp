@@ -15,7 +15,6 @@ use crate::types::{
 use crate::{
     get_symbol_definition_info,
     insert_symbol_reference,
-    BlockContext,
     Context,
     FunctionArgument,
     FunctionSymbol,
@@ -26,18 +25,17 @@ use crate::{
 };
 use amber_grammar::alpha050::{
     Expression,
-    FailableHandler,
     InterpolatedCommand,
     InterpolatedText,
 };
-use amber_grammar::{
-    CommandModifier,
-    Spanned,
-};
+use amber_grammar::Spanned;
 use amber_types::paths::FileId;
 
 use super::stmnts::{
     analyze_failable_handlers,
+    check_duplicate_modifiers,
+    has_failure_handler,
+    has_unsafe_or_trust,
     StmntAnalysisResult,
 };
 
@@ -186,6 +184,7 @@ pub fn analyze_exp(
             DataType::Null
         }
         Expression::FunctionInvocation(modifiers, (name, name_span), args, failable_handlers) => {
+            check_duplicate_modifiers(modifiers, &file, files);
             let fun_symbol = get_symbol_definition_info(files, name, &file, name_span.start);
 
             let expected_types = match fun_symbol {
@@ -303,6 +302,7 @@ pub fn analyze_exp(
                 file_id,
                 file_version,
                 failable_handlers,
+                modifiers,
                 files,
                 scoped_generic_types,
                 contexts,
@@ -389,21 +389,11 @@ pub fn analyze_exp(
                     .push(ref_loc);
             }
 
-            let has_failure_handler = failable_handlers
-                .iter()
-                .any(|(modifier, _)| !matches!(modifier, FailableHandler::Comment(_)));
-
             if matches!(
                 scoped_generic_types.deref_type(&exp_ty),
                 DataType::Failable(_)
-            ) && modifiers.iter().all(|(modifier, _)| {
-                *modifier != CommandModifier::Unsafe && *modifier != CommandModifier::Trust
-            }) && contexts.iter().all(|ctx| match ctx {
-                Context::Block(BlockContext { modifiers }) => modifiers.iter().all(|modifier| {
-                    *modifier != CommandModifier::Unsafe && *modifier != CommandModifier::Trust
-                }),
-                _ => true,
-            }) && !has_failure_handler
+            ) && !has_unsafe_or_trust(modifiers, contexts)
+                && !has_failure_handler(failable_handlers)
             {
                 files.report_error(
                     &file,
@@ -496,6 +486,7 @@ pub fn analyze_exp(
             ty.clone()
         }
         Expression::Command(modifiers, inter_cmd, failable_handlers) => {
+            check_duplicate_modifiers(modifiers, &file, files);
             inter_cmd.iter().for_each(|(inter_cmd, _)| {
                 if let InterpolatedCommand::Expression(exp) = inter_cmd {
                     analyze_expr!(exp, DataType::Any);
@@ -509,6 +500,7 @@ pub fn analyze_exp(
                 file_id,
                 file_version,
                 failable_handlers,
+                modifiers,
                 files,
                 scoped_generic_types,
                 contexts,
@@ -517,23 +509,7 @@ pub fn analyze_exp(
             is_propagating_failure |= is_prop;
             return_types.extend(failure_return_ty);
 
-            let has_failure_handler = failable_handlers
-                .iter()
-                .any(|(modifier, _)| !matches!(modifier, FailableHandler::Comment(_)));
-
-            if !has_failure_handler
-                && !modifiers.iter().any(|(modifier, _)| {
-                    *modifier == CommandModifier::Unsafe || *modifier == CommandModifier::Trust
-                })
-                && !contexts.iter().any(|ctx| match ctx {
-                    Context::Block(BlockContext { modifiers }) => {
-                        modifiers.iter().any(|modifier| {
-                            *modifier == CommandModifier::Unsafe
-                                || *modifier == CommandModifier::Trust
-                        })
-                    }
-                    _ => false,
-                })
+            if !has_failure_handler(failable_handlers) && !has_unsafe_or_trust(modifiers, contexts)
             {
                 files.report_error(&file, "Command must have a failure handler", *exp_span);
             }
@@ -636,6 +612,16 @@ pub fn analyze_exp(
             analyze_expr!(exp1, DataType::Boolean);
             let if_true = analyze_expr!(exp2, expected_type.clone()).exp_ty;
             let if_false = analyze_expr!(exp3, expected_type.clone()).exp_ty;
+
+            if !matches_type(&if_true, &if_false, scoped_generic_types) {
+                files.report_error(
+                    &file,
+                    &format!(
+                        "Ternary operation must evaluate to one type, got {if_true:?} and {if_false:?}"
+                    ),
+                    *exp_span,
+                );
+            }
 
             make_union_type(vec![if_true, if_false])
         }

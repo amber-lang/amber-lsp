@@ -544,6 +544,7 @@ fn keyword_completions(contexts: &[Context]) -> Vec<CompletionItem> {
             Some("if ${1:condition} {\n\t$0\n}"),
         ),
         ("loop", "Infinite loop", Some("loop {\n\t$0\n}")),
+        ("while", "While loop", Some("while $1 {\n\t$0\n}")),
         (
             "for",
             "Iterator loop",

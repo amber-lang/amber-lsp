@@ -2427,3 +2427,308 @@ pub fun foo() {
         error_list,
     );
 }
+
+// Helper to collect error messages from a single-file source
+async fn errors_from_source(source: &str) -> Vec<String> {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(&uri.to_file_path().unwrap(), source)
+        .await
+        .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let errors = backend.files.errors.get(&file_id);
+    errors
+        .iter()
+        .flat_map(|e| e.iter().cloned())
+        .map(|(msg, _)| msg)
+        .collect()
+}
+
+#[test]
+async fn test_error_duplicate_parameter_name() {
+    let errors = errors_from_source(
+        r#"fun foo(a, b, a) {
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Duplicate parameter name")),
+        "Expected duplicate parameter name error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_unique_parameter_names() {
+    let errors = errors_from_source(
+        r#"fun foo(a, b, c) {
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("Duplicate parameter name")),
+        "Expected no duplicate parameter name error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_failable_return_type_but_no_propagation() {
+    let errors = errors_from_source(
+        r#"fun foo(): Int? {
+    return 42
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Return type is declared as failable")),
+        "Expected failable return type error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_failable_return_type_with_propagation() {
+    let errors = errors_from_source(
+        r#"fun foo(): Text? {
+    return $echo "hello"$?
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("Return type is declared as failable")),
+        "Expected no failable return type error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_duplicate_command_modifier() {
+    let errors = errors_from_source(
+        r#"main {
+    trust trust $echo "hello"$ failed {
+        echo "error"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Duplicate command modifier")),
+        "Expected duplicate command modifier error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_different_command_modifiers() {
+    let errors = errors_from_source(
+        r#"main {
+    silent trust $echo "hello"$ failed {
+        echo "error"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("Duplicate command modifier")),
+        "Expected no duplicate command modifier error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_duplicate_failed_handler() {
+    let errors = errors_from_source(
+        r#"main {
+    $echo "hello"$ failed {
+        echo "error1"
+    } failed {
+        echo "error2"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Duplicate 'failed' handler")),
+        "Expected duplicate failed handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_duplicate_succeeded_handler() {
+    let errors = errors_from_source(
+        r#"main {
+    $echo "hello"$ failed {
+        echo "error"
+    } succeeded {
+        echo "ok1"
+    } succeeded {
+        echo "ok2"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Duplicate 'succeeded' handler")),
+        "Expected duplicate succeeded handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_ternary_type_mismatch() {
+    let errors = errors_from_source(
+        r#"let x = true then 42 else "hello"
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Ternary operation must evaluate to one type")),
+        "Expected ternary type mismatch error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_ternary_same_type() {
+    let errors = errors_from_source(
+        r#"let x = true then 42 else 99
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("Ternary operation must evaluate to one type")),
+        "Expected no ternary type mismatch error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_propagate_with_trust() {
+    let errors = errors_from_source(
+        r#"main {
+    trust $echo "hello"$?
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'trust' modifier cannot be used with failure handlers")),
+        "Expected trust with handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_trust_with_failed_handler() {
+    let errors = errors_from_source(
+        r#"main {
+    trust $echo "hello"$ failed {
+        echo "error"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'trust' modifier cannot be used with failure handlers")),
+        "Expected trust with handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_trust_with_succeeded_handler() {
+    let errors = errors_from_source(
+        r#"main {
+    trust $echo "hello"$ succeeded {
+        echo "ok"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'trust' modifier cannot be used with failure handlers")),
+        "Expected trust with handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_propagate_with_other_handlers() {
+    let errors = errors_from_source(
+        r#"main {
+    $echo "hello"$? succeeded {
+        echo "ok"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'?' operator cannot be used with other failure handlers")),
+        "Expected propagate with other handlers error, got: {:?}",
+        errors,
+    );
+}
