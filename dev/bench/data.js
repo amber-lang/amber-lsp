@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774049963362,
+  "lastUpdate": 1775164248171,
   "repoUrl": "https://github.com/amber-lang/amber-lsp",
   "entries": {
     "Amber LSP Benchmarks": [
@@ -719,6 +719,150 @@ window.BENCHMARK_DATA = {
             "name": "autocomplete/alpha050/completion",
             "value": 847743,
             "range": "± 790552",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hubik080@gmail.com",
+            "name": "Hubert Jabłoński",
+            "username": "KrosFire"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "84562cd9837e617a2b4b8702ebe54d59fd3a3136",
+          "message": "Fixes and improvments (#121)\n\n\n## New Features\n- Contextual keyword autocompletion in IDE, including conditional keywords for loops, functions, and failure handlers\n- Duplicate parameter name validation in function definitions\n- Duplicate command modifier detection\n- Duplicate failure handler detection (failed, succeeded, exited)\n- Failable return type validation—reports error when return type is declared failable but no failures propagate\n\n## Bug Fixes\n- Fixed generic type constraints leaking between function calls within the same scope\n- Fixed missing type mismatch errors for ternary expressions with mismatched branches\n\n## Tests\n- Comprehensive keyword completion and contextual availability tests\n- Generic type narrowing behavior validation\n- Error diagnostic coverage for new validations\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+          "timestamp": "2026-04-02T23:03:07+02:00",
+          "tree_id": "69a4159e45c34f12951cca4509eefb415a0a7b09",
+          "url": "https://github.com/amber-lang/amber-lsp/commit/84562cd9837e617a2b4b8702ebe54d59fd3a3136"
+        },
+        "date": 1775164247123,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "tokenize/alpha034/269 lines",
+            "value": 93148,
+            "range": "± 922",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "tokenize/alpha035/599 lines",
+            "value": 205266,
+            "range": "± 2655",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "tokenize/alpha040/854 lines",
+            "value": 300541,
+            "range": "± 3600",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "tokenize/alpha050/969 lines",
+            "value": 368143,
+            "range": "± 3296",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parse/alpha034/269 lines",
+            "value": 2127254,
+            "range": "± 36244",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parse/alpha035/599 lines",
+            "value": 4454350,
+            "range": "± 125534",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parse/alpha040/854 lines",
+            "value": 7480587,
+            "range": "± 218627",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parse/alpha050/969 lines",
+            "value": 10265140,
+            "range": "± 329079",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "analysis/alpha034/269 lines",
+            "value": 439263,
+            "range": "± 32044",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "analysis/alpha035/599 lines",
+            "value": 4904105,
+            "range": "± 169956",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "analysis/alpha040/854 lines",
+            "value": 9394733,
+            "range": "± 355034",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "analysis/alpha050/969 lines",
+            "value": 6299278,
+            "range": "± 259516",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "end_to_end/alpha034/269 lines",
+            "value": 2869410,
+            "range": "± 68107",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "end_to_end/alpha035/599 lines",
+            "value": 15076397,
+            "range": "± 584295",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "end_to_end/alpha040/854 lines",
+            "value": 26654630,
+            "range": "± 930664",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "end_to_end/alpha050/969 lines",
+            "value": 27247163,
+            "range": "± 1053423",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "autocomplete/alpha034/completion",
+            "value": 7342,
+            "range": "± 190",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "autocomplete/alpha035/completion",
+            "value": 7122,
+            "range": "± 185",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "autocomplete/alpha040/completion",
+            "value": 7494,
+            "range": "± 94",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "autocomplete/alpha050/completion",
+            "value": 945564,
+            "range": "± 880907",
             "unit": "ns/iter"
           }
         ]
