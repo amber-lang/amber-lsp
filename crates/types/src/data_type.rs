@@ -104,6 +104,13 @@ impl GenericsMap {
         self.constrain(id, constraint);
     }
 
+    /// Unconditionally set a generic's type, bypassing the specificity check.
+    /// Used to restore a generic to its pre-call value after a function call
+    /// so per-call constraints don't leak between call sites.
+    pub fn restore_generic_type(&self, id: usize, ty: DataType) {
+        self.map.insert(id, ty);
+    }
+
     fn constrain(&self, id: usize, constraint: DataType) {
         match self.get(id) {
             DataType::Generic(id) => {

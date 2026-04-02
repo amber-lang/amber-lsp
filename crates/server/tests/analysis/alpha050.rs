@@ -1699,6 +1699,422 @@ async fn test_auto_import_completion_from_stdlib_no_existing_import() {
     );
 }
 
+/// Helper: request completions for a source file at a given position and return
+/// only the keyword-kind completion labels.
+async fn keyword_labels_at(source: &str, line: u32, character: u32) -> Vec<String> {
+    use tower_lsp_server::lsp_types::*;
+    use tower_lsp_server::LanguageServer;
+
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(&uri.to_file_path().unwrap(), source)
+        .await
+        .unwrap();
+
+    backend.open_document(&uri).await.unwrap();
+
+    let completion_params = CompletionParams {
+        text_document_position: TextDocumentPositionParams {
+            text_document: TextDocumentIdentifier { uri },
+            position: Position { line, character },
+        },
+        work_done_progress_params: WorkDoneProgressParams {
+            work_done_token: None,
+        },
+        partial_result_params: PartialResultParams {
+            partial_result_token: None,
+        },
+        context: None,
+    };
+
+    let result = backend.completion(completion_params).await.unwrap();
+    match result {
+        Some(CompletionResponse::Array(items)) => items
+            .into_iter()
+            .filter(|item| item.kind == Some(CompletionItemKind::KEYWORD))
+            .map(|item| item.label)
+            .collect(),
+        _ => vec![],
+    }
+}
+
+/// Helper: request completions and return full keyword CompletionItems.
+async fn keyword_completions_at(
+    source: &str,
+    line: u32,
+    character: u32,
+) -> Vec<(String, Option<String>)> {
+    use tower_lsp_server::lsp_types::*;
+    use tower_lsp_server::LanguageServer;
+
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(&uri.to_file_path().unwrap(), source)
+        .await
+        .unwrap();
+
+    backend.open_document(&uri).await.unwrap();
+
+    let completion_params = CompletionParams {
+        text_document_position: TextDocumentPositionParams {
+            text_document: TextDocumentIdentifier { uri },
+            position: Position { line, character },
+        },
+        work_done_progress_params: WorkDoneProgressParams {
+            work_done_token: None,
+        },
+        partial_result_params: PartialResultParams {
+            partial_result_token: None,
+        },
+        context: None,
+    };
+
+    let result = backend.completion(completion_params).await.unwrap();
+    match result {
+        Some(CompletionResponse::Array(items)) => items
+            .into_iter()
+            .filter(|item| item.kind == Some(CompletionItemKind::KEYWORD))
+            .map(|item| (item.label, item.insert_text))
+            .collect(),
+        _ => vec![],
+    }
+}
+
+#[test]
+async fn test_keyword_break_continue_in_loop() {
+    // `bre` inside a loop should offer `break` and `continue`
+    let keywords = keyword_labels_at(
+        "loop {\n    bre\n}",
+        1,
+        7, // end of "bre"
+    )
+    .await;
+
+    assert!(
+        keywords.contains(&"break".to_string()),
+        "break should be offered inside a loop, got: {:?}",
+        keywords
+    );
+    assert!(
+        keywords.contains(&"continue".to_string()),
+        "continue should be offered inside a loop, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_break_continue_outside_loop() {
+    // `bre` outside a loop should NOT offer `break` or `continue`
+    let keywords = keyword_labels_at("bre", 0, 3).await;
+
+    assert!(
+        !keywords.contains(&"break".to_string()),
+        "break should NOT be offered outside a loop, got: {:?}",
+        keywords
+    );
+    assert!(
+        !keywords.contains(&"continue".to_string()),
+        "continue should NOT be offered outside a loop, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_return_in_function() {
+    // `ret` inside a function should offer `return`
+    let keywords = keyword_labels_at(
+        "fun foo() {\n    ret\n}",
+        1,
+        7, // end of "ret"
+    )
+    .await;
+
+    assert!(
+        keywords.contains(&"return".to_string()),
+        "return should be offered inside a function, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_return_outside_function() {
+    // `ret` at top-level should NOT offer `return`
+    let keywords = keyword_labels_at("ret", 0, 3).await;
+
+    assert!(
+        !keywords.contains(&"return".to_string()),
+        "return should NOT be offered outside a function, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_fail_in_function() {
+    // `fai` inside a function should offer `fail`
+    let keywords = keyword_labels_at("fun foo() {\n    fai\n}", 1, 7).await;
+
+    assert!(
+        keywords.contains(&"fail".to_string()),
+        "fail should be offered inside a function, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_fail_in_main() {
+    // `fai` inside main block should offer `fail`
+    let keywords = keyword_labels_at("main {\n    fai\n}", 1, 7).await;
+
+    assert!(
+        keywords.contains(&"fail".to_string()),
+        "fail should be offered inside main block, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_fail_outside_function_and_main() {
+    // `fai` at top-level should NOT offer `fail`
+    let keywords = keyword_labels_at("fai", 0, 3).await;
+
+    assert!(
+        !keywords.contains(&"fail".to_string()),
+        "fail should NOT be offered outside function/main, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_failed_after_command() {
+    // `fai` after a command expression should offer `failed`, `succeeded`, `exited`
+    let keywords = keyword_labels_at("trust $ echo hello $ fai", 0, 24).await;
+
+    assert!(
+        keywords.contains(&"failed".to_string()),
+        "failed should be offered after a command expression, got: {:?}",
+        keywords
+    );
+    assert!(
+        keywords.contains(&"succeeded".to_string()),
+        "succeeded should be offered after a command expression, got: {:?}",
+        keywords
+    );
+    assert!(
+        keywords.contains(&"exited".to_string()),
+        "exited should be offered after a command expression, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_failed_always_available() {
+    // `fai` at top-level should still offer failable handler keywords
+    let keywords = keyword_labels_at("fai", 0, 3).await;
+
+    assert!(
+        keywords.contains(&"failed".to_string()),
+        "failed should be offered, got: {:?}",
+        keywords
+    );
+    assert!(
+        keywords.contains(&"succeeded".to_string()),
+        "succeeded should be offered, got: {:?}",
+        keywords
+    );
+    assert!(
+        keywords.contains(&"exited".to_string()),
+        "exited should be offered, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_general_always_available() {
+    // General keywords should always be available at statement position
+    let keywords = keyword_labels_at("i", 0, 1).await;
+
+    for kw in [
+        "if",
+        "loop",
+        "for",
+        "let",
+        "const",
+        "echo",
+        "fun",
+        "pub",
+        "import",
+        "main",
+        "true",
+        "false",
+        "null",
+        "unsafe",
+        "silent",
+        "trust",
+        "sudo",
+        "exit",
+        "failed",
+        "succeeded",
+        "exited",
+    ] {
+        assert!(
+            keywords.contains(&kw.to_string()),
+            "keyword '{}' should always be available, got: {:?}",
+            kw,
+            keywords
+        );
+    }
+}
+
+#[test]
+async fn test_keyword_break_in_nested_loop() {
+    // `bre` inside a nested loop (for inside function) should offer `break`
+    let keywords = keyword_labels_at(
+        "fun foo() {\n    for x in [1, 2, 3] {\n        bre\n    }\n}",
+        2,
+        11,
+    )
+    .await;
+
+    assert!(
+        keywords.contains(&"break".to_string()),
+        "break should be offered inside a nested loop, got: {:?}",
+        keywords
+    );
+    assert!(
+        keywords.contains(&"return".to_string()),
+        "return should also be offered inside a function, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_failed_after_function_call() {
+    // `fai` after a function call should offer failable handler keywords
+    let keywords = keyword_labels_at("fun foo() {}\ntrust foo() fai", 1, 15).await;
+
+    assert!(
+        keywords.contains(&"failed".to_string()),
+        "failed should be offered after a function call, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_keyword_snippets() {
+    // Verify that structure keywords have snippet insert text
+    let completions = keyword_completions_at("i", 0, 1).await;
+
+    let find = |label: &str| -> Option<String> {
+        completions
+            .iter()
+            .find(|(l, _)| l == label)
+            .and_then(|(_, snippet)| snippet.clone())
+    };
+
+    // `if` should expand to a block with cursor on condition
+    let if_snippet = find("if").expect("if should have a snippet");
+    assert!(
+        if_snippet.contains("${1:condition}") && if_snippet.contains('{'),
+        "if snippet should have condition placeholder and block, got: {}",
+        if_snippet
+    );
+
+    // `loop` should expand to a block
+    let loop_snippet = find("loop").expect("loop should have a snippet");
+    assert!(
+        loop_snippet.contains('{'),
+        "loop snippet should have a block, got: {}",
+        loop_snippet
+    );
+
+    // `for` should expand with item in iterable
+    let for_snippet = find("for").expect("for should have a snippet");
+    assert!(
+        for_snippet.contains("${1:item}") && for_snippet.contains("${2:iterable}"),
+        "for snippet should have item and iterable placeholders, got: {}",
+        for_snippet
+    );
+
+    // `fun` should expand to function definition
+    let fun_snippet = find("fun").expect("fun should have a snippet");
+    assert!(
+        fun_snippet.contains("${1:name}") && fun_snippet.contains('('),
+        "fun snippet should have name placeholder and parens, got: {}",
+        fun_snippet
+    );
+
+    // `import` should focus on path first ($1), then names ($2)
+    let import_snippet = find("import").expect("import should have a snippet");
+    assert!(
+        import_snippet.contains("\"$1\"") && import_snippet.contains("$2"),
+        "import snippet should focus on path ($1) then names ($2), got: {}",
+        import_snippet
+    );
+
+    // `let` / `const` should have name placeholder
+    let let_snippet = find("let").expect("let should have a snippet");
+    assert!(
+        let_snippet.contains("${1:name}"),
+        "let snippet should have name placeholder, got: {}",
+        let_snippet
+    );
+
+    // `main` should expand to a block
+    let main_snippet = find("main").expect("main should have a snippet");
+    assert!(
+        main_snippet.contains('{'),
+        "main snippet should have a block, got: {}",
+        main_snippet
+    );
+
+    // `true`, `false`, `null` should NOT have snippets
+    assert!(find("true").is_none(), "true should not have a snippet");
+    assert!(find("false").is_none(), "false should not have a snippet");
+    assert!(find("null").is_none(), "null should not have a snippet");
+}
+
 #[test]
 async fn test_echo_not_marked_as_unused_import() {
     let (service, _) = tower_lsp_server::LspService::new(|client| {
@@ -1903,5 +2319,416 @@ my_len([1, 2])
         error_list.is_empty(),
         "Expected no type-mismatch errors when calling local generic with different types, got: {:?}",
         error_list,
+    );
+}
+
+#[test]
+async fn test_builtin_generic_not_narrowed_inside_function_body() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"pub fun foo() {
+    len("asd")
+    len([1, 2, 3])
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    // The second len() call should NOT get a type error: len's generic
+    // param must be reset between calls so it accepts both Text and [Int].
+    let errors = backend.files.errors.get(&file_id);
+    let error_list: Vec<_> = errors
+        .iter()
+        .flat_map(|e| e.iter().cloned())
+        .filter(|(msg, _)| msg.contains("Expected type"))
+        .collect();
+    assert!(
+        error_list.is_empty(),
+        "Expected no type-mismatch errors for len() with different types inside a function body, got: {:?}",
+        error_list,
+    );
+}
+
+#[test]
+async fn test_user_generic_not_narrowed_inside_function_body() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"fun my_len(value): Int {}
+
+pub fun foo() {
+    my_len("asd")
+    my_len([1, 2, 3])
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let errors = backend.files.errors.get(&file_id);
+    let error_list: Vec<_> = errors
+        .iter()
+        .flat_map(|e| e.iter().cloned())
+        .filter(|(msg, _)| msg.contains("Expected type"))
+        .collect();
+    assert!(
+        error_list.is_empty(),
+        "Expected no type-mismatch errors for user generic function with different types inside a function body, got: {:?}",
+        error_list,
+    );
+}
+
+// Helper to collect error messages from a single-file source
+async fn errors_from_source(source: &str) -> Vec<String> {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha050,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(&uri.to_file_path().unwrap(), source)
+        .await
+        .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let errors = backend.files.errors.get(&file_id);
+    errors
+        .iter()
+        .flat_map(|e| e.iter().cloned())
+        .map(|(msg, _)| msg)
+        .collect()
+}
+
+#[test]
+async fn test_error_duplicate_parameter_name() {
+    let errors = errors_from_source(
+        r#"fun foo(a, b, a) {
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Duplicate parameter name")),
+        "Expected duplicate parameter name error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_unique_parameter_names() {
+    let errors = errors_from_source(
+        r#"fun foo(a, b, c) {
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("Duplicate parameter name")),
+        "Expected no duplicate parameter name error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_failable_return_type_but_no_propagation() {
+    let errors = errors_from_source(
+        r#"fun foo(): Int? {
+    return 42
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Return type is declared as failable")),
+        "Expected failable return type error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_failable_return_type_with_propagation() {
+    let errors = errors_from_source(
+        r#"fun foo(): Text? {
+    return $echo "hello"$?
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("Return type is declared as failable")),
+        "Expected no failable return type error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_duplicate_command_modifier() {
+    let errors = errors_from_source(
+        r#"main {
+    trust trust $echo "hello"$ failed {
+        echo "error"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Duplicate command modifier")),
+        "Expected duplicate command modifier error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_different_command_modifiers() {
+    let errors = errors_from_source(
+        r#"main {
+    silent trust $echo "hello"$ failed {
+        echo "error"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("Duplicate command modifier")),
+        "Expected no duplicate command modifier error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_duplicate_failed_handler() {
+    let errors = errors_from_source(
+        r#"main {
+    $echo "hello"$ failed {
+        echo "error1"
+    } failed {
+        echo "error2"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Duplicate 'failed' handler")),
+        "Expected duplicate failed handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_duplicate_succeeded_handler() {
+    let errors = errors_from_source(
+        r#"main {
+    $echo "hello"$ failed {
+        echo "error"
+    } succeeded {
+        echo "ok1"
+    } succeeded {
+        echo "ok2"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Duplicate 'succeeded' handler")),
+        "Expected duplicate succeeded handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_ternary_type_mismatch() {
+    let errors = errors_from_source(
+        r#"let x = true then 42 else "hello"
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("Ternary operation must evaluate to one type")),
+        "Expected ternary type mismatch error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_ternary_same_type() {
+    let errors = errors_from_source(
+        r#"let x = true then 42 else 99
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("Ternary operation must evaluate to one type")),
+        "Expected no ternary type mismatch error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_propagate_with_trust() {
+    let errors = errors_from_source(
+        r#"main {
+    trust $echo "hello"$?
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'trust' modifier cannot be used with failure handlers")),
+        "Expected trust with handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_trust_with_failed_handler() {
+    let errors = errors_from_source(
+        r#"main {
+    trust $echo "hello"$ failed {
+        echo "error"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'trust' modifier cannot be used with failure handlers")),
+        "Expected trust with handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_trust_with_succeeded_handler() {
+    let errors = errors_from_source(
+        r#"main {
+    trust $echo "hello"$ succeeded {
+        echo "ok"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'trust' modifier cannot be used with failure handlers")),
+        "Expected trust with handler error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_propagate_with_other_handlers() {
+    let errors = errors_from_source(
+        r#"main {
+    $echo "hello"$? succeeded {
+        echo "ok"
+    }
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'?' operator cannot be used with other failure handlers")),
+        "Expected propagate with other handlers error, got: {:?}",
+        errors,
     );
 }

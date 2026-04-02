@@ -48,6 +48,55 @@ pub struct StmntAnalysisResult {
     pub return_ty: Option<DataType>,
 }
 
+/// Report errors for duplicate command modifiers in a modifier list.
+pub fn check_duplicate_modifiers(
+    modifiers: &[Spanned<CommandModifier>],
+    file: &(FileId, FileVersion),
+    files: &Files,
+) {
+    let mut seen = std::collections::HashSet::new();
+    for (modifier, span) in modifiers {
+        if !seen.insert(modifier) {
+            files.report_error(
+                file,
+                &format!("Duplicate command modifier '{modifier:?}'"),
+                *span,
+            );
+        }
+    }
+}
+
+/// Returns `true` if any inline or block-context modifier is `Unsafe` or `Trust`.
+pub fn has_unsafe_or_trust(modifiers: &[Spanned<CommandModifier>], contexts: &[Context]) -> bool {
+    modifiers
+        .iter()
+        .any(|(m, _)| *m == CommandModifier::Unsafe || *m == CommandModifier::Trust)
+        || contexts.iter().any(|ctx| match ctx {
+            Context::Block(BlockContext { modifiers }) => modifiers
+                .iter()
+                .any(|m| *m == CommandModifier::Unsafe || *m == CommandModifier::Trust),
+            _ => false,
+        })
+}
+
+/// Returns `true` if any inline or block-context modifier is `Trust`.
+pub fn has_trust(modifiers: &[Spanned<CommandModifier>], contexts: &[Context]) -> bool {
+    modifiers.iter().any(|(m, _)| *m == CommandModifier::Trust)
+        || contexts.iter().any(|ctx| match ctx {
+            Context::Block(BlockContext { modifiers }) => {
+                modifiers.contains(&CommandModifier::Trust)
+            }
+            _ => false,
+        })
+}
+
+/// Returns `true` if the failable handler list contains at least one non-comment handler.
+pub fn has_failure_handler(failable_handlers: &[Spanned<FailableHandler>]) -> bool {
+    failable_handlers
+        .iter()
+        .any(|(h, _)| !matches!(h, FailableHandler::Comment(_)))
+}
+
 /// Analyze a statement.
 ///
 /// Returns the data type of the return statement and a boolean indicating if the
@@ -1042,6 +1091,7 @@ pub fn analyze_stmnt(
             }
         }
         Statement::MoveFiles(modifiers, _, from_exp, to_exp, failable_handlers) => {
+            check_duplicate_modifiers(modifiers, &file, files);
             let exp1 = analyze_exp(
                 file_id,
                 file_version,
@@ -1065,29 +1115,13 @@ pub fn analyze_stmnt(
                 file_id,
                 file_version,
                 failable_handlers,
+                modifiers,
                 files,
                 scoped_generic_types,
                 contexts,
             );
 
-            let has_failure_handler = failable_handlers.iter().any(|(modifier, _)| {
-                matches!(modifier, FailableHandler::Failure(_))
-                    || matches!(modifier, FailableHandler::Exited(_, _, _))
-            });
-
-            if !has_failure_handler
-                && !modifiers.iter().any(|(modifier, _)| {
-                    *modifier == CommandModifier::Unsafe || *modifier == CommandModifier::Trust
-                })
-                && !contexts.iter().any(|ctx| match ctx {
-                    Context::Block(BlockContext { modifiers }) => {
-                        modifiers.iter().any(|modifier| {
-                            *modifier == CommandModifier::Unsafe
-                                || *modifier == CommandModifier::Trust
-                        })
-                    }
-                    _ => false,
-                })
+            if !has_failure_handler(failable_handlers) && !has_unsafe_or_trust(modifiers, contexts)
             {
                 files.report_error(&file, "Command must have a failure handler", *span);
             }
@@ -1142,6 +1176,7 @@ pub fn analyze_block(
 
     match block {
         Block::Block(modifiers, stmnt) => {
+            check_duplicate_modifiers(modifiers, &(file_id, file_version), files);
             let mut new_contexts = contexts.to_owned();
             new_contexts.push(Context::Block(BlockContext {
                 modifiers: modifiers.iter().map(|(m, _)| m.clone()).collect(),
@@ -1224,6 +1259,7 @@ pub fn analyze_failable_handlers(
     file_id: FileId,
     file_version: FileVersion,
     failable_handlers: &[Spanned<FailableHandler>],
+    modifiers: &[Spanned<CommandModifier>],
     files: &Files,
     scoped_generic_types: &GenericsMap,
     contexts: &[Context],
@@ -1234,6 +1270,24 @@ pub fn analyze_failable_handlers(
 
     let mut has_exited_handler = false; // exited
     let mut has_status_handler = false; // Succeeded/Failed
+    let mut failure_count = 0u32;
+    let mut succeeded_count = 0u32;
+    let mut exited_count = 0u32;
+
+    // The 'trust' modifier cannot be combined with any failure handler
+    if has_trust(modifiers, &contexts) && has_failure_handler(failable_handlers) {
+        // Report error on the first non-comment handler's span
+        if let Some((_, span)) = failable_handlers
+            .iter()
+            .find(|(h, _)| !matches!(h, FailableHandler::Comment(_)))
+        {
+            files.report_error(
+                &(file_id, file_version),
+                "The 'trust' modifier cannot be used with failure handlers",
+                *span,
+            );
+        }
+    }
 
     failable_handlers
         .iter()
@@ -1298,9 +1352,37 @@ pub fn analyze_failable_handlers(
                             );
                         }
 
+                        let has_other_handlers = failable_handlers.iter().any(|(h, _)| {
+                            matches!(
+                                h,
+                                FailableHandler::Succeeded(_, _)
+                                    | FailableHandler::Exited(_, _, _)
+                            ) || matches!(
+                                h,
+                                FailableHandler::Failure((FailureHandler::Handle(_, _, _), _))
+                            )
+                        });
+
+                        if has_other_handlers {
+                            files.report_error(
+                                &(file_id, file_version),
+                                "The '?' operator cannot be used with other failure handlers",
+                                *span,
+                            );
+                        }
+
                         is_propagating = true;
                     }
                 };
+
+                failure_count += 1;
+                if failure_count > 1 {
+                    files.report_error(
+                        &(file_id, file_version),
+                        "Duplicate 'failed' handler",
+                        keyword_span,
+                    );
+                }
 
                 has_status_handler = true;
 
@@ -1327,6 +1409,15 @@ pub fn analyze_failable_handlers(
                 );
 
                 has_status_handler = true;
+
+                succeeded_count += 1;
+                if succeeded_count > 1 {
+                    files.report_error(
+                        &(file_id, file_version),
+                        "Duplicate 'succeeded' handler",
+                        *span,
+                    );
+                }
 
                 if has_exited_handler {
                     files.report_error(
@@ -1377,6 +1468,15 @@ pub fn analyze_failable_handlers(
                 );
 
                 has_exited_handler = true;
+
+                exited_count += 1;
+                if exited_count > 1 {
+                    files.report_error(
+                        &(file_id, file_version),
+                        "Duplicate 'exited' handler",
+                        *name_span,
+                    );
+                }
 
                 if has_status_handler {
                     files.report_error(

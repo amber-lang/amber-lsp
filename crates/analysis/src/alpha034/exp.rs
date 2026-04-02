@@ -76,6 +76,8 @@ pub fn analyze_exp(
                 }
             };
 
+            let mut generics_to_restore: Vec<(usize, DataType)> = vec![];
+
             args.iter().enumerate().for_each(|(idx, arg)| {
                 if let Some((ty, is_ref)) = expected_types.get(idx) {
                     let exp_ty = analyze_exp(
@@ -115,6 +117,9 @@ pub fn analyze_exp(
                     }
 
                     if let DataType::Generic(id) = ty {
+                        if scoped_generic_types.is_inferred(*id) {
+                            generics_to_restore.push((*id, scoped_generic_types.get(*id)));
+                        }
                         scoped_generic_types.constrain_generic_type(*id, exp_ty.clone());
                     }
                 } else {
@@ -208,6 +213,12 @@ pub fn analyze_exp(
                         start: name_span.start,
                         end: name_span.end,
                     });
+            }
+
+            // Restore foreign-function generics to their pre-call values so
+            // constraints from this call don't leak into subsequent calls.
+            for (id, saved_ty) in generics_to_restore {
+                scoped_generic_types.restore_generic_type(id, saved_ty);
             }
 
             fun_symbol

@@ -106,7 +106,7 @@ pub fn failable_handlers_parser<'a>(
         succeeded_parser(stmnts.clone()),
         exited_parser(stmnts),
     ))
-    .separated_by(comment_parser().or_not())
+    .separated_by(comment_parser().repeated())
     .allow_leading()
     .collect()
     .boxed()

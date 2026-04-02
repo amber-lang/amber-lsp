@@ -172,6 +172,8 @@ pub fn analyze_exp(
                 }
             };
 
+            let mut generics_to_restore: Vec<(usize, DataType)> = vec![];
+
             args.iter().enumerate().for_each(|(idx, arg)| {
                 if let Some((ty, _, is_ref)) = expected_types.get(idx) {
                     let ExpAnalysisResult {
@@ -218,6 +220,9 @@ pub fn analyze_exp(
                     is_propagating_failure |= propagates_failure;
 
                     if let DataType::Generic(id) = ty {
+                        if scoped_generic_types.is_inferred(*id) {
+                            generics_to_restore.push((*id, scoped_generic_types.get(*id)));
+                        }
                         scoped_generic_types.constrain_generic_type(*id, exp_ty.clone());
                     }
                 } else {
@@ -349,6 +354,12 @@ pub fn analyze_exp(
                     "Failable function must be handled with a failure handler or marked with `trust` modifier",
                     *name_span,
                 );
+            }
+
+            // Restore foreign-function generics to their pre-call values so
+            // constraints from this call don't leak into subsequent calls.
+            for (id, saved_ty) in generics_to_restore {
+                scoped_generic_types.restore_generic_type(id, saved_ty);
             }
 
             exp_ty

@@ -51,7 +51,7 @@ pub enum JumpDefinitionResult {
     None,
 }
 
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub enum CommandModifier {
     Unsafe,
     Trust,

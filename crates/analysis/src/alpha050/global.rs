@@ -113,6 +113,7 @@ pub async fn analyze_global_stmnt(
 
                 let mut new_generic_types = vec![];
                 let mut prev_arg_optional = false;
+                let mut seen_param_names = std::collections::HashSet::new();
 
                 args.iter().for_each(|(arg, _)| {
                     let (name, ty, name_span) = match arg {
@@ -185,6 +186,14 @@ pub async fn analyze_global_stmnt(
                         }
                         FunctionArgument::Error => return,
                     };
+
+                    if !seen_param_names.insert(name.clone()) {
+                        backend.get_files().report_error(
+                            &(file_id, file_version),
+                            &format!("Duplicate parameter name '{name}'"),
+                            *name_span,
+                        );
+                    }
 
                     let mut symbol_table = match backend
                         .get_files()
@@ -309,6 +318,14 @@ pub async fn analyze_global_stmnt(
                             backend.get_files().report_error(
                                 &(file_id, file_version),
                                 "Function is propagating an error, but return type is not failable",
+                                *ty_span,
+                            );
+                        }
+
+                        if !is_propagating && matches!(ty, DataType::Failable(_)) {
+                            backend.get_files().report_error(
+                                &(file_id, file_version),
+                                "Return type is declared as failable, but the function body does not propagate any failures",
                                 *ty_span,
                             );
                         }
