@@ -1,0 +1,31 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: backend.files.errors
+---
+{
+    (
+        FileId(
+            0,
+        ),
+        FileVersion(
+            1,
+        ),
+    ): [
+        (
+            "\"echo\" is not defined",
+            23..27,
+        ),
+        (
+            "\"echo\" is not defined",
+            51..55,
+        ),
+        (
+            "\"echo\" is not defined",
+            87..91,
+        ),
+        (
+            "Exited handler should be used without any other handlers",
+            68..74,
+        ),
+    ],
+}
