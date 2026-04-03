@@ -8,6 +8,7 @@ pub mod alpha034;
 pub mod alpha035;
 pub mod alpha040;
 pub mod alpha050;
+pub mod alpha060;
 
 // Re-export types from amber_types for use within this crate and by consumers
 pub use amber_types::token::Span;
@@ -24,6 +25,7 @@ pub enum Grammar {
     Alpha035(Option<Vec<Spanned<alpha035::GlobalStatement>>>),
     Alpha040(Option<Vec<Spanned<alpha040::GlobalStatement>>>),
     Alpha050(Option<Vec<Spanned<alpha050::GlobalStatement>>>),
+    Alpha060(Option<Vec<Spanned<alpha060::GlobalStatement>>>),
 }
 
 #[macro_export]

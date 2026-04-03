@@ -1,0 +1,127 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: symbol_table.symbols
+---
+{
+    11..=15: SymbolInfo {
+        name: "code",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: true,
+        undefined: false,
+        span: 11..15,
+        contexts: [],
+    },
+    23..=27: SymbolInfo {
+        name: "echo",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Null,
+        is_definition: false,
+        undefined: true,
+        span: 23..27,
+        contexts: [
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+    28..=32: SymbolInfo {
+        name: "code",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: false,
+        undefined: false,
+        span: 28..32,
+        contexts: [
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+    51..=55: SymbolInfo {
+        name: "echo",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Null,
+        is_definition: false,
+        undefined: true,
+        span: 51..55,
+        contexts: [
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+    75..=79: SymbolInfo {
+        name: "code",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: true,
+        undefined: false,
+        span: 75..79,
+        contexts: [],
+    },
+    87..=91: SymbolInfo {
+        name: "echo",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Null,
+        is_definition: false,
+        undefined: true,
+        span: 87..91,
+        contexts: [
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+    92..=96: SymbolInfo {
+        name: "code",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: false,
+        undefined: false,
+        span: 92..96,
+        contexts: [
+            Block(
+                BlockContext {
+                    modifiers: [],
+                },
+            ),
+        ],
+    },
+}

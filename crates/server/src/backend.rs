@@ -122,12 +122,14 @@ impl Backend {
                 AmberVersion::Alpha035 => Box::new(grammar::alpha035::AmberCompiler::new()),
                 AmberVersion::Alpha040 => Box::new(grammar::alpha040::AmberCompiler::new()),
                 AmberVersion::Alpha050 => Box::new(grammar::alpha050::AmberCompiler::new()),
+                AmberVersion::Alpha060 => Box::new(grammar::alpha060::AmberCompiler::new()),
             },
             token_types: match amber_version {
                 AmberVersion::Alpha034 => Box::new(grammar::alpha034::semantic_tokens::LEGEND_TYPE),
                 AmberVersion::Alpha035 => Box::new(grammar::alpha035::semantic_tokens::LEGEND_TYPE),
                 AmberVersion::Alpha040 => Box::new(grammar::alpha040::semantic_tokens::LEGEND_TYPE),
                 AmberVersion::Alpha050 => Box::new(grammar::alpha050::semantic_tokens::LEGEND_TYPE),
+                AmberVersion::Alpha060 => Box::new(grammar::alpha060::semantic_tokens::LEGEND_TYPE),
             },
             amber_version,
         }
@@ -223,6 +225,11 @@ impl Backend {
                 analysis::alpha050::global::analyze_global_stmnt(file_id, version, &ast, self)
                     .await;
                 analysis::alpha050::unused::check_unused_symbols(file_id, version, &self.files);
+            }
+            Grammar::Alpha060(Some(ast)) => {
+                analysis::alpha060::global::analyze_global_stmnt(file_id, version, &ast, self)
+                    .await;
+                analysis::alpha060::unused::check_unused_symbols(file_id, version, &self.files);
             }
             _ => {}
         }
