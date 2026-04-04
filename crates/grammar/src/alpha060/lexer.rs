@@ -53,6 +53,8 @@ pub enum TokenKind {
     Bang,
     #[token("?")]
     Question,
+    #[token("|")]
+    Pipe,
 
     // Delimiters
     #[token("(")]
@@ -388,6 +390,7 @@ fn token_kind_to_string(kind: &TokenKind, slice: &str) -> String {
         TokenKind::Equals => "=".to_string(),
         TokenKind::Bang => "!".to_string(),
         TokenKind::Question => "?".to_string(),
+        TokenKind::Pipe => "|".to_string(),
         TokenKind::OpenParen => "(".to_string(),
         TokenKind::CloseParen => ")".to_string(),
         TokenKind::OpenBracket => "[".to_string(),

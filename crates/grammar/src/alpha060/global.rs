@@ -103,37 +103,53 @@ pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
 }
 
 pub fn type_parser<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
-    let literal_type = choice((
-        just(T!["Text"]).to(DataType::Text),
-        just(T!["Num"]).to(DataType::Number),
-        just(T!["Int"]).to(DataType::Int),
-        just(T!["Bool"]).to(DataType::Boolean),
-        just(T!["Null"]).to(DataType::Null),
-    ))
-    .boxed();
+    recursive(|union_type| {
+        let literal_type = choice((
+            just(T!["Text"]).to(DataType::Text),
+            just(T!["Num"]).to(DataType::Number),
+            just(T!["Int"]).to(DataType::Int),
+            just(T!["Bool"]).to(DataType::Boolean),
+            just(T!["Null"]).to(DataType::Null),
+        ))
+        .boxed();
 
-    literal_type
-        .clone()
-        .or(just(T!["["])
-            .ignore_then(literal_type.or_not())
+        let array_type = just(T!["["])
+            .ignore_then(union_type.or_not())
             .then_ignore(just(T!["]"]))
-            .map(|ty| DataType::Array(Box::new(ty.unwrap_or(DataType::Any)))))
-        .then(
-            just(T!["?"])
-                .or_not()
-                .map(|is_optional| is_optional.is_some()),
-        )
-        .map_with(|(ty, is_optional), e| {
-            (
-                match is_optional {
-                    true => DataType::Failable(Box::new(ty)),
-                    _ => ty,
-                },
-                e.span(),
+            .map(|ty| DataType::Array(Box::new(ty.unwrap_or(DataType::Any))))
+            .boxed();
+
+        // single_type := (literal_type | array_type) "?"?
+        let single_type = literal_type
+            .or(array_type)
+            .then(
+                just(T!["?"])
+                    .or_not()
+                    .map(|is_optional| is_optional.is_some()),
             )
-        })
-        .labelled("type")
-        .boxed()
+            .map(|(ty, is_optional)| match is_optional {
+                true => DataType::Failable(Box::new(ty)),
+                _ => ty,
+            })
+            .boxed();
+
+        // union_type := single_type ("|" single_type)*
+        single_type
+            .clone()
+            .separated_by(just(T!["|"]))
+            .at_least(1)
+            .collect::<Vec<DataType>>()
+            .map(|types| {
+                if types.len() == 1 {
+                    types.into_iter().next().unwrap()
+                } else {
+                    DataType::Union(types)
+                }
+            })
+    })
+    .map_with(|ty, e| (ty, e.span()))
+    .labelled("type")
+    .boxed()
 }
 
 fn compiler_flag_parser<'a>() -> impl AmberParser<'a, Spanned<CompilerFlag>> {

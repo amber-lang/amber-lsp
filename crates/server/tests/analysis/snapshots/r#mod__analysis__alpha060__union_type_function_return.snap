@@ -1,0 +1,8 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+assertion_line: 2959
+expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_string(&generic_types)).collect::<Vec<String>>()"
+---
+[
+    "fun get_value(): Int | Text",
+]

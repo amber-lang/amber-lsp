@@ -35,6 +35,7 @@ const KEYWORDS: &[&str] = &[
     "then",
     "Text",
     "Num",
+    "Int",
     "Bool",
     "Null",
     "ref",
@@ -119,6 +120,7 @@ pub fn default_recovery<'a>() -> impl AmberParser<'a, Token> {
         T![">"],
         T!["<="],
         T![">="],
+        T!["|"],
         T![","],
     ]);
 

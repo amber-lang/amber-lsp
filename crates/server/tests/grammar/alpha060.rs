@@ -456,3 +456,173 @@ fn test_array_destruct_init_with_comments_and_trailing() {
 
     assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
 }
+
+// ==================== Union Type Tests ====================
+
+#[test]
+fn test_union_type_simple() {
+    let input = r#"
+    fun foo(x: Int | Text) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_three_types() {
+    let input = r#"
+    fun foo(x: Int | Text | Bool) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_with_null() {
+    let input = r#"
+    fun foo(x: Int | Null) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_with_failable() {
+    let input = r#"
+    fun foo(x: Int? | Text) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_failable_at_end() {
+    let input = r#"
+    fun foo(x: Int | Text?) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_with_array() {
+    let input = r#"
+    fun foo(x: [Int] | Text) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_array_with_union_inside() {
+    let input = r#"
+    fun foo(x: [Int | Text]) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_complex() {
+    let input = r#"
+    fun foo(x: Int | [Num? | Int] | Text | Null?) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_return_type() {
+    let input = r#"
+    fun foo(): Int | Text {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_return_type_with_failable() {
+    let input = r#"
+    fun foo(): Int | Text? {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_multiple_args() {
+    let input = r#"
+    fun foo(a: Int | Text, b: Bool | Null) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_cast() {
+    let input = r#"
+    let x = 42 as Int | Text
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_is_check() {
+    let input = r#"
+    let x = 42
+    let y = x is Int | Text
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_array_failable() {
+    let input = r#"
+    fun foo(x: [Int]? | Text) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_all_primitives() {
+    let input = r#"
+    fun foo(x: Int | Num | Text | Bool | Null) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_nested_array_with_failable() {
+    let input = r#"
+    fun foo(x: [Num? | Int]) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_empty_array_in_union() {
+    let input = r#"
+    fun foo(x: [] | Text) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_optional_arg_with_union() {
+    let input = r#"
+    fun foo(x: Int | Text = 42) {
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_union_type_lexer_pipe_token() {
+    let input = "Int | Text";
+    let tokens = tokenize(input);
+    assert_eq!(tokens[1].0 .0, "|");
+}
