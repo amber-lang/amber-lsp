@@ -378,3 +378,81 @@ fn test_array_index_set_expression_index() {
 
     assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
 }
+
+#[test]
+fn test_array_destruct_init() {
+    let input = r#"
+    let [a, b] = [1, 2]
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_array_destruct_init_three_vars() {
+    let input = r#"
+    let [x, y, z] = [1, 2, 3]
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_array_destruct_set_simple() {
+    assert_debug_snapshot!(parse_unwrap(&tokenize("[a, b] = [1, 2]")));
+}
+
+#[test]
+fn test_array_destruct_set() {
+    let input = r#"
+    let a = 0;
+    let b = 0;
+    [a, b] = [1, 2]
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_array_destruct_init_and_set() {
+    let input = r#"
+    let array_to_destruct = [1, 2, 3]
+
+    let [a, b] = array_to_destruct
+
+    [a, b] = array_to_destruct
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_array_destruct_init_with_comments_and_trailing() {
+    let input = r#"
+    let array_to_destruct = [1, 2, 3]
+
+    let [
+        // comment
+        // 2nd comment
+        a,
+        // 3rd comment
+        // 4th comment
+        b,
+        // 5th comment
+        // 6th comment
+    ] = array_to_destruct
+
+    [
+        // comment
+        // 2nd comment
+        a,
+        // 3rd comment
+        // 4th comment
+        b,
+        // 5th comment
+        // 6th comment
+    ] = array_to_destruct
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}

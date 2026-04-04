@@ -1,0 +1,25 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+assertion_line: 250
+expression: "compiler.tokenize(r#\"\"test\\\"\"#)"
+---
+[
+    (
+        Token(
+            "\"",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "test",
+        ),
+        1..5,
+    ),
+    (
+        Token(
+            "\\\"",
+        ),
+        5..7,
+    ),
+]

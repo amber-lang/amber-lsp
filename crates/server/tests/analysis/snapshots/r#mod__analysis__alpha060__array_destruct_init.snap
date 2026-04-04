@@ -1,0 +1,58 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: symbol_table.symbols
+---
+{
+    5..=11: SymbolInfo {
+        name: "values",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: [Int],
+        is_definition: true,
+        undefined: false,
+        span: 5..11,
+        contexts: [],
+    },
+    29..=30: SymbolInfo {
+        name: "a",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: true,
+        undefined: false,
+        span: 29..30,
+        contexts: [],
+    },
+    32..=33: SymbolInfo {
+        name: "b",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: true,
+        undefined: false,
+        span: 32..33,
+        contexts: [],
+    },
+    37..=43: SymbolInfo {
+        name: "values",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+            },
+        ),
+        data_type: [Int],
+        is_definition: false,
+        undefined: false,
+        span: 37..43,
+        contexts: [],
+    },
+}

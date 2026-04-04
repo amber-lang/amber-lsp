@@ -203,6 +203,14 @@ pub enum Statement {
         Box<Spanned<Expression>>,
         Box<Spanned<Expression>>,
     ),
+    /// Array destructuring in declaration: `let [a, b] = expr`
+    ArrayDestructInit(
+        Spanned<String>,
+        Vec<Spanned<String>>,
+        Spanned<VariableInitType>,
+    ),
+    /// Array destructuring in assignment: `[a, b] = expr`
+    ArrayDestructSet(Vec<Spanned<String>>, Box<Spanned<Expression>>),
     IfCondition(
         Spanned<String>,
         Spanned<IfCondition>,

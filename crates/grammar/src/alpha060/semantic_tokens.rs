@@ -539,6 +539,45 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
 
                 tokens
             }
+            Statement::ArrayDestructInit((_, let_span), names, (val, _)) => {
+                let mut tokens = vec![(
+                    hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                    *let_span,
+                )];
+
+                for (_, var_span) in names {
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::VARIABLE),
+                        *var_span,
+                    ));
+                }
+
+                match val {
+                    VariableInitType::Expression(expr) => {
+                        tokens.extend(semantic_tokens_from_expr(expr));
+                    }
+                    VariableInitType::DataType((_, ty_span)) => {
+                        tokens.push((hash_semantic_token_type(SemanticTokenType::TYPE), *ty_span));
+                    }
+                    VariableInitType::Error => {}
+                }
+
+                tokens
+            }
+            Statement::ArrayDestructSet(names, expr) => {
+                let mut tokens = vec![];
+
+                for (_, var_span) in names {
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::VARIABLE),
+                        *var_span,
+                    ));
+                }
+
+                tokens.extend(semantic_tokens_from_expr(expr));
+
+                tokens
+            }
             Statement::Error => vec![],
         })
         .collect()

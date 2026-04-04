@@ -423,6 +423,68 @@ pub fn analyze_stmnt(
                 return_ty: exp.return_ty,
             }
         }
+        Statement::ArrayDestructInit(_, names, (value, _)) => {
+            let exp = match value {
+                VariableInitType::Expression(exp) => analyze_exp(
+                    file_id,
+                    file_version,
+                    exp,
+                    DataType::Any,
+                    files,
+                    scoped_generic_types,
+                    contexts,
+                ),
+                VariableInitType::DataType((ty, _)) => ExpAnalysisResult {
+                    exp_ty: ty.clone(),
+                    is_propagating_failure: false,
+                    return_ty: None,
+                },
+                _ => ExpAnalysisResult {
+                    exp_ty: DataType::Error,
+                    is_propagating_failure: false,
+                    return_ty: None,
+                },
+            };
+
+            let rhs_ty = match exp.exp_ty {
+                DataType::Failable(ty) => scoped_generic_types.deref_type(&ty),
+                ty => scoped_generic_types.deref_type(&ty),
+            };
+
+            // Extract element type from the array type
+            let element_ty = match &rhs_ty {
+                DataType::Array(inner) => scoped_generic_types.deref_type(inner),
+                _ => {
+                    files.report_error(&file, "Array destructuring requires an array value", *span);
+                    DataType::Error
+                }
+            };
+
+            let mut symbol_table = files.symbol_table.entry(file).or_default();
+
+            for (var_name, var_span) in names {
+                insert_symbol_definition(
+                    &mut symbol_table,
+                    &SymbolInfo {
+                        name: var_name.to_string(),
+                        symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                        data_type: element_ty.clone(),
+                        is_definition: true,
+                        undefined: false,
+                        span: *var_span,
+                        contexts: contexts.clone(),
+                    },
+                    file,
+                    span.end..=scope_end,
+                    false,
+                );
+            }
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp.is_propagating_failure,
+                return_ty: exp.return_ty,
+            }
+        }
         Statement::ConstInit(_, (var_name, var_span), exp) => {
             let exp = analyze_exp(
                 file_id,
@@ -914,6 +976,60 @@ pub fn analyze_stmnt(
                 scoped_generic_types,
                 contexts,
             );
+
+            StmntAnalysisResult {
+                is_propagating_failure: exp_analysis.is_propagating_failure,
+                return_ty: exp_analysis.return_ty,
+            }
+        }
+        Statement::ArrayDestructSet(names, exp) => {
+            // Check all target variables exist and are assignable
+            for (var, var_span) in names {
+                if let Some(info) = get_symbol_definition_info(files, var, &file, var_span.start) {
+                    match info.symbol_type {
+                        SymbolType::Function(_) => {
+                            files.report_error(&file, "Cannot assign to a function", *var_span);
+                        }
+                        SymbolType::Variable(v) if v.is_const => {
+                            files.report_error(&file, "Cannot assign to a constant", *var_span);
+                        }
+                        _ => {}
+                    }
+                }
+            }
+
+            let exp_analysis = analyze_exp(
+                file_id,
+                file_version,
+                exp,
+                DataType::Any,
+                files,
+                scoped_generic_types,
+                contexts,
+            );
+
+            let rhs_ty = scoped_generic_types.deref_type(&exp_analysis.exp_ty);
+
+            match &rhs_ty {
+                DataType::Array(_) => {}
+                _ => {
+                    files.report_error(&file, "Array destructuring requires an array value", *span);
+                }
+            }
+
+            for (var, var_span) in names {
+                insert_symbol_reference(
+                    var,
+                    files,
+                    &SymbolLocation {
+                        file,
+                        start: var_span.start,
+                        end: var_span.end,
+                    },
+                    scoped_generic_types,
+                    contexts,
+                );
+            }
 
             StmntAnalysisResult {
                 is_propagating_failure: exp_analysis.is_propagating_failure,

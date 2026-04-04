@@ -9,6 +9,8 @@ use super::{
     Statement,
 };
 
+pub mod array_destruct_init;
+pub mod array_destruct_set;
 pub mod array_index_set;
 pub mod block;
 pub mod comment;
@@ -28,8 +30,10 @@ pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
         choice((
             comment::comment_parser().map_with(|com, e| (Statement::Comment(com), e.span())),
             shebang::shebang_parser(),
+            array_destruct_init::array_destruct_init_parser(stmnt.clone()),
             var_init::var_init_parser(stmnt.clone()),
             array_index_set::array_index_set_parser(stmnt.clone()),
+            array_destruct_set::array_destruct_set_parser(stmnt.clone()),
             var_set::var_set_parser(stmnt.clone()),
             block::block_parser_statement(stmnt.clone()),
             if_cond::if_chain_parser(stmnt.clone()),
@@ -43,7 +47,7 @@ pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
             parse_expr(stmnt).map_with(|expr, e| (Statement::Expression(Box::new(expr)), e.span())),
         ))
         .labelled("statement")
-        .then_ignore(just(T![';']).or_not())
+        .then_ignore(just(T![";"]).or_not())
         .boxed()
     })
     .boxed()
