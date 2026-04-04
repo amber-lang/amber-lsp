@@ -19,18 +19,13 @@ pub fn array_destruct_set_parser<'a>(
 ) -> impl AmberParser<'a, Spanned<Statement>> {
     ident("variable".to_string())
         .map_with(|name, e| (name, e.span()))
-        .separated_by(
-            comment_parser()
-                .repeated()
-                .then(just(T![","]))
-                .then(comment_parser().repeated()),
-        )
+        .separated_by(just(T![","]).then(comment_parser().repeated()))
         .at_least(1)
         .allow_trailing()
         .collect::<Vec<_>>()
         .delimited_by(
             just(T!["["]).then(comment_parser().repeated()),
-            just(T!["]"]),
+            just(T!["]"]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["]"]))),
         )
         .then_ignore(just(T!["="]))
         .then(

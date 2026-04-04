@@ -1,7 +1,6 @@
 ---
 source: crates/server/tests/grammar/alpha060.rs
-assertion_line: 305
-expression: "compiler.tokenize(\"$$$\")"
+expression: "compiler.tokenize(\"$$x\")"
 ---
 [
     (
@@ -18,7 +17,7 @@ expression: "compiler.tokenize(\"$$$\")"
     ),
     (
         Token(
-            "$",
+            "x",
         ),
         2..3,
     ),

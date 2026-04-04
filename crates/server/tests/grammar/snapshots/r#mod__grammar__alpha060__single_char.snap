@@ -1,6 +1,5 @@
 ---
 source: crates/server/tests/grammar/alpha060.rs
-assertion_line: 345
 expression: "compiler.tokenize(\"x\")"
 ---
 [

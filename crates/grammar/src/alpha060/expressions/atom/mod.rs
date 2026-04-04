@@ -54,10 +54,8 @@ pub fn array_index_parser<'a>(
                             .map_with(|_, e| (Expression::Error, e.span())),
                     )),
                 )
-                .then_ignore(
-                    just(T![']'])
-                        .recover_with(via_parser(default_recovery().or_not().map(|_| T![']']))),
-                )
+                .then_ignore(just(T![']']))
+                .then_ignore(just(T!["="]).not())
                 .repeated(),
             |expr, index| {
                 let span = SimpleSpan::from(expr.1.start..index.1.end);

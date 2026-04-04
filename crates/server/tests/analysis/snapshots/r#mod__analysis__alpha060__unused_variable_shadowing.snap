@@ -15,5 +15,9 @@ expression: backend.files.unused_diagnostics
             "Unused variable \"a\"",
             5..6,
         ),
+        (
+            "Unused variable \"a\"",
+            22..23,
+        ),
     ],
 }

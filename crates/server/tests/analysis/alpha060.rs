@@ -413,11 +413,11 @@ async fn test_failure_handlers() {
         &uri.to_file_path().unwrap(),
         r#"
 $$ failed(code) {
-    echo code
+    echo(code)
 } succeeded {
-    echo "success"
+    echo("success")
 } exited(code) {
-    echo code
+    echo(code)
 }
 "#,
     )
@@ -753,7 +753,7 @@ pub fun unused_helper(b) {
 import { helper, unused_helper } from "mylib"
 
 let result = helper(5)
-echo result
+echo(result)
 "#,
     )
     .await
@@ -822,7 +822,7 @@ pub fun helper(a) {
 import { helper } from "mylib"
 
 let result = helper(5)
-echo result
+echo(result)
 "#,
     )
     .await
@@ -872,7 +872,7 @@ async fn test_unused_variable_shadowing() {
 let a = 23
 {
     let a = 22
-    echo a
+    echo(a)
 }
 "#,
     )
@@ -943,7 +943,7 @@ pub fun another(b) {
         r#"
 import { helper, another } from "mylib"
 
-echo "hello"
+echo("hello")
 "#,
     )
     .await
@@ -1013,7 +1013,7 @@ pub fun another(b) {
         r#"
 import * from "mylib"
 
-echo "hello"
+echo("hello")
 "#,
     )
     .await
@@ -1084,7 +1084,7 @@ pub fun another(b) {
 import * from "mylib"
 
 let result = helper(5)
-echo result
+echo(result)
 "#,
     )
     .await
@@ -1347,7 +1347,7 @@ async fn test_no_unreachable_warning_without_terminator() {
         "
 fun add(a, b) {
     let result = a + b
-    echo result
+    echo(result)
     return result
 }
 ",
@@ -1929,7 +1929,7 @@ async fn test_keyword_fail_outside_function_and_main() {
 #[test]
 async fn test_keyword_failed_after_command() {
     // `fai` after a command expression should offer `failed`, `succeeded`, `exited`
-    let keywords = keyword_labels_at("trust $ echo hello $ fai", 0, 24).await;
+    let keywords = keyword_labels_at("trust $ echo(hello) $ fai", 0, 24).await;
 
     assert!(
         keywords.contains(&"failed".to_string()),
@@ -2141,7 +2141,7 @@ async fn test_echo_not_marked_as_unused_import() {
     };
     let uri = Uri::from_file_path(file).unwrap();
 
-    vfs.write(&uri.to_file_path().unwrap(), "echo 4\n")
+    vfs.write(&uri.to_file_path().unwrap(), "echo(4)\n")
         .await
         .unwrap();
 
@@ -2521,7 +2521,7 @@ async fn test_error_failable_return_type_but_no_propagation() {
 async fn test_no_error_failable_return_type_with_propagation() {
     let errors = errors_from_source(
         r#"fun foo(): Text? {
-    return $echo "hello"$?
+    return $echo("hello")$?
 }
 "#,
     )
@@ -2539,8 +2539,8 @@ async fn test_no_error_failable_return_type_with_propagation() {
 async fn test_error_duplicate_command_modifier() {
     let errors = errors_from_source(
         r#"main {
-    trust trust $echo "hello"$ failed {
-        echo "error"
+    trust trust $echo("hello")$ failed {
+        echo("error")
     }
 }
 "#,
@@ -2559,8 +2559,8 @@ async fn test_error_duplicate_command_modifier() {
 async fn test_no_error_different_command_modifiers() {
     let errors = errors_from_source(
         r#"main {
-    silent trust $echo "hello"$ failed {
-        echo "error"
+    silent trust $echo("hello")$ failed {
+        echo("error")
     }
 }
 "#,
@@ -2579,10 +2579,10 @@ async fn test_no_error_different_command_modifiers() {
 async fn test_error_duplicate_failed_handler() {
     let errors = errors_from_source(
         r#"main {
-    $echo "hello"$ failed {
-        echo "error1"
+    $echo("hello")$ failed {
+        echo("error1")
     } failed {
-        echo "error2"
+        echo("error2")
     }
 }
 "#,
@@ -2601,12 +2601,12 @@ async fn test_error_duplicate_failed_handler() {
 async fn test_error_duplicate_succeeded_handler() {
     let errors = errors_from_source(
         r#"main {
-    $echo "hello"$ failed {
-        echo "error"
+    $echo("hello")$ failed {
+        echo("error")
     } succeeded {
-        echo "ok1"
+        echo("ok1")
     } succeeded {
-        echo "ok2"
+        echo("ok2")
     }
 }
 "#,
@@ -2657,7 +2657,7 @@ async fn test_no_error_ternary_same_type() {
 async fn test_error_propagate_with_trust() {
     let errors = errors_from_source(
         r#"main {
-    trust $echo "hello"$?
+    trust $echo("hello")$?
 }
 "#,
     )
@@ -2675,8 +2675,8 @@ async fn test_error_propagate_with_trust() {
 async fn test_error_trust_with_failed_handler() {
     let errors = errors_from_source(
         r#"main {
-    trust $echo "hello"$ failed {
-        echo "error"
+    trust $echo("hello")$ failed {
+        echo("error")
     }
 }
 "#,
@@ -2695,8 +2695,8 @@ async fn test_error_trust_with_failed_handler() {
 async fn test_error_trust_with_succeeded_handler() {
     let errors = errors_from_source(
         r#"main {
-    trust $echo "hello"$ succeeded {
-        echo "ok"
+    trust $echo("hello")$ succeeded {
+        echo("ok")
     }
 }
 "#,
@@ -2715,8 +2715,8 @@ async fn test_error_trust_with_succeeded_handler() {
 async fn test_error_propagate_with_other_handlers() {
     let errors = errors_from_source(
         r#"main {
-    $echo "hello"$? succeeded {
-        echo "ok"
+    $echo("hello")$? succeeded {
+        echo("ok")
     }
 }
 "#,

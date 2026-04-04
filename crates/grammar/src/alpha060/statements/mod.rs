@@ -30,10 +30,10 @@ pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
         choice((
             comment::comment_parser().map_with(|com, e| (Statement::Comment(com), e.span())),
             shebang::shebang_parser(),
+            array_destruct_set::array_destruct_set_parser(stmnt.clone()),
             array_destruct_init::array_destruct_init_parser(stmnt.clone()),
             var_init::var_init_parser(stmnt.clone()),
             array_index_set::array_index_set_parser(stmnt.clone()),
-            array_destruct_set::array_destruct_set_parser(stmnt.clone()),
             var_set::var_set_parser(stmnt.clone()),
             block::block_parser_statement(stmnt.clone()),
             if_cond::if_chain_parser(stmnt.clone()),

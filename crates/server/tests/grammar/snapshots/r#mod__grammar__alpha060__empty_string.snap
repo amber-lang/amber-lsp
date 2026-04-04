@@ -1,19 +1,18 @@
 ---
 source: crates/server/tests/grammar/alpha060.rs
-assertion_line: 336
-expression: "compiler.tokenize(\"$echo test\")"
+expression: "compiler.tokenize(r#\"\"\"\"#)"
 ---
 [
     (
         Token(
-            "$",
+            "\"",
         ),
         0..1,
     ),
     (
         Token(
-            "echo test",
+            "\"",
         ),
-        1..10,
+        1..2,
     ),
 ]

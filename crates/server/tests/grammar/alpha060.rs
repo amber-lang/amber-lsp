@@ -115,12 +115,12 @@ fn test_unfinished_function_call() {
     let x = [1, 2, 3]
     let y = 2
 
-    echo array_contains(x, y)
+    echo(array_contains)(x, y)
 
     let line = 213
 
     for idx, line in lines(\"text.txt\") {
-      echo line
+      echo(line)
     }
 
     // fun foo(x: Num, y: Text) {
@@ -147,20 +147,20 @@ fn test_unfinished_function_call() {
 fn test_comments_in_ifs() {
     let input = r#"
     if {
-        1 == 2: echo "x" // test comment
+        1 == 2: echo("x") // test comment
         // another comment
         2 == 2 {
-            echo "y"
+            echo("y")
         }
         // another
-        else: echo "z" // comment
+        else: echo("z") // comment
         // super comment
         /// doc comment
     }
 
-    if age >= 16: echo "Welcome" // comment
+    if age >= 16: echo("Welcome") // comment
     // comment in between
-    else: echo "Entry not allowed" // another comment
+    else: echo("Entry not allowed") // another comment
 "#;
 
     assert_debug_snapshot!(parse(&tokenize(input)));
@@ -170,15 +170,15 @@ fn test_comments_in_ifs() {
 fn test_block_singleline() {
     let input = r#"
     main {
-    echo 4
+    echo(4)
     }
 
-    main(args): echo args
+    main(args): echo(args)
 
     $$ failed {
-        echo "failed"
+        echo("failed")
     }
-    $$ failed: echo "failed"
+    $$ failed: echo("failed")
 
 "#;
 
@@ -188,20 +188,20 @@ fn test_block_singleline() {
 #[test]
 fn test_failable_handlers() {
     let input = r#"
-    $$ succeeded(code): echo code // should fail
-    $$ succeeded: echo "success" // should succeed
+    $$ succeeded(code): echo(code) // should fail
+    $$ succeeded: echo("success") // should succeed
 
-    $$ failed(code): echo code // should succeed
-    $$ failed: echo "failed" // should succeed
+    $$ failed(code): echo(code) // should succeed
+    $$ failed: echo("failed") // should succeed
 
-    $$ exited(code): echo code // should succeed
-    $$ exited: echo "then" // should fail
+    $$ exited(code): echo(code) // should succeed
+    $$ exited: echo("then") // should fail
 
     $$
     // succeeded
-    succeeded: echo "success"
+    succeeded: echo("success")
     // failed
-    failed(code): echo "failed with code: {code}"
+    failed(code): echo("failed) with code: {code}"
 
 
     $$?
@@ -213,16 +213,16 @@ fn test_failable_handlers() {
 #[test]
 fn test_mv_files() {
     let input = r#"
-    mv "/tmp/a" "/tmp/b"
+    mv("/tmp/a", "/tmp/b")
 
-    unsafe mv "/tmp/a" "/tmp/b"
+    unsafe mv("/tmp/a", "/tmp/b")
 
-    mv "/tmp/a" "/tmp/b" failed {
-        echo "Error"
+    mv ("/tmp/a", "/tmp/b") failed {
+        echo("Error")
     }
 
     unsafe {
-        mv "/tmp/a" "/tmp/b"
+        mv ("/tmp/a", "/tmp/b")
     }
 "#;
 
@@ -333,7 +333,7 @@ fn test_lexer_error_recovery() {
     let compiler = AmberCompiler::new();
 
     assert_debug_snapshot!("unclosed_string", compiler.tokenize(r#""unclosed"#));
-    assert_debug_snapshot!("unclosed_command", compiler.tokenize("$echo test"));
+    assert_debug_snapshot!("unclosed_command", compiler.tokenize("$echo(test)"));
     assert_debug_snapshot!("mismatched_braces", compiler.tokenize(r#""{{{""#));
 }
 

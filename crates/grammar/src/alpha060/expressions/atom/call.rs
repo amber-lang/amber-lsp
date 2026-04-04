@@ -43,5 +43,6 @@ pub fn function_call_parser<'a>(
                 e.span(),
             )
         })
+        .labelled("Function call")
         .boxed()
 }

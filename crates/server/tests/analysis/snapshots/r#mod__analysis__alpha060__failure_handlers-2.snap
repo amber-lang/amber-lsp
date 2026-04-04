@@ -4,10 +4,5 @@ expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_
 ---
 [
     "code: Int",
-    "echo: Null",
-    "code: Int",
-    "echo: Null",
-    "code: Int",
-    "echo: Null",
     "code: Int",
 ]

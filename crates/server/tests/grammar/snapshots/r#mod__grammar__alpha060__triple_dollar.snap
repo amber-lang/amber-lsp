@@ -1,25 +1,24 @@
 ---
 source: crates/server/tests/grammar/alpha060.rs
-assertion_line: 250
-expression: "compiler.tokenize(r#\"\"test\\\"\"#)"
+expression: "compiler.tokenize(\"$$$\")"
 ---
 [
     (
         Token(
-            "\"",
+            "$",
         ),
         0..1,
     ),
     (
         Token(
-            "test",
+            "$",
         ),
-        1..5,
+        1..2,
     ),
     (
         Token(
-            "\\\"",
+            "$",
         ),
-        5..7,
+        2..3,
     ),
 ]

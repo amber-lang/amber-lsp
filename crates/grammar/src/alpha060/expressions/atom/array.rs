@@ -25,4 +25,5 @@ pub fn array_parser<'a>(
     )
     .map_with(move |arr, e| (Expression::Array(arr), e.span()))
     .boxed()
+    .labelled("array")
 }
