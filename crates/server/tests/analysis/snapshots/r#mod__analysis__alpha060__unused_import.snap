@@ -20,4 +20,12 @@ expression: backend.files.unused_diagnostics
             52..58,
         ),
     ],
+    (
+        FileId(
+            1,
+        ),
+        FileVersion(
+            1,
+        ),
+    ): [],
 }

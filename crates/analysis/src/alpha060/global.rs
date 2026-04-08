@@ -97,6 +97,127 @@ pub async fn analyze_global_stmnt(
         ))
     }
 
+    // Phase 1: Hoist all function declarations so they are visible throughout
+    // the file. This enables recursive calls and forward references.
+    for (global, _span) in default_imports.iter().chain(ast.iter()) {
+        if let GlobalStatement::FunctionDefinition(
+            compiler_flags,
+            (is_pub, _),
+            _,
+            (name, name_span),
+            args,
+            declared_return_ty,
+            _body,
+        ) = global
+        {
+            let scoped_generics_map = backend.get_files().generic_types.clone();
+            let mut hoisted_generic_types = vec![];
+
+            let hoisted_args: Vec<Spanned<crate::FunctionArgument>> = args
+                .iter()
+                .filter_map(|(arg, arg_span)| match arg {
+                    FunctionArgument::Generic((is_ref, _), (arg_name, _)) => {
+                        let generic_id = scoped_generics_map.new_generic_id();
+                        scoped_generics_map.constrain_generic_type(generic_id, DataType::Any);
+                        hoisted_generic_types.push(generic_id);
+                        Some((
+                            crate::FunctionArgument {
+                                name: arg_name.clone(),
+                                data_type: DataType::Generic(generic_id),
+                                is_optional: false,
+                                default_value_type: None,
+                                is_ref: *is_ref,
+                            },
+                            *arg_span,
+                        ))
+                    }
+                    FunctionArgument::Typed((is_ref, _), (arg_name, _), (ty, _)) => Some((
+                        crate::FunctionArgument {
+                            name: arg_name.clone(),
+                            data_type: ty.clone(),
+                            is_optional: false,
+                            default_value_type: None,
+                            is_ref: *is_ref,
+                        },
+                        *arg_span,
+                    )),
+                    FunctionArgument::Optional((is_ref, _), (arg_name, _), ty, _exp) => {
+                        let data_type = match ty {
+                            Some((ty, _)) => ty.clone(),
+                            None => {
+                                let generic_id = scoped_generics_map.new_generic_id();
+                                scoped_generics_map
+                                    .constrain_generic_type(generic_id, DataType::Any);
+                                hoisted_generic_types.push(generic_id);
+                                DataType::Generic(generic_id)
+                            }
+                        };
+                        Some((
+                            crate::FunctionArgument {
+                                name: arg_name.clone(),
+                                data_type,
+                                is_optional: true,
+                                default_value_type: None,
+                                is_ref: *is_ref,
+                            },
+                            *arg_span,
+                        ))
+                    }
+                    FunctionArgument::Error => None,
+                })
+                .collect();
+
+            // Propagate hoisted generics to the global generics map
+            hoisted_generic_types.iter().for_each(|generic_id| {
+                let ty = scoped_generics_map.get(*generic_id);
+                backend
+                    .get_files()
+                    .generic_types
+                    .constrain_generic_type(*generic_id, ty.clone());
+                backend
+                    .get_files()
+                    .generic_types
+                    .mark_as_inferred(*generic_id);
+            });
+
+            let return_type = match declared_return_ty {
+                Some((ty, _)) => ty.clone(),
+                None => DataType::Any,
+            };
+
+            let mut symbol_table = backend
+                .get_files()
+                .symbol_table
+                .entry((file_id, file_version))
+                .or_default();
+
+            insert_symbol_definition(
+                &mut symbol_table,
+                &SymbolInfo {
+                    name: name.to_string(),
+                    symbol_type: SymbolType::Function(FunctionSymbol {
+                        arguments: hoisted_args,
+                        is_public: *is_pub,
+                        compiler_flags: compiler_flags
+                            .iter()
+                            .map(|(flag, _)| flag.clone())
+                            .collect(),
+                        docs: None,
+                    }),
+                    data_type: return_type,
+                    is_definition: true,
+                    undefined: false,
+                    span: *name_span,
+                    contexts: vec![],
+                },
+                (file_id, file_version),
+                0..=usize::MAX,
+                *is_pub,
+            );
+        }
+    }
+
+    // Phase 2: Full analysis of all global statements
     for (global, span) in default_imports.iter().chain(ast.iter()) {
         match global {
             GlobalStatement::FunctionDefinition(

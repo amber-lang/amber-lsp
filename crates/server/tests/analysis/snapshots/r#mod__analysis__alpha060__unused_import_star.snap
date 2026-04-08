@@ -16,4 +16,12 @@ expression: backend.files.unused_diagnostics
             1..22,
         ),
     ],
+    (
+        FileId(
+            1,
+        ),
+        FileVersion(
+            1,
+        ),
+    ): [],
 }

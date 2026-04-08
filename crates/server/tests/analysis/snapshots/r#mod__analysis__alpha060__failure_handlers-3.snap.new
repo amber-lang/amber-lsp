@@ -1,5 +1,6 @@
 ---
 source: crates/server/tests/analysis/alpha060.rs
+assertion_line: 436
 expression: backend.files.errors
 ---
 {

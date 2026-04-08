@@ -3011,3 +3011,336 @@ fun complex(x: Int | [Num? | Int] | Text | Null?) {
         .collect::<Vec<String>>());
     assert_debug_snapshot!(backend.files.errors);
 }
+
+#[test]
+async fn test_recursive_function() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun factorial(n: Int): Int {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_forward_reference() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun foo(a) {
+    return bar(a)
+}
+
+fun bar(a) {
+    return a
+}
+
+let x = foo(2)
+let y = foo(\"hello\")
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_mutual_recursion() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun is_even(n: Int): Bool {
+    if n == 0 {
+        return true
+    }
+    return is_odd(n - 1)
+}
+
+fun is_odd(n: Int): Bool {
+    if n == 0 {
+        return false
+    }
+    return is_even(n - 1)
+}
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_recursive_generic_function() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun identity(a) {
+    return identity(a)
+}
+
+let x = identity(42)
+let y = identity(\"text\")
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_forward_reference_typed() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun caller(): Int {
+    return callee(10)
+}
+
+fun callee(n: Int): Int {
+    return n + 1
+}
+
+let result = caller()
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_forward_reference_multiple_functions() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun a(x: Int): Int {
+    return b(x)
+}
+
+fun b(x: Int): Int {
+    return c(x)
+}
+
+fun c(x: Int): Int {
+    return x + 1
+}
+
+let result = a(5)
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
