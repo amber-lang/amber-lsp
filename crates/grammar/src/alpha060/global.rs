@@ -21,6 +21,7 @@ use super::{
     ImportContent,
     Spanned,
     Statement,
+    VariableInitType,
 };
 
 pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
@@ -159,6 +160,7 @@ fn compiler_flag_parser<'a>() -> impl AmberParser<'a, Spanned<CompilerFlag>> {
                 just(T!["allow_nested_if_else"]).to(CompilerFlag::AllowNestedIfElse),
                 just(T!["allow_generic_return"]).to(CompilerFlag::AllowGenericReturn),
                 just(T!["allow_absurd_cast"]).to(CompilerFlag::AllowAbsurdCast),
+                just(T!["allow_public_mutable"]).to(CompilerFlag::AllowPublicMutable),
             ))
             .recover_with(via_parser(
                 default_recovery().or_not().map(|_| CompilerFlag::Error),
@@ -337,20 +339,102 @@ pub fn main_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .labelled("main body")
 }
 
+pub fn pub_const_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
+    just(T!["pub"])
+        .map_with(|_, e| (true, e.span()))
+        .then(just(T!["const"]).map_with(|_, e| ("const".to_string(), e.span())))
+        .then(
+            ident("variable".to_string())
+                .recover_with(via_parser(
+                    default_recovery().or_not().map(|_| "".to_string()),
+                ))
+                .map_with(|name, e| (name, e.span())),
+        )
+        .then_ignore(
+            just(T!["="]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["="]))),
+        )
+        .then(
+            parse_expr(statement_parser()).recover_with(via_parser(
+                default_recovery()
+                    .or_not()
+                    .map_with(|_, e| (Expression::Error, e.span())),
+            )),
+        )
+        .map_with(|(((is_pub, const_keyword), name), value), e| {
+            (
+                GlobalStatement::PublicConstInit(is_pub, const_keyword, name, Box::new(value)),
+                e.span(),
+            )
+        })
+        .boxed()
+        .labelled("public const declaration")
+}
+
+pub fn pub_var_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
+    compiler_flag_parser()
+        .repeated()
+        .collect()
+        .then(just(T!["pub"]).map_with(|_, e| (true, e.span())))
+        .then(just(T!["let"]).map_with(|_, e| ("let".to_string(), e.span())))
+        .then(
+            ident("variable".to_string())
+                .recover_with(via_parser(
+                    default_recovery().or_not().map(|_| "".to_string()),
+                ))
+                .map_with(|name, e| (name, e.span())),
+        )
+        .then_ignore(
+            just(T!["="]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["="]))),
+        )
+        .then(
+            choice((
+                type_parser().map(VariableInitType::DataType),
+                parse_expr(statement_parser()).map(VariableInitType::Expression),
+            ))
+            .recover_with(via_parser(
+                default_recovery().or_not().map(|_| VariableInitType::Error),
+            ))
+            .map_with(|val, e| (val, e.span())),
+        )
+        .map_with(
+            |((((compiler_flags, is_pub), let_keyword), name), value), e| {
+                (
+                    GlobalStatement::PublicVarInit(
+                        compiler_flags,
+                        is_pub,
+                        let_keyword,
+                        name,
+                        value,
+                    ),
+                    e.span(),
+                )
+            },
+        )
+        .boxed()
+        .labelled("public variable declaration")
+}
+
 pub fn global_statement_parser<'a>() -> impl AmberParser<'a, Vec<Spanned<GlobalStatement>>> {
     let statement = statement_parser()
         .map(|stmnt| (GlobalStatement::Statement(Box::new(stmnt.clone())), stmnt.1))
         .boxed();
 
-    choice((import_parser(), function_parser(), main_parser(), statement))
-        .recover_with(via_parser(any().map_with(|_, e| {
-            (
-                GlobalStatement::Statement(Box::new((Statement::Error, e.span()))),
-                e.span(),
-            )
-        })))
-        .repeated()
-        .collect()
-        .then_ignore(end())
-        .boxed()
+    choice((
+        import_parser(),
+        function_parser(),
+        main_parser(),
+        pub_const_parser(),
+        pub_var_parser(),
+        statement,
+    ))
+    .recover_with(via_parser(any().map_with(|_, e| {
+        (
+            GlobalStatement::Statement(Box::new((Statement::Error, e.span()))),
+            e.span(),
+        )
+    })))
+    .repeated()
+    .collect()
+    .then_ignore(end())
+    .boxed()
 }

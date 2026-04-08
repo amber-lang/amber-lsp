@@ -66,6 +66,7 @@ pub enum CompilerFlag {
     AllowNestedIfElse,
     AllowGenericReturn,
     AllowAbsurdCast,
+    AllowPublicMutable,
     Error,
 }
 
@@ -75,6 +76,7 @@ impl fmt::Display for CompilerFlag {
             CompilerFlag::AllowNestedIfElse => write!(f, "allow_nested_if_else"),
             CompilerFlag::AllowGenericReturn => write!(f, "allow_generic_return"),
             CompilerFlag::AllowAbsurdCast => write!(f, "allow_absurd_cast"),
+            CompilerFlag::AllowPublicMutable => write!(f, "allow_public_mutable"),
             CompilerFlag::Error => write!(f, "<Invalid flag>"),
         }
     }

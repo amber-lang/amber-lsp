@@ -276,6 +276,25 @@ pub enum GlobalStatement {
         Vec<Spanned<Statement>>,
     ),
     Main(Spanned<String>, Option<Spanned<String>>, Spanned<Block>),
+    /// Public constant declaration
+    ///
+    /// is_pub, "const", name, value
+    PublicConstInit(
+        Spanned<bool>,
+        Spanned<String>,
+        Spanned<String>,
+        Box<Spanned<Expression>>,
+    ),
+    /// Public variable declaration (requires #[allow_public_mutable])
+    ///
+    /// compiler_flags, is_pub, "let", name, value
+    PublicVarInit(
+        Vec<Spanned<CompilerFlag>>,
+        Spanned<bool>,
+        Spanned<String>,
+        Spanned<String>,
+        Spanned<VariableInitType>,
+    ),
     Statement(Box<Spanned<Statement>>),
 }
 

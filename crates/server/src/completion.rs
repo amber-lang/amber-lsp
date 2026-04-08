@@ -514,7 +514,7 @@ fn symbol_to_completion_item(
             }),
             ..CompletionItem::default()
         }),
-        SymbolType::Variable(VariableSymbol { is_const }) => Some(CompletionItem {
+        SymbolType::Variable(VariableSymbol { is_const, .. }) => Some(CompletionItem {
             label: symbol_info.name.clone(),
             kind: Some(if is_const {
                 CompletionItemKind::CONSTANT

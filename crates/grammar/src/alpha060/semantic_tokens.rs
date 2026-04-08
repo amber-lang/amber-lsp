@@ -205,6 +205,61 @@ pub fn semantic_tokens_from_ast(
                 GlobalStatement::Statement(stmnt) => {
                     tokens.extend(semantic_tokens_from_stmnts(&[*stmnt.clone()]));
                 }
+                GlobalStatement::PublicConstInit(
+                    (_, is_pub_span),
+                    (_, const_keyword_span),
+                    (_, name_span),
+                    value,
+                ) => {
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::MODIFIER),
+                        *is_pub_span,
+                    ));
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                        *const_keyword_span,
+                    ));
+                    tokens.push((hash_semantic_token_type(CONSTANT), *name_span));
+                    tokens.extend(semantic_tokens_from_expr(value));
+                }
+                GlobalStatement::PublicVarInit(
+                    compiler_flags,
+                    (_, is_pub_span),
+                    (_, let_keyword_span),
+                    (_, name_span),
+                    (value, _),
+                ) => {
+                    compiler_flags.iter().for_each(|(_, span)| {
+                        tokens.push((
+                            hash_semantic_token_type(SemanticTokenType::DECORATOR),
+                            *span,
+                        ));
+                    });
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::MODIFIER),
+                        *is_pub_span,
+                    ));
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                        *let_keyword_span,
+                    ));
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::VARIABLE),
+                        *name_span,
+                    ));
+                    match value {
+                        VariableInitType::Expression(expr) => {
+                            tokens.extend(semantic_tokens_from_expr(expr));
+                        }
+                        VariableInitType::DataType((_, ty_span)) => {
+                            tokens.push((
+                                hash_semantic_token_type(SemanticTokenType::TYPE),
+                                *ty_span,
+                            ));
+                        }
+                        VariableInitType::Error => {}
+                    }
+                }
             }
         }
 

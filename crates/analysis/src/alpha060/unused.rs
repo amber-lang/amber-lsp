@@ -16,6 +16,7 @@ use crate::{
     SymbolLocation,
     SymbolTable,
     SymbolType,
+    VariableSymbol,
 };
 use amber_types::paths::FileId;
 
@@ -173,8 +174,8 @@ pub fn check_unused_symbols(file_id: FileId, file_version: FileVersion, files: &
         };
 
         match &symbol_info.symbol_type {
-            SymbolType::Variable(_) => {
-                if !used_defs.contains(&def_key(&symbol_info.name, &def_location)) {
+            SymbolType::Variable(VariableSymbol { is_public, .. }) => {
+                if !is_public && !used_defs.contains(&def_key(&symbol_info.name, &def_location)) {
                     files.report_unused(
                         &file,
                         &format!("Unused variable \"{}\"", symbol_info.name),

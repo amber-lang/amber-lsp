@@ -28,8 +28,10 @@ use amber_grammar::alpha060::{
     GlobalStatement,
     ImportContent,
     Statement,
+    VariableInitType,
 };
 use amber_grammar::{
+    CompilerFlag,
     Span,
     Spanned,
 };
@@ -336,7 +338,10 @@ pub async fn analyze_global_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: name.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: ty,
                             is_definition: true,
                             undefined: false,
@@ -650,6 +655,7 @@ pub async fn analyze_global_stmnt(
                                         name: ident.to_string(),
                                         symbol_type: SymbolType::Variable(VariableSymbol {
                                             is_const: false,
+                                            is_public: false,
                                         }),
                                         data_type: DataType::Null,
                                         is_definition: false,
@@ -723,6 +729,7 @@ pub async fn analyze_global_stmnt(
                                             name: ident.to_string(),
                                             symbol_type: SymbolType::Variable(VariableSymbol {
                                                 is_const: false,
+                                                is_public: false,
                                             }),
                                             data_type: DataType::Null,
                                             is_definition: false,
@@ -803,7 +810,10 @@ pub async fn analyze_global_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: args.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: DataType::Array(Box::new(DataType::Text)),
                             is_definition: true,
                             undefined: false,
@@ -853,6 +863,118 @@ pub async fn analyze_global_stmnt(
                     usize::MAX,
                     &backend.get_files().generic_types.clone(),
                     &mut contexts,
+                );
+            }
+            GlobalStatement::PublicConstInit((_is_pub, _), _, (name, name_span), value) => {
+                let exp = analyze_exp(
+                    file_id,
+                    file_version,
+                    value,
+                    DataType::Any,
+                    backend.get_files(),
+                    &backend.get_files().generic_types.clone(),
+                    &vec![],
+                );
+
+                let var_type = match exp.exp_ty {
+                    DataType::Failable(ty) => backend.get_files().generic_types.deref_type(&ty),
+                    ty => backend.get_files().generic_types.deref_type(&ty),
+                };
+
+                let mut symbol_table = backend
+                    .get_files()
+                    .symbol_table
+                    .entry((file_id, file_version))
+                    .or_default();
+
+                insert_symbol_definition(
+                    &mut symbol_table,
+                    &SymbolInfo {
+                        name: name.to_string(),
+                        symbol_type: SymbolType::Variable(VariableSymbol {
+                            is_const: true,
+                            is_public: true,
+                        }),
+                        data_type: var_type,
+                        is_definition: true,
+                        undefined: false,
+                        span: *name_span,
+                        contexts: vec![],
+                    },
+                    (file_id, file_version),
+                    span.end..=usize::MAX,
+                    true,
+                );
+            }
+            GlobalStatement::PublicVarInit(
+                compiler_flags,
+                (_is_pub, pub_span),
+                _,
+                (name, name_span),
+                (value, _),
+            ) => {
+                let has_allow_public_mutable = compiler_flags
+                    .iter()
+                    .any(|(flag, _)| *flag == CompilerFlag::AllowPublicMutable);
+
+                if !has_allow_public_mutable {
+                    backend.get_files().report_error(
+                        &(file_id, file_version),
+                        "Public mutable variables require `#[allow_public_mutable]`",
+                        *pub_span,
+                    );
+                }
+
+                let exp = match value {
+                    VariableInitType::Expression(exp) => analyze_exp(
+                        file_id,
+                        file_version,
+                        exp,
+                        DataType::Any,
+                        backend.get_files(),
+                        &backend.get_files().generic_types.clone(),
+                        &vec![],
+                    ),
+                    VariableInitType::DataType((ty, _)) => ExpAnalysisResult {
+                        exp_ty: ty.clone(),
+                        is_propagating_failure: false,
+                        return_ty: None,
+                    },
+                    _ => ExpAnalysisResult {
+                        exp_ty: DataType::Error,
+                        is_propagating_failure: false,
+                        return_ty: None,
+                    },
+                };
+
+                let var_type = match exp.exp_ty {
+                    DataType::Failable(ty) => backend.get_files().generic_types.deref_type(&ty),
+                    ty => backend.get_files().generic_types.deref_type(&ty),
+                };
+
+                let mut symbol_table = backend
+                    .get_files()
+                    .symbol_table
+                    .entry((file_id, file_version))
+                    .or_default();
+
+                insert_symbol_definition(
+                    &mut symbol_table,
+                    &SymbolInfo {
+                        name: name.to_string(),
+                        symbol_type: SymbolType::Variable(VariableSymbol {
+                            is_const: false,
+                            is_public: true,
+                        }),
+                        data_type: var_type,
+                        is_definition: true,
+                        undefined: false,
+                        span: *name_span,
+                        contexts: vec![],
+                    },
+                    (file_id, file_version),
+                    span.end..=usize::MAX,
+                    true,
                 );
             }
         }

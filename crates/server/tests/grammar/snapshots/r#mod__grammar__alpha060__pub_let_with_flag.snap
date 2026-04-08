@@ -1,0 +1,43 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+expression: parse_unwrap(&tokenize(input))
+---
+[
+    (
+        PublicVarInit(
+            [
+                (
+                    AllowPublicMutable,
+                    5..28,
+                ),
+            ],
+            (
+                true,
+                33..36,
+            ),
+            (
+                "let",
+                37..40,
+            ),
+            (
+                "counter",
+                41..48,
+            ),
+            (
+                Expression(
+                    (
+                        Int(
+                            (
+                                0,
+                                51..52,
+                            ),
+                        ),
+                        51..52,
+                    ),
+                ),
+                51..52,
+            ),
+        ),
+        5..52,
+    ),
+]

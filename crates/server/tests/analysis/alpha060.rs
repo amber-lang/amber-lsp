@@ -3344,3 +3344,220 @@ let result = a(5)
         .collect::<Vec<String>>());
     assert_debug_snapshot!(backend.files.errors);
 }
+
+#[test]
+async fn test_pub_const_export() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+pub const MAX_SIZE = 100
+pub const GREETING = \"hello\"
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(symbol_table.public_definitions);
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_pub_let_without_flag_error() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+pub let counter = 0
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    // Should report an error about missing #[allow_public_mutable]
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_pub_let_with_flag_no_error() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+#[allow_public_mutable]
+pub let counter = 0
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(symbol_table.public_definitions);
+    // Should have no errors
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_pub_const_import() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let lib_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\lib.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/lib.ab")
+        }
+    };
+    let main_file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+
+    let lib_uri = Uri::from_file_path(lib_file).unwrap();
+    let main_uri = Uri::from_file_path(main_file).unwrap();
+
+    vfs.write(
+        &lib_uri.to_file_path().unwrap(),
+        "
+pub const MAX_SIZE = 100
+",
+    )
+    .await
+    .unwrap();
+
+    vfs.write(
+        &main_uri.to_file_path().unwrap(),
+        "
+import { MAX_SIZE } from \"lib\"
+
+let x = MAX_SIZE
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&main_uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}

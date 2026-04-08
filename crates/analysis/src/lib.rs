@@ -76,6 +76,7 @@ pub enum SymbolType {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct VariableSymbol {
     pub is_const: bool,
+    pub is_public: bool,
 }
 
 /// Information about a symbol in the document.
@@ -426,7 +427,10 @@ pub fn insert_symbol_reference(
                 span.clone(),
                 SymbolInfo {
                     name: symbol.to_string(),
-                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                    symbol_type: SymbolType::Variable(VariableSymbol {
+                        is_const: false,
+                        is_public: false,
+                    }),
                     data_type: DataType::Null,
                     is_definition: false,
                     undefined: true,

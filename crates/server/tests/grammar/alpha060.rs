@@ -626,3 +626,50 @@ fn test_union_type_lexer_pipe_token() {
     let tokens = tokenize(input);
     assert_eq!(tokens[1].0 .0, "|");
 }
+
+#[test]
+fn test_pub_const() {
+    let input = r#"
+    pub const MAX_SIZE = 100
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_pub_const_with_expression() {
+    let input = r#"
+    pub const GREETING = "Hello, World!"
+    pub const LIMIT = 10 + 5
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_pub_let_with_flag() {
+    let input = r#"
+    #[allow_public_mutable]
+    pub let counter = 0
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_pub_let_without_flag() {
+    let input = r#"
+    pub let counter = 0
+"#;
+    // Should parse successfully (error reported during analysis, not grammar)
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_pub_const_and_pub_fun() {
+    let input = r#"
+    pub const VERSION = "1.0"
+
+    pub fun get_version() {
+        return VERSION
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}

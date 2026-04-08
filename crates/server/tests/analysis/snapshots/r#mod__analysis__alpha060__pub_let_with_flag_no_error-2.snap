@@ -1,0 +1,18 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: symbol_table.public_definitions
+---
+{
+    "counter": SymbolLocation {
+        file: (
+            FileId(
+                0,
+            ),
+            FileVersion(
+                1,
+            ),
+        ),
+        start: 33,
+        end: 40,
+    },
+}
