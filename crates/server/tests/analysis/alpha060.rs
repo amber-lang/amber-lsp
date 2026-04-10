@@ -3390,7 +3390,9 @@ pub const GREETING = \"hello\"
         .iter()
         .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
         .collect::<Vec<String>>());
-    assert_debug_snapshot!(symbol_table.public_definitions);
+    let mut sorted_pub_defs: Vec<_> = symbol_table.public_definitions.iter().collect();
+    sorted_pub_defs.sort_by_key(|(name, _)| *name);
+    assert_debug_snapshot!(sorted_pub_defs);
     assert_debug_snapshot!(backend.files.errors);
 }
 
@@ -3487,7 +3489,9 @@ pub let counter = 0
         .iter()
         .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
         .collect::<Vec<String>>());
-    assert_debug_snapshot!(symbol_table.public_definitions);
+    let mut sorted_pub_defs: Vec<_> = symbol_table.public_definitions.iter().collect();
+    sorted_pub_defs.sort_by_key(|(name, _)| *name);
+    assert_debug_snapshot!(sorted_pub_defs);
     // Should have no errors
     assert_debug_snapshot!(backend.files.errors);
 }

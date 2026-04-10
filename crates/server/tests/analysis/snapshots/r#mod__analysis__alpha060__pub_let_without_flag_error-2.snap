@@ -12,7 +12,7 @@ expression: backend.files.errors
         ),
     ): [
         (
-            "Public mutable variables require #[allow_public_mutable]",
+            "Public mutable variables require `#[allow_public_mutable]`",
             1..4,
         ),
     ],

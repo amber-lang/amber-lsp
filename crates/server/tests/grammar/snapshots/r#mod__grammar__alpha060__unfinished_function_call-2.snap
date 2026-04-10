@@ -511,7 +511,7 @@ expression: result
     ),
     [
         found '","' at 112..113 expected '"("', '"["', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', or '")"',
-        found '","' at 112..113 expected something else, '")"', '"["', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '";"', import statement, function definition, main body, or statement,
-        found '")"' at 115..116 expected '"("', '"["', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '"+="', '"-="', '"*="', '"/="', '"%="', '"="', '";"', import statement, function definition, main body, or statement,
+        found '","' at 112..113 expected something else, '")"', '"["', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '";"', import statement, function definition, main body, public const declaration, public variable declaration, or statement,
+        found '")"' at 115..116 expected '"("', '"["', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '"+="', '"-="', '"*="', '"/="', '"%="', '"="', '";"', import statement, function definition, main body, public const declaration, public variable declaration, or statement,
     ],
 )

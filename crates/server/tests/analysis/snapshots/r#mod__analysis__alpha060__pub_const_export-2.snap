@@ -1,30 +1,36 @@
 ---
 source: crates/server/tests/analysis/alpha060.rs
-expression: symbol_table.public_definitions
+expression: sorted_pub_defs
 ---
-{
-    "MAX_SIZE": SymbolLocation {
-        file: (
-            FileId(
-                0,
+[
+    (
+        "GREETING",
+        SymbolLocation {
+            file: (
+                FileId(
+                    0,
+                ),
+                FileVersion(
+                    1,
+                ),
             ),
-            FileVersion(
-                1,
+            start: 36,
+            end: 44,
+        },
+    ),
+    (
+        "MAX_SIZE",
+        SymbolLocation {
+            file: (
+                FileId(
+                    0,
+                ),
+                FileVersion(
+                    1,
+                ),
             ),
-        ),
-        start: 11,
-        end: 19,
-    },
-    "GREETING": SymbolLocation {
-        file: (
-            FileId(
-                0,
-            ),
-            FileVersion(
-                1,
-            ),
-        ),
-        start: 36,
-        end: 44,
-    },
-}
+            start: 11,
+            end: 19,
+        },
+    ),
+]
