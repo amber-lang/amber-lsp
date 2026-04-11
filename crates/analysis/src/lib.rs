@@ -202,6 +202,10 @@ pub struct SymbolTable {
     /// when none of the imported symbols are referenced.
     /// Each entry is (statement_span, vec of (symbol_name, definition_location)).
     pub import_all_statements: Vec<(Span, Vec<(String, SymbolLocation)>)>,
+    /// Maps function definition start offset (`name_span.start`) to the
+    /// end offset of the enclosing function statement (`span.end`).
+    /// Used to detect self-only-referenced (recursive) functions.
+    pub function_body_ranges: HashMap<usize, usize>,
 }
 
 impl Default for SymbolTable {
@@ -213,6 +217,7 @@ impl Default for SymbolTable {
             public_definitions: Arc::new(HashMap::new()),
             fun_call_arg_scope: RangeInclusiveMap::new(),
             import_all_statements: Vec::new(),
+            function_body_ranges: HashMap::new(),
         }
     }
 }

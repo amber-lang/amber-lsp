@@ -43,6 +43,14 @@ fn build_used_defs(symbol_table: &SymbolTable) -> HashSet<DefKey> {
         if let Some(defs) = symbol_table.definitions.get(name) {
             for reference in references {
                 if let Some(resolved) = defs.get(&reference.start) {
+                    // Skip self-references: if a function's only references
+                    // are recursive calls inside its own body, it is unused.
+                    if let Some(&body_end) = symbol_table.function_body_ranges.get(&resolved.start)
+                    {
+                        if reference.start > resolved.start && reference.start < body_end {
+                            continue;
+                        }
+                    }
                     used.insert(def_key(name, resolved));
                 }
             }

@@ -432,6 +432,10 @@ pub async fn analyze_global_stmnt(
                     span.end..=usize::MAX,
                     *is_pub,
                 );
+
+                symbol_table
+                    .function_body_ranges
+                    .insert(name_span.start, span.end);
             }
             GlobalStatement::Import(
                 (is_public_import, _),

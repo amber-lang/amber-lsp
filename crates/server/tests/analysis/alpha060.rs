@@ -3565,3 +3565,103 @@ let x = MAX_SIZE
         .collect::<Vec<String>>());
     assert_debug_snapshot!(backend.files.errors);
 }
+
+#[test]
+async fn test_unused_recursive_function() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+fun factorial(n) {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    backend.open_document(&uri).await.unwrap();
+
+    // factorial only references itself → should be flagged as unused.
+    assert_debug_snapshot!(backend.files.unused_diagnostics);
+}
+
+#[test]
+async fn test_used_recursive_function() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+fun factorial(n) {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+let result = factorial(5)
+echo(result)
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    // factorial is called externally → should NOT be flagged as unused.
+    let unused = backend.files.unused_diagnostics.get(&file_id);
+    let has_unused_fn = unused
+        .map(|u| u.iter().any(|(msg, _)| msg.contains("Unused function")))
+        .unwrap_or(false);
+    assert!(
+        !has_unused_fn,
+        "Recursive function called externally should not be flagged as unused"
+    );
+}
