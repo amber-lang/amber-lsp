@@ -68,7 +68,7 @@ pub fun mv(source: Text, destination: Text): Null? {}
 pub fun nameof(ref var): Text {}
 
 /// TODO DOCS
-pub fun pid(ref var): Int {}
+pub fun pid(): Int {}
 
 /// TODO DOCS
 pub fun pwd(): Text {}
@@ -89,7 +89,7 @@ pub fun sleep(time_s: Int): Text {}
 pub fun touch(file: Text): Null {}
 
 /// TODO DOCS
-pub fun wait(pids: [Int]): Null {}
+pub fun await(pids: [Int] | Int): Null {}
 
 /// TODO DOCS
 pub fun status(): Int {}
