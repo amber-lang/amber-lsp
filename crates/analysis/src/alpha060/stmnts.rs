@@ -1,3 +1,9 @@
+use std::collections::HashMap;
+use std::sync::atomic::{
+    AtomicUsize,
+    Ordering,
+};
+
 use crate::files::{
     FileVersion,
     Files,
@@ -23,6 +29,7 @@ use amber_grammar::alpha060::{
     Block,
     Comment,
     ElseCondition,
+    Expression,
     FailableHandler,
     FailureHandler,
     IfChainContent,
@@ -33,9 +40,13 @@ use amber_grammar::alpha060::{
 };
 use amber_grammar::{
     CommandModifier,
+    Span,
     Spanned,
 };
 use amber_types::paths::FileId;
+
+/// Counter for generating unique synthetic offsets for type narrowing shadow definitions.
+static SYNTHETIC_OFFSET: AtomicUsize = AtomicUsize::new(usize::MAX / 2);
 
 use super::exp::{
     analyze_exp,
@@ -97,6 +108,260 @@ pub fn has_failure_handler(failable_handlers: &[Spanned<FailableHandler>]) -> bo
         .any(|(h, _)| !matches!(h, FailableHandler::Comment(_)))
 }
 
+/// A type narrowing: either a positive inclusion or a negative exclusion.
+#[derive(Debug, Clone)]
+enum Narrowing {
+    /// Variable is narrowed to exactly this type (e.g. `a is Int` → `Include(Int)`).
+    Include(DataType),
+    /// Variable should have these types excluded (e.g. `not (a is Int)` → `Exclude([Int])`).
+    Exclude(Vec<DataType>),
+}
+
+/// Extract type narrowings from a condition expression.
+/// Returns a map of variable name → narrowing when the condition is TRUE.
+///
+/// For `a is Int`: narrows `a` to `Int`.
+/// For `not (a is Int)`: excludes `Int` from `a`.
+/// For `a is Int and b is Text`: narrows both `a` to `Int` and `b` to `Text`.
+/// For `a is Int or a is Bool`: narrows `a` to `Int | Bool`.
+fn extract_narrowings(expr: &Expression) -> HashMap<String, Narrowing> {
+    match expr {
+        Expression::Is(inner_expr, _, (data_type, _)) => {
+            if let Expression::Var((name, _)) = &inner_expr.0 {
+                if !matches!(data_type, DataType::Error) {
+                    let mut map = HashMap::new();
+                    map.insert(name.clone(), Narrowing::Include(data_type.clone()));
+                    return map;
+                }
+            }
+            HashMap::new()
+        }
+        Expression::Not(_, inner) => {
+            // `not expr` flips narrowings to exclusions and vice versa
+            let inner_exclusions = extract_exclusions(&inner.0);
+            let mut result = HashMap::new();
+            for (name, types) in inner_exclusions {
+                if types.len() == 1 {
+                    result.insert(name, Narrowing::Include(types.into_iter().next().unwrap()));
+                } else {
+                    result.insert(name, Narrowing::Include(make_union_type(types)));
+                }
+            }
+            // Also convert inner narrowings into exclusions
+            let inner_narrowings = extract_narrowings(&inner.0);
+            for (name, narrowing) in inner_narrowings {
+                match narrowing {
+                    Narrowing::Include(ty) => {
+                        result.insert(name, Narrowing::Exclude(vec![ty]));
+                    }
+                    Narrowing::Exclude(types) => {
+                        result.insert(name, Narrowing::Include(make_union_type(types)));
+                    }
+                }
+            }
+            result
+        }
+        Expression::And(lhs, _, rhs) => {
+            let mut narrowings = extract_narrowings(&lhs.0);
+            let rhs_narrowings = extract_narrowings(&rhs.0);
+            for (name, narrowing) in rhs_narrowings {
+                narrowings
+                    .entry(name)
+                    .and_modify(|existing| match (existing.clone(), &narrowing) {
+                        (Narrowing::Exclude(mut a), Narrowing::Exclude(b)) => {
+                            a.extend(b.iter().cloned());
+                            *existing = Narrowing::Exclude(a);
+                        }
+                        _ => {
+                            *existing = narrowing.clone();
+                        }
+                    })
+                    .or_insert(narrowing);
+            }
+            narrowings
+        }
+        Expression::Or(lhs, _, rhs) => {
+            let lhs_narrowings = extract_narrowings(&lhs.0);
+            let rhs_narrowings = extract_narrowings(&rhs.0);
+            let mut result = HashMap::new();
+            for (name, lhs_n) in &lhs_narrowings {
+                if let Some(rhs_n) = rhs_narrowings.get(name) {
+                    match (lhs_n, rhs_n) {
+                        (Narrowing::Include(lhs_ty), Narrowing::Include(rhs_ty)) => {
+                            let union_ty = make_union_type(vec![lhs_ty.clone(), rhs_ty.clone()]);
+                            result.insert(name.clone(), Narrowing::Include(union_ty));
+                        }
+                        (Narrowing::Exclude(a), Narrowing::Exclude(b)) => {
+                            // Intersection of exclusions: only exclude types in both
+                            let common: Vec<DataType> =
+                                a.iter().filter(|ty| b.contains(ty)).cloned().collect();
+                            if !common.is_empty() {
+                                result.insert(name.clone(), Narrowing::Exclude(common));
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            result
+        }
+        Expression::Parentheses(inner) => extract_narrowings(&inner.0),
+        _ => HashMap::new(),
+    }
+}
+
+/// Extract type exclusions from a condition expression.
+/// Returns the types to EXCLUDE from each variable when the condition is FALSE.
+///
+/// For `a is Int`: excludes `Int` from `a`.
+/// For `not (a is Int)`: excludes nothing (the negation was true, so we can't exclude `Int`).
+/// For `a is Int or a is Bool`: excludes both `Int` and `Bool` from `a`.
+/// For `a is Int and b is Text`: can't exclude anything (De Morgan's law).
+fn extract_exclusions(expr: &Expression) -> HashMap<String, Vec<DataType>> {
+    match expr {
+        Expression::Is(inner_expr, _, (data_type, _)) => {
+            if let Expression::Var((name, _)) = &inner_expr.0 {
+                if !matches!(data_type, DataType::Error) {
+                    let mut map = HashMap::new();
+                    map.insert(name.clone(), vec![data_type.clone()]);
+                    return map;
+                }
+            }
+            HashMap::new()
+        }
+        Expression::Not(_, inner) => {
+            // NOT (NOT (a is Int)) → a is Int → no exclusion (we'd need inclusion)
+            // For else-branch exclusion purposes, `not (a is X)` being false means `a is X` was true
+            // So the exclusion from the negated condition is the narrowing of the inner
+            let inner_narrowings = extract_narrowings(&inner.0);
+            let mut result = HashMap::new();
+            for (name, narrowing) in inner_narrowings {
+                if let Narrowing::Include(ty) = narrowing {
+                    result.insert(name, vec![ty]);
+                }
+            }
+            result
+        }
+        Expression::Or(lhs, _, rhs) => {
+            // NOT (A or B) = NOT A AND NOT B
+            let mut exclusions = extract_exclusions(&lhs.0);
+            let rhs_exclusions = extract_exclusions(&rhs.0);
+            for (name, types) in rhs_exclusions {
+                exclusions.entry(name).or_default().extend(types);
+            }
+            exclusions
+        }
+        Expression::And(lhs, _, rhs) => {
+            // NOT (A and B) = NOT A OR NOT B — can't exclude individually in general
+            // But if both sides exclude the same variable, we can take the intersection
+            let lhs_exclusions = extract_exclusions(&lhs.0);
+            let rhs_exclusions = extract_exclusions(&rhs.0);
+            let mut result = HashMap::new();
+            for (name, lhs_types) in &lhs_exclusions {
+                if let Some(rhs_types) = rhs_exclusions.get(name) {
+                    let mut combined = lhs_types.clone();
+                    combined.extend(rhs_types.iter().cloned());
+                    result.insert(name.clone(), combined);
+                }
+            }
+            result
+        }
+        Expression::Parentheses(inner) => extract_exclusions(&inner.0),
+        _ => HashMap::new(),
+    }
+}
+
+/// Subtract excluded types from a union type.
+fn subtract_types(original: &DataType, excluded: &[DataType]) -> DataType {
+    match original {
+        DataType::Union(types) => {
+            let remaining: Vec<DataType> = types
+                .iter()
+                .filter(|ty| !excluded.contains(ty))
+                .cloned()
+                .collect();
+            if remaining.is_empty() {
+                original.clone()
+            } else {
+                make_union_type(remaining)
+            }
+        }
+        _ => {
+            if excluded.contains(original) {
+                DataType::Null
+            } else {
+                original.clone()
+            }
+        }
+    }
+}
+
+/// Apply type narrowings to a block by inserting shadow variable definitions.
+fn apply_type_narrowings(
+    file_id: FileId,
+    file_version: FileVersion,
+    narrowings: &HashMap<String, Narrowing>,
+    block_span: Span,
+    files: &Files,
+    contexts: &[Context],
+) {
+    if narrowings.is_empty() {
+        return;
+    }
+
+    let file = (file_id, file_version);
+
+    for (var_name, narrowing) in narrowings {
+        // Look up the original definition to get symbol info
+        let original_info = get_symbol_definition_info(files, var_name, &file, block_span.start);
+
+        if let Some(original_info) = original_info {
+            let narrowed_type = match narrowing {
+                Narrowing::Include(ty) => ty.clone(),
+                Narrowing::Exclude(excluded) => {
+                    let result = subtract_types(&original_info.data_type, excluded);
+                    if result == original_info.data_type {
+                        continue;
+                    }
+                    result
+                }
+            };
+
+            let synthetic_pos = SYNTHETIC_OFFSET.fetch_add(1, Ordering::SeqCst);
+            let synthetic_span = Span::from(synthetic_pos..synthetic_pos + 1);
+
+            let narrowed_info = SymbolInfo {
+                name: var_name.clone(),
+                symbol_type: original_info.symbol_type.clone(),
+                data_type: narrowed_type,
+                is_definition: true,
+                undefined: false,
+                span: synthetic_span,
+                contexts: contexts.to_vec(),
+            };
+
+            let mut symbol_table = files.symbol_table.entry(file).or_default();
+
+            symbol_table
+                .symbols
+                .insert(synthetic_pos..=synthetic_pos, narrowed_info);
+
+            let defs = symbol_table
+                .definitions
+                .entry(var_name.clone())
+                .or_default();
+            defs.insert(
+                block_span.start..=block_span.end,
+                SymbolLocation {
+                    file,
+                    start: synthetic_pos,
+                    end: synthetic_pos,
+                },
+            );
+        }
+    }
+}
+
 /// Analyze a statement.
 ///
 /// Returns the data type of the return statement and a boolean indicating if the
@@ -125,12 +390,13 @@ pub fn analyze_stmnt(
         Statement::IfChain(_, if_chain) => {
             let mut stmnts = vec![];
             let mut exps = vec![];
+            let mut all_exclusions: HashMap<String, Vec<DataType>> = HashMap::new();
 
             for (if_chain_content, _) in if_chain.iter() {
                 match if_chain_content {
                     IfChainContent::IfCondition((condition, _)) => match condition {
                         IfCondition::IfCondition(exp, block) => {
-                            let exp = analyze_exp(
+                            let exp_result = analyze_exp(
                                 file_id,
                                 file_version,
                                 exp,
@@ -139,6 +405,17 @@ pub fn analyze_stmnt(
                                 scoped_generic_types,
                                 contexts,
                             );
+
+                            let narrowings = extract_narrowings(&exp.0);
+                            apply_type_narrowings(
+                                file_id,
+                                file_version,
+                                &narrowings,
+                                block.1,
+                                files,
+                                contexts,
+                            );
+
                             let stmnt = analyze_block(
                                 file_id,
                                 file_version,
@@ -148,7 +425,12 @@ pub fn analyze_stmnt(
                                 contexts,
                             );
 
-                            exps.push(exp);
+                            let exclusions = extract_exclusions(&exp.0);
+                            for (name, types) in exclusions {
+                                all_exclusions.entry(name).or_default().extend(types);
+                            }
+
+                            exps.push(exp_result);
                             stmnts.push(stmnt);
                         }
                         IfCondition::Error => {}
@@ -159,6 +441,25 @@ pub fn analyze_stmnt(
                     },
                     IfChainContent::Else((else_cond, _)) => match else_cond {
                         ElseCondition::Else(_, block) => {
+                            // Compute narrowings for else branch by subtracting
+                            // all excluded types from original variable types
+                            if !all_exclusions.is_empty() {
+                                let else_narrowings: HashMap<String, Narrowing> = all_exclusions
+                                    .iter()
+                                    .map(|(name, excluded)| {
+                                        (name.clone(), Narrowing::Exclude(excluded.clone()))
+                                    })
+                                    .collect();
+                                apply_type_narrowings(
+                                    file_id,
+                                    file_version,
+                                    &else_narrowings,
+                                    block.1,
+                                    files,
+                                    contexts,
+                                );
+                            }
+
                             let stmnt = analyze_block(
                                 file_id,
                                 file_version,
@@ -183,10 +484,11 @@ pub fn analyze_stmnt(
         Statement::IfCondition(_, if_cond, comments, else_cond) => {
             let mut stmnts = vec![];
             let mut exps = vec![];
+            let mut condition_exclusions: HashMap<String, Vec<DataType>> = HashMap::new();
 
             match &if_cond.0 {
                 IfCondition::IfCondition(exp, block) => {
-                    let exp = analyze_exp(
+                    let exp_result = analyze_exp(
                         file_id,
                         file_version,
                         exp,
@@ -195,6 +497,17 @@ pub fn analyze_stmnt(
                         scoped_generic_types,
                         contexts,
                     );
+
+                    let narrowings = extract_narrowings(&exp.0);
+                    apply_type_narrowings(
+                        file_id,
+                        file_version,
+                        &narrowings,
+                        block.1,
+                        files,
+                        contexts,
+                    );
+
                     let block = analyze_block(
                         file_id,
                         file_version,
@@ -204,8 +517,10 @@ pub fn analyze_stmnt(
                         contexts,
                     );
 
+                    condition_exclusions = extract_exclusions(&exp.0);
+
                     stmnts.push(block);
-                    exps.push(exp);
+                    exps.push(exp_result);
                 }
                 IfCondition::Comment((Comment::DocString(docs), _)) => {
                     let _ = handle_doc_strings(docs, contexts);
@@ -222,6 +537,23 @@ pub fn analyze_stmnt(
             if let Some(else_cond) = else_cond {
                 match &else_cond.0 {
                     ElseCondition::Else(_, block) => {
+                        if !condition_exclusions.is_empty() {
+                            let else_narrowings: HashMap<String, Narrowing> = condition_exclusions
+                                .iter()
+                                .map(|(name, excluded)| {
+                                    (name.clone(), Narrowing::Exclude(excluded.clone()))
+                                })
+                                .collect();
+                            apply_type_narrowings(
+                                file_id,
+                                file_version,
+                                &else_narrowings,
+                                block.1,
+                                files,
+                                contexts,
+                            );
+                        }
+
                         let block = analyze_block(
                             file_id,
                             file_version,

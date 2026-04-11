@@ -3718,3 +3718,251 @@ fun foo(n: Int) {
         .collect::<Vec<String>>());
     assert_debug_snapshot!(backend.files.errors);
 }
+
+/// Helper: analyze source and return symbol info as (name, type_string, is_definition) tuples.
+async fn symbols_from_source(source: &str) -> Vec<(String, String, bool)> {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(&uri.to_file_path().unwrap(), source)
+        .await
+        .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    symbol_table
+        .symbols
+        .iter()
+        .map(|(_, info)| {
+            let ty = info.data_type.to_string(&generic_types);
+            (info.name.clone(), ty, info.is_definition)
+        })
+        .collect()
+}
+
+#[test]
+async fn test_type_narrowing_simple_is_check() {
+    let symbols = symbols_from_source(
+        r#"
+fun foo(a: Text | Int) {
+    if a is Int {
+        echo a
+    }
+}
+"#,
+    )
+    .await;
+
+    let narrowed_refs: Vec<_> = symbols
+        .iter()
+        .filter(|(name, ty, is_def)| name == "a" && !is_def && ty == "Int")
+        .collect();
+    assert!(
+        !narrowed_refs.is_empty(),
+        "Expected a narrowed to Int inside if-block, got symbols: {:?}",
+        symbols
+            .iter()
+            .filter(|(n, _, _)| n == "a")
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+async fn test_type_narrowing_if_chain() {
+    let symbols = symbols_from_source(
+        r#"
+fun foo(a: Text | Int | Bool) {
+    if {
+        a is Int {
+            echo a
+        }
+        a is Bool {
+            echo a
+        }
+        else {
+            echo a
+        }
+    }
+}
+"#,
+    )
+    .await;
+
+    let a_refs: Vec<_> = symbols
+        .iter()
+        .filter(|(name, _, is_def)| name == "a" && !is_def)
+        .collect();
+
+    let has_int = a_refs.iter().any(|(_, ty, _)| ty == "Int");
+    let has_bool = a_refs.iter().any(|(_, ty, _)| ty == "Bool");
+    let has_text = a_refs.iter().any(|(_, ty, _)| ty == "Text");
+
+    assert!(
+        has_int,
+        "Expected a narrowed to Int in first branch, refs: {:?}",
+        a_refs
+    );
+    assert!(
+        has_bool,
+        "Expected a narrowed to Bool in second branch, refs: {:?}",
+        a_refs
+    );
+    assert!(
+        has_text,
+        "Expected a narrowed to Text in else branch, refs: {:?}",
+        a_refs
+    );
+}
+
+#[test]
+async fn test_type_narrowing_and_condition() {
+    let symbols = symbols_from_source(
+        r#"
+fun test_narrowing(a: Text | Int, b: Text | Int) {
+    if (a is Int) and (b is Int) {
+        echo a
+        echo b
+    }
+}
+"#,
+    )
+    .await;
+
+    let a_refs: Vec<_> = symbols
+        .iter()
+        .filter(|(name, _, is_def)| name == "a" && !is_def)
+        .collect();
+    let b_refs: Vec<_> = symbols
+        .iter()
+        .filter(|(name, _, is_def)| name == "b" && !is_def)
+        .collect();
+
+    let a_has_int = a_refs.iter().any(|(_, ty, _)| ty == "Int");
+    let b_has_int = b_refs.iter().any(|(_, ty, _)| ty == "Int");
+
+    assert!(a_has_int, "Expected a narrowed to Int, refs: {:?}", a_refs);
+    assert!(b_has_int, "Expected b narrowed to Int, refs: {:?}", b_refs);
+}
+
+#[test]
+async fn test_type_narrowing_or_condition() {
+    let symbols = symbols_from_source(
+        r#"
+fun foo(a: Text | Int | Bool) {
+    if a is Int or a is Bool {
+        echo a
+    }
+}
+"#,
+    )
+    .await;
+
+    let a_refs: Vec<_> = symbols
+        .iter()
+        .filter(|(name, _, is_def)| name == "a" && !is_def)
+        .collect();
+
+    let has_union = a_refs.iter().any(|(_, ty, _)| ty == "Int | Bool");
+    assert!(
+        has_union,
+        "Expected a narrowed to Int | Bool, refs: {:?}",
+        a_refs
+    );
+}
+
+#[test]
+async fn test_type_narrowing_else_branch() {
+    let symbols = symbols_from_source(
+        r#"
+fun foo(a: Text | Int) {
+    if a is Int {
+        echo a
+    } else {
+        echo a
+    }
+}
+"#,
+    )
+    .await;
+
+    let a_refs: Vec<_> = symbols
+        .iter()
+        .filter(|(name, _, is_def)| name == "a" && !is_def)
+        .collect();
+
+    let has_int = a_refs.iter().any(|(_, ty, _)| ty == "Int");
+    let has_text = a_refs.iter().any(|(_, ty, _)| ty == "Text");
+
+    assert!(
+        has_int,
+        "Expected a narrowed to Int in if-block, refs: {:?}",
+        a_refs
+    );
+    assert!(
+        has_text,
+        "Expected a narrowed to Text in else-block, refs: {:?}",
+        a_refs
+    );
+}
+
+#[test]
+async fn test_type_narrowing_not_is_check() {
+    let symbols = symbols_from_source(
+        r#"
+fun test_narrowing(a: Text | Int, b: Text | Int) {
+    if not (a is Text) and not (b is Text) {
+        echo a
+        echo b
+    }
+}
+"#,
+    )
+    .await;
+
+    let a_refs: Vec<_> = symbols
+        .iter()
+        .filter(|(name, _, is_def)| name == "a" && !is_def)
+        .collect();
+    let b_refs: Vec<_> = symbols
+        .iter()
+        .filter(|(name, _, is_def)| name == "b" && !is_def)
+        .collect();
+
+    // not (a is Text) with a: Text | Int should narrow to Int
+    let a_has_int = a_refs.iter().any(|(_, ty, _)| ty == "Int");
+    let b_has_int = b_refs.iter().any(|(_, ty, _)| ty == "Int");
+
+    assert!(
+        a_has_int,
+        "Expected a narrowed to Int via not(is Text), refs: {:?}",
+        a_refs
+    );
+    assert!(
+        b_has_int,
+        "Expected b narrowed to Int via not(is Text), refs: {:?}",
+        b_refs
+    );
+}
