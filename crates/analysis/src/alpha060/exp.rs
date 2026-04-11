@@ -394,6 +394,10 @@ pub fn analyze_exp(
                 );
             }
 
+            // Resolve the return type *before* restoring generics so the
+            // call-site constraints are captured in the returned type.
+            let exp_ty = scoped_generic_types.deref_type(&exp_ty);
+
             // Restore foreign-function generics to their pre-call values so
             // constraints from this call don't leak into subsequent calls.
             for (id, saved_ty) in generics_to_restore {
@@ -639,7 +643,17 @@ pub fn analyze_exp(
             *exp_span,
         );
     } else if let DataType::Generic(id) = ty {
-        scoped_generic_types.constrain_generic_type(id, expected_type.clone());
+        // Only constrain when the expected type is not a foreign function's
+        // generic parameter. Foreign generics (marked as inferred) are
+        // constrained by the FunctionInvocation handler in the other
+        // direction; constraining here would form a cycle that prevents the
+        // FunctionInvocation constraint from being applied.
+        match &expected_type {
+            DataType::Generic(exp_id) if scoped_generic_types.is_inferred(*exp_id) => {}
+            _ => {
+                scoped_generic_types.constrain_generic_type(id, expected_type.clone());
+            }
+        }
     }
 
     ExpAnalysisResult {

@@ -10,8 +10,8 @@ expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_
     "fun bar(a: Any): Any",
     "a: Any",
     "a: Any",
-    "x: Any",
-    "fun foo(a: Int): Any",
-    "y: Any",
-    "fun foo(a: Text): Any",
+    "x: Int",
+    "fun foo(a: Int): Int",
+    "y: Text",
+    "fun foo(a: Text): Text",
 ]
