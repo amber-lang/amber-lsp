@@ -415,6 +415,23 @@ pub async fn analyze_global_stmnt(
                     );
                 });
 
+                // When return type is not declared, the hoisted placeholder
+                // type is `Any`.  Recursive (and forward) calls resolve to
+                // that placeholder, injecting spurious `Any` into the
+                // collected return types (e.g. `Int | Any` instead of `Int`).
+                // Filter those out so the inferred type is based only on
+                // concrete return expressions.
+                if declared_return_ty.is_none() {
+                    let concrete: Vec<DataType> = return_types
+                        .iter()
+                        .filter(|t| !matches!(t, DataType::Any))
+                        .cloned()
+                        .collect();
+                    if !concrete.is_empty() {
+                        return_types = concrete;
+                    }
+                }
+
                 let mut inferred_return_type = match return_types.len() {
                     0 => DataType::Null,
                     _ => make_union_type(return_types),
