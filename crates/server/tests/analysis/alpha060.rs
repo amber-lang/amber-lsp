@@ -3966,3 +3966,93 @@ fun test_narrowing(a: Text | Int, b: Text | Int) {
         b_refs
     );
 }
+
+#[test]
+async fn test_goto_definition_in_narrowed_block() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    // Use a global `a` to ensure the fix picks the parameter, not the global.
+    let source = r#"let a = 123
+
+fun test_narrowing(a: Text) {
+    if not (a is Text) {
+        return a
+    }
+}"#;
+
+    vfs.write(&uri.to_file_path().unwrap(), source)
+        .await
+        .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+
+    // Find the offset of "a" in "return a" (the reference inside the narrowed block)
+    let return_a_offset = source.find("return a").unwrap() + "return ".len();
+
+    // Look up the symbol at that offset
+    let symbol_info = symbol_table.symbols.get(&return_a_offset).unwrap();
+    assert_eq!(symbol_info.name, "a");
+
+    // Look up its definition — type narrowing may have inserted a synthetic one
+    let definitions = symbol_table.definitions.get(&symbol_info.name).unwrap();
+    let definition = definitions.get(&return_a_offset).unwrap();
+
+    // The definition should be synthetic (>= usize::MAX / 2) due to type narrowing.
+    assert!(
+        definition.start >= usize::MAX / 2,
+        "Expected a synthetic definition inside narrowed block"
+    );
+
+    // Goto-definition should resolve to the parameter, not the synthetic offset
+    // and not the global `let a`. Find the closest non-synthetic definition
+    // (simulating what goto_definition does).
+    let resolved_def = definitions
+        .iter()
+        .filter(|(_, loc)| loc.start < usize::MAX / 2)
+        .min_by_key(|(range, _)| {
+            if return_a_offset < *range.start() {
+                range.start() - return_a_offset
+            } else if return_a_offset > *range.end() {
+                return_a_offset - range.end()
+            } else {
+                0
+            }
+        })
+        .map(|(_, loc)| loc);
+
+    assert!(
+        resolved_def.is_some(),
+        "Expected a non-synthetic definition for 'a' (the parameter)"
+    );
+
+    let resolved_def = resolved_def.unwrap();
+    let param_a_offset = source.find("a: Text").unwrap();
+    assert_eq!(
+        resolved_def.start, param_a_offset,
+        "Goto definition should resolve to parameter 'a' at offset {}, not global 'a'",
+        param_a_offset
+    );
+}
