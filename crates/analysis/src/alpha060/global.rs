@@ -441,7 +441,12 @@ pub async fn analyze_global_stmnt(
 
                     let mut inferred_return_type = match return_types.len() {
                         0 => DataType::Null,
-                        _ => make_union_type(return_types),
+                        _ => {
+                            if !terminator_seen {
+                                return_types.push(DataType::Null);
+                            }
+                            make_union_type(return_types)
+                        }
                     };
 
                     if is_propagating && !matches!(inferred_return_type, DataType::Failable(_)) {

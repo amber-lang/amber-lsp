@@ -4056,3 +4056,55 @@ fun test_narrowing(a: Text) {
         param_a_offset
     );
 }
+
+#[test]
+async fn test_if_without_else_return_includes_null() {
+    let symbols = symbols_from_source(
+        r#"
+fun foo(a: Text | Int) {
+    if a is Text {
+        return a
+    }
+}
+"#,
+    )
+    .await;
+
+    let foo_def = symbols
+        .iter()
+        .find(|(name, _, is_def)| name == "foo" && *is_def)
+        .expect("Expected foo definition");
+
+    assert!(
+        foo_def.1.contains("Text | Null"),
+        "Function with if-without-else return should infer Text | Null, got: {}",
+        foo_def.1
+    );
+}
+
+#[test]
+async fn test_if_else_return_no_null() {
+    let symbols = symbols_from_source(
+        r#"
+fun foo(a: Text | Int) {
+    if a is Text {
+        return a
+    } else {
+        return "default"
+    }
+}
+"#,
+    )
+    .await;
+
+    let foo_def = symbols
+        .iter()
+        .find(|(name, _, is_def)| name == "foo" && *is_def)
+        .expect("Expected foo definition");
+
+    assert!(
+        foo_def.1.contains("Text") && !foo_def.1.contains("Null"),
+        "Function with if-else where all branches return should infer Text (no Null), got: {}",
+        foo_def.1
+    );
+}
