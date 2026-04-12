@@ -51,6 +51,30 @@ pub async fn handle_goto_definition(
     let definition = match symbol_table.definitions.get(&symbol_info.name) {
         Some(definitions) => match definitions.get(&offset) {
             Some(definition) => {
+                // Type narrowing inserts shadow definitions at synthetic offsets
+                // (starting at usize::MAX / 2). For goto-definition we want
+                // the real source location, so find the original non-synthetic
+                // definition whose scope is closest to the current offset
+                // (the one that was split by the narrowing insertion).
+                let definition = if definition.start >= usize::MAX / 2 {
+                    definitions
+                        .iter()
+                        .filter(|(_, loc)| loc.start < usize::MAX / 2)
+                        .min_by_key(|(range, _)| {
+                            if offset < *range.start() {
+                                range.start() - offset
+                            } else if offset > *range.end() {
+                                offset - range.end()
+                            } else {
+                                0
+                            }
+                        })
+                        .map(|(_, loc)| loc)
+                        .unwrap_or(definition)
+                } else {
+                    definition
+                };
+
                 let definition_file_rope = match backend.files.document_map.get(&definition.file) {
                     Some(document) => document.clone(),
                     None => return Ok(None),

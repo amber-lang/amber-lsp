@@ -31,6 +31,7 @@ pub mod alpha034;
 pub mod alpha035;
 pub mod alpha040;
 pub mod alpha050;
+pub mod alpha060;
 pub mod files;
 pub mod stdlib;
 pub mod types;
@@ -75,6 +76,7 @@ pub enum SymbolType {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct VariableSymbol {
     pub is_const: bool,
+    pub is_public: bool,
 }
 
 /// Information about a symbol in the document.
@@ -200,6 +202,10 @@ pub struct SymbolTable {
     /// when none of the imported symbols are referenced.
     /// Each entry is (statement_span, vec of (symbol_name, definition_location)).
     pub import_all_statements: Vec<(Span, Vec<(String, SymbolLocation)>)>,
+    /// Maps function definition start offset (`name_span.start`) to the
+    /// end offset of the enclosing function statement (`span.end`).
+    /// Used to detect self-only-referenced (recursive) functions.
+    pub function_body_ranges: HashMap<usize, usize>,
 }
 
 impl Default for SymbolTable {
@@ -211,6 +217,7 @@ impl Default for SymbolTable {
             public_definitions: Arc::new(HashMap::new()),
             fun_call_arg_scope: RangeInclusiveMap::new(),
             import_all_statements: Vec::new(),
+            function_body_ranges: HashMap::new(),
         }
     }
 }
@@ -425,7 +432,10 @@ pub fn insert_symbol_reference(
                 span.clone(),
                 SymbolInfo {
                     name: symbol.to_string(),
-                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                    symbol_type: SymbolType::Variable(VariableSymbol {
+                        is_const: false,
+                        is_public: false,
+                    }),
                     data_type: DataType::Null,
                     is_definition: false,
                     undefined: true,

@@ -22,8 +22,16 @@ use amber_grammar::alpha050::{
     GlobalStatement as Alpha050GlobalStatement,
     ImportContent as Alpha050ImportContent,
 };
+use amber_grammar::alpha060::{
+    GlobalStatement as Alpha060GlobalStatement,
+    ImportContent as Alpha060ImportContent,
+};
 use amber_grammar::Grammar;
 use amber_types::paths::FileId;
+use amber_types::token::{
+    Span,
+    Spanned,
+};
 use amber_types::AmberVersion;
 
 use crate::backend::Backend;
@@ -232,12 +240,25 @@ async fn symbol_completions(
     }
 
     // Keyword completions: only when NOT inside an import context.
-    if import_context.is_none() && backend.amber_version == AmberVersion::Alpha050 {
-        completions.extend(keyword_completions(&symbol_info.contexts))
+    if import_context.is_none() {
+        match backend.amber_version {
+            AmberVersion::Alpha050 => {
+                completions.extend(keyword_completions_alpha050(&symbol_info.contexts));
+            }
+            AmberVersion::Alpha060 => {
+                completions.extend(keyword_completions_alpha060(&symbol_info.contexts));
+            }
+            _ => {}
+        }
     }
 
-    // Auto-import: only for alpha050 and when NOT inside an import context.
-    if import_context.is_none() && backend.amber_version == AmberVersion::Alpha050 {
+    // Auto-import: only for alpha050/alpha060 and when NOT inside an import context.
+    if import_context.is_none()
+        && matches!(
+            backend.amber_version,
+            AmberVersion::Alpha050 | AmberVersion::Alpha060
+        )
+    {
         auto_import_existing(
             backend,
             uri,
@@ -281,82 +302,139 @@ async fn auto_import_existing(
         None => return,
     };
 
+    enum ImportMatch<'a> {
+        A050(&'a [Spanned<Alpha050GlobalStatement>]),
+        A060(&'a [Spanned<Alpha060GlobalStatement>]),
+    }
+
     let stmts = match ast {
-        Grammar::Alpha050(Some(ref stmts)) => stmts,
+        Grammar::Alpha050(Some(ref stmts)) => ImportMatch::A050(stmts),
+        Grammar::Alpha060(Some(ref stmts)) => ImportMatch::A060(stmts),
         _ => return,
     };
 
-    for (global_stmt, _stmt_span) in stmts.iter() {
-        if let Alpha050GlobalStatement::Import(
-            _is_pub,
-            _import_kw,
-            (Alpha050ImportContent::ImportSpecific(ref ident_list), ref content_span),
-            _from_kw,
-            (ref path, _path_span),
-        ) = global_stmt
-        {
-            let imported_uri = map_import_path(uri, path, backend).await;
-
-            let imported_file_id = match backend.files.get(&imported_uri) {
-                Some(fid) => fid,
-                None => continue,
-            };
-            let imported_version = backend.files.get_latest_version(imported_file_id);
-            let imported_sym_table = match backend
-                .files
-                .symbol_table
-                .get(&(imported_file_id, imported_version))
-            {
-                Some(st) => st.clone(),
-                None => continue,
-            };
-
-            let already_imported: HashSet<String> =
-                ident_list.iter().map(|(name, _)| name.clone()).collect();
-
-            let (insert_offset, import_prefix) = if ident_list.is_empty() {
-                (content_span.start + 1, " ")
-            } else {
-                let last_ident_span = &ident_list.last().unwrap().1;
-                (last_ident_span.end, ", ")
-            };
-            let insert_position = backend.offset_to_position(insert_offset, &rope);
-
-            for (pub_name, pub_location) in imported_sym_table.public_definitions.iter() {
-                if already_imported.contains(pub_name) || in_scope_names.contains(pub_name) {
-                    continue;
-                }
-
-                let additional_edit = TextEdit {
-                    range: Range {
-                        start: insert_position,
-                        end: insert_position,
-                    },
-                    new_text: format!("{}{}", import_prefix, pub_name),
-                };
-
-                let label_desc = Some(format!("auto import from \"{}\"", path));
-
-                let pub_sym_info = match get_symbol_definition_info(
-                    &backend.files,
-                    pub_name,
-                    &pub_location.file,
-                    usize::MAX,
-                ) {
-                    Some(info) => info,
-                    None => continue,
-                };
-
-                if let Some(item) = symbol_to_completion_item(
-                    backend,
-                    &pub_sym_info,
-                    false,
-                    Some(additional_edit),
-                    label_desc,
-                ) {
-                    completions.push(item);
+    match stmts {
+        ImportMatch::A050(stmts) => {
+            for (global_stmt, _stmt_span) in stmts.iter() {
+                if let Alpha050GlobalStatement::Import(
+                    _is_pub,
+                    _import_kw,
+                    (Alpha050ImportContent::ImportSpecific(ref ident_list), ref content_span),
+                    _from_kw,
+                    (ref path, _path_span),
+                ) = global_stmt
+                {
+                    let import = ImportStmtInfo {
+                        ident_list,
+                        content_span,
+                        path,
+                    };
+                    process_import_stmt(backend, uri, in_scope_names, completions, &rope, &import)
+                        .await;
                 }
             }
+        }
+        ImportMatch::A060(stmts) => {
+            for (global_stmt, _stmt_span) in stmts.iter() {
+                if let Alpha060GlobalStatement::Import(
+                    _is_pub,
+                    _import_kw,
+                    (Alpha060ImportContent::ImportSpecific(ref ident_list), ref content_span),
+                    _from_kw,
+                    (ref path, _path_span),
+                ) = global_stmt
+                {
+                    let import = ImportStmtInfo {
+                        ident_list,
+                        content_span,
+                        path,
+                    };
+                    process_import_stmt(backend, uri, in_scope_names, completions, &rope, &import)
+                        .await;
+                }
+            }
+        }
+    }
+}
+
+struct ImportStmtInfo<'a> {
+    ident_list: &'a [Spanned<String>],
+    content_span: &'a Span,
+    path: &'a str,
+}
+
+/// Shared logic for processing a single import statement for auto-import completions.
+async fn process_import_stmt(
+    backend: &Backend,
+    uri: &Uri,
+    in_scope_names: &HashSet<String>,
+    completions: &mut Vec<CompletionItem>,
+    rope: &Rope,
+    import: &ImportStmtInfo<'_>,
+) {
+    let imported_uri = map_import_path(uri, import.path, backend).await;
+
+    let imported_file_id = match backend.files.get(&imported_uri) {
+        Some(fid) => fid,
+        None => return,
+    };
+    let imported_version = backend.files.get_latest_version(imported_file_id);
+    let imported_sym_table = match backend
+        .files
+        .symbol_table
+        .get(&(imported_file_id, imported_version))
+    {
+        Some(st) => st.clone(),
+        None => return,
+    };
+
+    let already_imported: HashSet<String> = import
+        .ident_list
+        .iter()
+        .map(|(name, _)| name.clone())
+        .collect();
+
+    let (insert_offset, import_prefix) = if import.ident_list.is_empty() {
+        (import.content_span.start + 1, " ")
+    } else {
+        let last_ident_span = &import.ident_list.last().unwrap().1;
+        (last_ident_span.end, ", ")
+    };
+    let insert_position = backend.offset_to_position(insert_offset, rope);
+
+    for (pub_name, pub_location) in imported_sym_table.public_definitions.iter() {
+        if already_imported.contains(pub_name) || in_scope_names.contains(pub_name) {
+            continue;
+        }
+
+        let additional_edit = TextEdit {
+            range: Range {
+                start: insert_position,
+                end: insert_position,
+            },
+            new_text: format!("{}{}", import_prefix, pub_name),
+        };
+
+        let label_desc = Some(format!("auto import from \"{}\"", import.path));
+
+        let pub_sym_info = match get_symbol_definition_info(
+            &backend.files,
+            pub_name,
+            &pub_location.file,
+            usize::MAX,
+        ) {
+            Some(info) => info,
+            None => continue,
+        };
+
+        if let Some(item) = symbol_to_completion_item(
+            backend,
+            &pub_sym_info,
+            false,
+            Some(additional_edit),
+            label_desc,
+        ) {
+            completions.push(item);
         }
     }
 }
@@ -375,28 +453,54 @@ async fn auto_import_stdlib(
 
     if let Some(ast) = backend.files.ast_map.get(&(file_id, version)) {
         let ast = ast.clone();
-        if let Grammar::Alpha050(Some(ref stmts)) = ast {
-            for (global_stmt, _) in stmts.iter() {
-                match global_stmt {
-                    Alpha050GlobalStatement::Import(
-                        _,
-                        _,
-                        (Alpha050ImportContent::ImportSpecific(_), _),
-                        _,
-                        (ref path, _),
-                    )
-                    | Alpha050GlobalStatement::Import(
-                        _,
-                        _,
-                        (Alpha050ImportContent::ImportAll, _),
-                        _,
-                        (ref path, _),
-                    ) => {
-                        already_imported_paths.insert(path.clone());
+        match ast {
+            Grammar::Alpha050(Some(ref stmts)) => {
+                for (global_stmt, _) in stmts.iter() {
+                    match global_stmt {
+                        Alpha050GlobalStatement::Import(
+                            _,
+                            _,
+                            (Alpha050ImportContent::ImportSpecific(_), _),
+                            _,
+                            (ref path, _),
+                        )
+                        | Alpha050GlobalStatement::Import(
+                            _,
+                            _,
+                            (Alpha050ImportContent::ImportAll, _),
+                            _,
+                            (ref path, _),
+                        ) => {
+                            already_imported_paths.insert(path.clone());
+                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
             }
+            Grammar::Alpha060(Some(ref stmts)) => {
+                for (global_stmt, _) in stmts.iter() {
+                    match global_stmt {
+                        Alpha060GlobalStatement::Import(
+                            _,
+                            _,
+                            (Alpha060ImportContent::ImportSpecific(_), _),
+                            _,
+                            (ref path, _),
+                        )
+                        | Alpha060GlobalStatement::Import(
+                            _,
+                            _,
+                            (Alpha060ImportContent::ImportAll, _),
+                            _,
+                            (ref path, _),
+                        ) => {
+                            already_imported_paths.insert(path.clone());
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
         }
     }
 
@@ -505,7 +609,7 @@ fn symbol_to_completion_item(
             }),
             ..CompletionItem::default()
         }),
-        SymbolType::Variable(VariableSymbol { is_const }) => Some(CompletionItem {
+        SymbolType::Variable(VariableSymbol { is_const, .. }) => Some(CompletionItem {
             label: symbol_info.name.clone(),
             kind: Some(if is_const {
                 CompletionItemKind::CONSTANT
@@ -530,7 +634,7 @@ fn symbol_to_completion_item(
 }
 
 /// Build keyword [`CompletionItem`]s appropriate for the given context stack.
-fn keyword_completions(contexts: &[Context]) -> Vec<CompletionItem> {
+fn keyword_completions_alpha050(contexts: &[Context]) -> Vec<CompletionItem> {
     let in_loop = contexts.iter().any(|c| matches!(c, Context::Loop));
     let in_function = contexts.iter().any(|c| matches!(c, Context::Function(_)));
     let in_main = contexts.contains(&Context::Main);
@@ -562,6 +666,102 @@ fn keyword_completions(contexts: &[Context]) -> Vec<CompletionItem> {
         ("trust", "Trust command result", None),
         ("sudo", "Run with elevated privileges", None),
         ("exit", "Exit the script", Some("exit $0")),
+        (
+            "failed",
+            "Handle command failure",
+            Some("failed {\n\t$0\n}"),
+        ),
+        (
+            "succeeded",
+            "Handle command success",
+            Some("succeeded {\n\t$0\n}"),
+        ),
+        (
+            "exited",
+            "Handle command exit with status code",
+            Some("exited(${1:code}) {\n\t$0\n}"),
+        ),
+        // Top-level keywords
+        (
+            "fun",
+            "Function definition",
+            Some("fun ${1:name}($2) {\n\t$0\n}"),
+        ),
+        ("pub", "Public modifier", None),
+        ("import", "Import module", Some("import { $2 } from \"$1\"")),
+        ("main", "Main block", Some("main {\n\t$0\n}")),
+        // Value literals
+        ("true", "Boolean true", None),
+        ("false", "Boolean false", None),
+        ("null", "Null value", None),
+    ];
+
+    // Loop-only keywords
+    if in_loop {
+        keywords.extend([
+            ("break", "Exit the current loop", None),
+            ("continue", "Skip to the next loop iteration", None),
+        ]);
+    }
+
+    // Function-only keywords
+    if in_function {
+        keywords.push((
+            "return",
+            "Return from the current function",
+            Some("return $0"),
+        ));
+    }
+
+    // Fail: available in function or main context
+    if in_function || in_main {
+        keywords.push(("fail", "Propagate a failure", Some("fail $0")));
+    }
+
+    keywords
+        .into_iter()
+        .map(|(kw, desc, snippet)| CompletionItem {
+            label: kw.to_string(),
+            kind: Some(CompletionItemKind::KEYWORD),
+            detail: Some(desc.to_string()),
+            insert_text: snippet.map(|s| s.to_string()),
+            insert_text_format: snippet.map(|_| InsertTextFormat::SNIPPET),
+            ..CompletionItem::default()
+        })
+        .collect()
+}
+
+/// Build keyword [`CompletionItem`]s appropriate for the given context stack.
+fn keyword_completions_alpha060(contexts: &[Context]) -> Vec<CompletionItem> {
+    let in_loop = contexts.iter().any(|c| matches!(c, Context::Loop));
+    let in_function = contexts.iter().any(|c| matches!(c, Context::Function(_)));
+    let in_main = contexts.contains(&Context::Main);
+
+    // (label, description, optional snippet)
+    let mut keywords: Vec<(&str, &str, Option<&str>)> = vec![
+        // Statement-level keywords (always available in statement position)
+        (
+            "if",
+            "Conditional branch",
+            Some("if ${1:condition} {\n\t$0\n}"),
+        ),
+        ("loop", "Infinite loop", Some("loop {\n\t$0\n}")),
+        ("while", "While loop", Some("while $1 {\n\t$0\n}")),
+        (
+            "for",
+            "Iterator loop",
+            Some("for ${1:item} in ${2:iterable} {\n\t$0\n}"),
+        ),
+        ("let", "Variable declaration", Some("let ${1:name} = $0")),
+        (
+            "const",
+            "Constant declaration",
+            Some("const ${1:name} = $0"),
+        ),
+        ("unsafe", "Suppress failure handling", None),
+        ("silent", "Suppress command output", None),
+        ("trust", "Trust command result", None),
+        ("sudo", "Run with elevated privileges", None),
         (
             "failed",
             "Handle command failure",

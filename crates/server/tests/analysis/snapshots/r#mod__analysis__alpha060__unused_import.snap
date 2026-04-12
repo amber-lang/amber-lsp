@@ -1,0 +1,23 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: backend.files.unused_diagnostics
+---
+{
+    (
+        FileId(
+            0,
+        ),
+        FileVersion(
+            1,
+        ),
+    ): [
+        (
+            "Unused import \"unused_helper\"",
+            18..31,
+        ),
+        (
+            "Unused variable \"result\"",
+            52..58,
+        ),
+    ],
+}

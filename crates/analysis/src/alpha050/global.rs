@@ -215,7 +215,10 @@ pub async fn analyze_global_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: name.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: ty,
                             is_definition: true,
                             undefined: false,
@@ -291,7 +294,12 @@ pub async fn analyze_global_stmnt(
 
                 let mut inferred_return_type = match return_types.len() {
                     0 => DataType::Null,
-                    _ => make_union_type(return_types),
+                    _ => {
+                        if !terminator_seen {
+                            return_types.push(DataType::Null);
+                        }
+                        make_union_type(return_types)
+                    }
                 };
 
                 if is_propagating && !matches!(inferred_return_type, DataType::Failable(_)) {
@@ -429,6 +437,10 @@ pub async fn analyze_global_stmnt(
                     span.end..=usize::MAX,
                     *is_pub,
                 );
+
+                symbol_table
+                    .function_body_ranges
+                    .insert(name_span.start, span.end);
             }
             GlobalStatement::Import(
                 (is_public_import, _),
@@ -529,6 +541,7 @@ pub async fn analyze_global_stmnt(
                                         name: ident.to_string(),
                                         symbol_type: SymbolType::Variable(VariableSymbol {
                                             is_const: false,
+                                            is_public: false,
                                         }),
                                         data_type: DataType::Null,
                                         is_definition: false,
@@ -602,6 +615,7 @@ pub async fn analyze_global_stmnt(
                                             name: ident.to_string(),
                                             symbol_type: SymbolType::Variable(VariableSymbol {
                                                 is_const: false,
+                                                is_public: false,
                                             }),
                                             data_type: DataType::Null,
                                             is_definition: false,
@@ -682,7 +696,10 @@ pub async fn analyze_global_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: args.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: DataType::Array(Box::new(DataType::Text)),
                             is_definition: true,
                             undefined: false,
