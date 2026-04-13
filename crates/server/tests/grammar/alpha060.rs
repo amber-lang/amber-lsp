@@ -673,3 +673,41 @@ fn test_pub_const_and_pub_fun() {
 "#;
     assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
 }
+
+#[test]
+fn test_test_block_with_name() {
+    let input = r#"
+    test "my test" {
+        let x = 1
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_test_block_without_name() {
+    let input = r#"
+    test {
+        let x = 1
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_multiple_test_blocks() {
+    let input = r#"
+    test "first" {
+        let a = 1
+    }
+
+    test "second" {
+        let b = 2
+    }
+
+    test {
+        let c = 3
+    }
+"#;
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}

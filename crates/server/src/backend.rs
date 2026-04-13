@@ -380,6 +380,9 @@ impl LanguageServer for Backend {
                     retrigger_characters: Some(vec![",".to_string()]), // Retrigger on ','
                     ..Default::default()
                 }),
+                code_lens_provider: Some(CodeLensOptions {
+                    resolve_provider: Some(false),
+                }),
                 ..ServerCapabilities::default()
             },
         })
@@ -562,5 +565,9 @@ impl LanguageServer for Backend {
 
     async fn signature_help(&self, params: SignatureHelpParams) -> Result<Option<SignatureHelp>> {
         crate::hover::handle_signature_help(self, params).await
+    }
+
+    async fn code_lens(&self, params: CodeLensParams) -> Result<Option<Vec<CodeLens>>> {
+        crate::code_lens::handle_code_lens(self, params).await
     }
 }

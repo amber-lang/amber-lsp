@@ -205,6 +205,21 @@ pub fn semantic_tokens_from_ast(
                 GlobalStatement::Statement(stmnt) => {
                     tokens.extend(semantic_tokens_from_stmnts(&[*stmnt.clone()]));
                 }
+                GlobalStatement::TestBlock((_, test_keyword_span), name, body) => {
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                        *test_keyword_span,
+                    ));
+
+                    if let Some((_, name_span)) = name {
+                        tokens.push((
+                            hash_semantic_token_type(SemanticTokenType::STRING),
+                            *name_span,
+                        ));
+                    }
+
+                    tokens.extend(semantic_tokens_from_stmnts(body));
+                }
                 GlobalStatement::PublicConstInit(
                     (_, is_pub_span),
                     (_, const_keyword_span),

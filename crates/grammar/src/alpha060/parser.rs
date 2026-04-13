@@ -45,6 +45,7 @@ const KEYWORDS: &[&str] = &[
     "succeeded",
     "failed",
     "exited",
+    "test",
 ];
 
 #[inline]

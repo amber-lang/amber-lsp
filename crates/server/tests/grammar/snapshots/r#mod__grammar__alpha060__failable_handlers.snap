@@ -820,9 +820,9 @@ expression: parse(&tokenize(input))
     ),
     [
         found '"("' at 17..18 expected '":"', or '"{"',
-        found '":"' at 23..24 expected '"["', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '";"', import statement, function definition, main body, public const declaration, public variable declaration, or statement,
+        found '":"' at 23..24 expected '"["', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '";"', import statement, function definition, main body, test block, public const declaration, public variable declaration, or statement,
         found '"("' at 272..273 expected '")"',
-        found '":"' at 266..267 expected import statement, function definition, main body, public const declaration, public variable declaration, or statement,
+        found '":"' at 266..267 expected import statement, function definition, main body, test block, public const declaration, public variable declaration, or statement,
         found '"$"' at 423..424 expected '"["', '"as"', '"is"', '"*"', '"/"', '"%"', '"+"', '"-"', '">="', '">"', '"<="', '"<"', '"=="', '"!="', '"and"', '"or"', '".."', '"then"', '","', or '")"',
     ],
 )

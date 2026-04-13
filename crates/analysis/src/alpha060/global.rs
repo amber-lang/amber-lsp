@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::alpha060::exp::ExpAnalysisResult;
 use crate::alpha060::stmnts::is_terminating_statement;
 use crate::files::FileVersion;
@@ -13,6 +15,7 @@ use crate::{
     insert_symbol_definition,
     map_import_path,
     AnalysisHost,
+    BlockContext,
     Context,
     FunctionContext,
     FunctionSymbol,
@@ -31,6 +34,7 @@ use amber_grammar::alpha060::{
     VariableInitType,
 };
 use amber_grammar::{
+    CommandModifier,
     CompilerFlag,
     Span,
     Spanned,
@@ -223,6 +227,7 @@ pub async fn analyze_global_stmnt(
     // `Any` (the hoisted placeholder).  After the first pass all functions have
     // concrete return types so a second pass resolves those forward references.
     let mut is_reanalysis = false;
+    let mut seen_test_names: HashMap<String, Span> = HashMap::new();
     'analysis: loop {
         let mut contexts = vec![];
         for (global, span) in default_imports.iter().chain(ast.iter()) {
@@ -912,6 +917,38 @@ pub async fn analyze_global_stmnt(
                         &mut contexts,
                     );
                 }
+                GlobalStatement::TestBlock(_, name, body) => {
+                    // Validate unique test names
+                    if let Some((test_name, test_name_span)) = name {
+                        if !test_name.is_empty() {
+                            let already_seen = seen_test_names.contains_key(test_name);
+                            if already_seen {
+                                backend.get_files().report_error(
+                                    &(file_id, file_version),
+                                    &format!("Duplicate test name '{test_name}'"),
+                                    *test_name_span,
+                                );
+                            } else {
+                                seen_test_names.insert(test_name.clone(), *test_name_span);
+                            }
+                        }
+                    }
+
+                    let mut test_contexts = vec![Context::Block(BlockContext {
+                        modifiers: vec![CommandModifier::Trust],
+                    })];
+                    body.iter().for_each(|stmnt| {
+                        analyze_stmnt(
+                            file_id,
+                            file_version,
+                            stmnt,
+                            backend.get_files(),
+                            span.end,
+                            &backend.get_files().generic_types.clone(),
+                            &mut test_contexts,
+                        );
+                    });
+                }
                 GlobalStatement::PublicConstInit((_is_pub, _), _, (name, name_span), value) => {
                     let exp = analyze_exp(
                         file_id,
@@ -1060,6 +1097,7 @@ pub async fn analyze_global_stmnt(
             });
             if has_unresolved_forward_refs {
                 is_reanalysis = true;
+                seen_test_names.clear();
                 backend.get_files().errors.remove(&(file_id, file_version));
                 backend
                     .get_files()

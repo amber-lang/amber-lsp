@@ -4108,3 +4108,118 @@ fun foo(a: Text | Int) {
         foo_def.1
     );
 }
+
+#[test]
+async fn test_test_block_analyzes_body() {
+    let symbols = symbols_from_source(
+        r#"
+test "my test" {
+    let x = 42
+}
+"#,
+    )
+    .await;
+
+    let x_def = symbols
+        .iter()
+        .find(|(name, _, is_def)| name == "x" && *is_def);
+    assert!(
+        x_def.is_some(),
+        "Expected variable 'x' to be defined in test block"
+    );
+    assert!(
+        x_def.unwrap().1.contains("Int"),
+        "Expected x to be Int, got: {}",
+        x_def.unwrap().1
+    );
+}
+
+#[test]
+async fn test_test_block_without_name_analyzes() {
+    let symbols = symbols_from_source(
+        r#"
+test {
+    let y = "hello"
+}
+"#,
+    )
+    .await;
+
+    let y_def = symbols
+        .iter()
+        .find(|(name, _, is_def)| name == "y" && *is_def);
+    assert!(
+        y_def.is_some(),
+        "Expected variable 'y' to be defined in unnamed test block"
+    );
+    assert!(
+        y_def.unwrap().1.contains("Text"),
+        "Expected y to be Text, got: {}",
+        y_def.unwrap().1
+    );
+}
+
+#[test]
+async fn test_duplicate_test_name_error() {
+    let errors = errors_from_source(
+        r#"
+test "duplicate" {
+    let a = 1
+}
+
+test "duplicate" {
+    let b = 2
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors.iter().any(|e| e.contains("Duplicate test name")),
+        "Expected duplicate test name error, got: {:?}",
+        errors
+    );
+}
+
+#[test]
+async fn test_unique_test_names_no_error() {
+    let errors = errors_from_source(
+        r#"
+test "first test" {
+    let a = 1
+}
+
+test "second test" {
+    let b = 2
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors.iter().any(|e| e.contains("Duplicate test name")),
+        "Did not expect duplicate test name error, got: {:?}",
+        errors
+    );
+}
+
+#[test]
+async fn test_test_block_trusts_failable_functions() {
+    let errors = errors_from_source(
+        r#"
+fun risky(): Num? {
+    fail 1
+}
+
+test "failable in test" {
+    let x = risky()
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("failure handler") || e.contains("trust")),
+        "Failable functions in test blocks should not require failure handlers, got: {:?}",
+        errors
+    );
+}

@@ -1,0 +1,50 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+expression: parse_unwrap(&tokenize(input))
+---
+[
+    (
+        TestBlock(
+            (
+                "test",
+                5..9,
+            ),
+            Some(
+                (
+                    "my test",
+                    10..19,
+                ),
+            ),
+            [
+                (
+                    VariableInit(
+                        (
+                            "let",
+                            30..33,
+                        ),
+                        (
+                            "x",
+                            34..35,
+                        ),
+                        (
+                            Expression(
+                                (
+                                    Int(
+                                        (
+                                            1,
+                                            38..39,
+                                        ),
+                                    ),
+                                    38..39,
+                                ),
+                            ),
+                            38..39,
+                        ),
+                    ),
+                    30..39,
+                ),
+            ],
+        ),
+        5..45,
+    ),
+]

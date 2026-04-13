@@ -414,6 +414,62 @@ pub fn pub_var_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         .labelled("public variable declaration")
 }
 
+pub fn test_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
+    let name_parser = just(T!['"'])
+        .then(
+            any()
+                .filter(|c| *c != T!['"'])
+                .repeated()
+                .collect::<Vec<Token>>()
+                .map(|name| name.iter().map(|t| t.to_string()).collect::<String>()),
+        )
+        .then(
+            just(T!['"']).recover_with(via_parser(
+                default_recovery()
+                    .repeated()
+                    .then(just(T!['"']))
+                    .or_not()
+                    .map(|_| T!['"']),
+            )),
+        )
+        .map_with(|((_, name), _), e| (name, e.span()))
+        .boxed();
+
+    just(T!["test"])
+        .map_with(|_, e| ("test".to_string(), e.span()))
+        .then(name_parser.or_not())
+        .then(
+            just(T!["{"])
+                .ignore_then(
+                    statement_parser()
+                        .recover_with(via_parser(
+                            default_recovery().map_with(|_, e| (Statement::Error, e.span())),
+                        ))
+                        .repeated()
+                        .collect(),
+                )
+                .then_ignore(
+                    just(T!["}"])
+                        .recover_with(via_parser(default_recovery().or_not().map(|_| T!["}"]))),
+                )
+                .recover_with(via_parser(
+                    default_recovery()
+                        .repeated()
+                        .then(just(T!["}"]))
+                        .or_not()
+                        .map(|_| vec![]),
+                )),
+        )
+        .map_with(|((test_keyword, name), body), e| {
+            (
+                GlobalStatement::TestBlock(test_keyword, name, body),
+                e.span(),
+            )
+        })
+        .boxed()
+        .labelled("test block")
+}
+
 pub fn global_statement_parser<'a>() -> impl AmberParser<'a, Vec<Spanned<GlobalStatement>>> {
     let statement = statement_parser()
         .map(|stmnt| (GlobalStatement::Statement(Box::new(stmnt.clone())), stmnt.1))
@@ -423,6 +479,7 @@ pub fn global_statement_parser<'a>() -> impl AmberParser<'a, Vec<Spanned<GlobalS
         import_parser(),
         function_parser(),
         main_parser(),
+        test_parser(),
         pub_const_parser(),
         pub_var_parser(),
         statement,

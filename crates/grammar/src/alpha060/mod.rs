@@ -296,6 +296,14 @@ pub enum GlobalStatement {
         Spanned<VariableInitType>,
     ),
     Statement(Box<Spanned<Statement>>),
+    /// Test block
+    ///
+    /// "test", optional name, body
+    TestBlock(
+        Spanned<String>,
+        Option<Spanned<String>>,
+        Vec<Spanned<Statement>>,
+    ),
 }
 
 #[derive(Debug)]
