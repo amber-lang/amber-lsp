@@ -45,8 +45,12 @@ use amber_grammar::{
 };
 use amber_types::paths::FileId;
 
+/// Positions at or above this threshold are synthetic shadow definitions
+/// created by type narrowing, not real source positions.
+pub const SYNTHETIC_THRESHOLD: usize = usize::MAX / 2;
+
 /// Counter for generating unique synthetic offsets for type narrowing shadow definitions.
-static SYNTHETIC_OFFSET: AtomicUsize = AtomicUsize::new(usize::MAX / 2);
+static SYNTHETIC_OFFSET: AtomicUsize = AtomicUsize::new(SYNTHETIC_THRESHOLD);
 
 use super::exp::{
     analyze_exp,

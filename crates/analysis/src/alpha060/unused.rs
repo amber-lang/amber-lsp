@@ -37,6 +37,8 @@ fn def_key(name: &str, loc: &SymbolLocation) -> DefKey {
 
 /// Precompute the set of definitions that are actually referenced
 fn build_used_defs(symbol_table: &SymbolTable) -> HashSet<DefKey> {
+    use super::stmnts::SYNTHETIC_THRESHOLD;
+
     let mut used = HashSet::new();
 
     for (name, references) in &symbol_table.references {
@@ -52,6 +54,17 @@ fn build_used_defs(symbol_table: &SymbolTable) -> HashSet<DefKey> {
                         }
                     }
                     used.insert(def_key(name, resolved));
+
+                    // If the reference resolved to a synthetic shadow definition
+                    // (created by type narrowing), also mark the original
+                    // (non-synthetic) definitions as used.
+                    if resolved.start >= SYNTHETIC_THRESHOLD {
+                        for (_, original) in defs.iter() {
+                            if original.start < SYNTHETIC_THRESHOLD {
+                                used.insert(def_key(name, original));
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -172,6 +185,11 @@ pub fn check_unused_symbols(file_id: FileId, file_version: FileVersion, files: &
     // ── Check variables and functions ─────────────────────────────────────
     for (_, symbol_info) in symbol_table.symbols.iter() {
         if !symbol_info.is_definition {
+            continue;
+        }
+
+        // Skip synthetic shadow definitions created by type narrowing.
+        if symbol_info.span.start >= super::stmnts::SYNTHETIC_THRESHOLD {
             continue;
         }
 

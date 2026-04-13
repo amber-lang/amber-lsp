@@ -4223,3 +4223,49 @@ test "failable in test" {
         errors
     );
 }
+
+#[test]
+async fn test_no_unused_warning_for_narrowed_variable() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+fun test_narrowing(a: Text | Int) {
+    if a is Text {
+        return a
+    } else {
+        return 2
+    }
+}
+"#,
+    )
+    .await
+    .unwrap();
+
+    backend.open_document(&uri).await.unwrap();
+
+    // `a` is used inside a type-narrowed block — should NOT produce unused warning.
+    assert_debug_snapshot!(backend.files.unused_diagnostics);
+}
