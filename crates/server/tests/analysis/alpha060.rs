@@ -4725,3 +4725,60 @@ bar(b, "Hello")
         .collect::<Vec<String>>());
     assert_debug_snapshot!(backend.files.errors);
 }
+
+#[test]
+async fn test_ref_array_return_type_inference() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+pub fun array_shift(ref array) {
+    const element = array[0]
+    array = array[1..2]
+    return element
+}
+
+let x = [1, 2, 3]
+let v = array_shift(x)
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    // `v` should be inferred as Int (the element type of [Int])
+    let v_symbol = symbol_table
+        .symbols
+        .iter()
+        .find(|(_, si)| si.name == "v" && si.is_definition)
+        .map(|(_, si)| si.clone())
+        .expect("Should find variable v");
+
+    assert_eq!(v_symbol.data_type.to_string(&generic_types), "Int");
+}
