@@ -300,6 +300,20 @@ pub fn make_union_type(types: Vec<DataType>) -> DataType {
         .filter(|ty| seen.insert(ty.clone()))
         .collect();
 
+    // When there is a concrete Array(T) alongside Array(Any) (empty array),
+    // drop Array(Any) so the concrete element type wins.
+    let has_concrete_array = dedup_types
+        .iter()
+        .any(|ty| matches!(ty, DataType::Array(inner) if !matches!(inner.as_ref(), DataType::Any)));
+    let dedup_types: Vec<DataType> = if has_concrete_array {
+        dedup_types
+            .into_iter()
+            .filter(|ty| !matches!(ty, DataType::Array(inner) if matches!(inner.as_ref(), DataType::Any)))
+            .collect()
+    } else {
+        dedup_types
+    };
+
     if dedup_types.len() == 1 {
         dedup_types[0].clone()
     } else {

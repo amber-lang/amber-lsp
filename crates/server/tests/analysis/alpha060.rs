@@ -2992,7 +2992,7 @@ async fn test_union_type_complex_arg() {
     vfs.write(
         &uri.to_file_path().unwrap(),
         "
-fun complex(x: Int | [Num? | Int] | Text | Null?) {
+fun complex(x: Int | [Num]? | Text | Null?) {
 }
 ",
     )
@@ -4268,4 +4268,460 @@ fun test_narrowing(a: Text | Int) {
 
     // `a` is used inside a type-narrowed block — should NOT produce unused warning.
     assert_debug_snapshot!(backend.files.unused_diagnostics);
+}
+
+#[test]
+async fn test_empty_array_type_inference_shorthand_add() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+let arr = []
+arr += [1]
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    // After `arr += [1]`, the variable `arr` should be inferred as [Int]
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_empty_array_type_inference_reassignment() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+let array = []
+array += [1]
+
+let array2 = []
+array2 = [1, 2, 3]
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_empty_array_type_inference_binary_op() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+let a = [1, 2, 3] + []
+let b = [] + [4, 5, 6]
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    // Both `a` and `b` should be [Int]
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_empty_array_type_inference_ternary() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+let a = true then [1, 2, 3] else []
+let b = false then [] else [4, 5, 6]
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    // Both `a` and `b` should be [Int]
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_empty_array_type_inference_function_param() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun foo(arr: [Int]) {
+    let x = arr + [1]
+}
+foo([])
+",
+    )
+    .await
+    .unwrap();
+
+    let _ = backend.open_document(&uri).await.unwrap();
+
+    // Passing [] to a param typed [Int] should produce no errors
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_empty_array_type_inference_function_ref() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun foo(ref arg: [Int]) {
+    arg += [5]
+}
+let a = []
+foo(a)
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    // `a` should be refined to [Int] after being passed to ref param typed [Int]
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_empty_array_type_inference_comparison() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+let a = []
+let r1 = a > [1]
+let r2 = a < [1]
+let r3 = a >= [1]
+let r4 = a <= [1]
+
+let b = []
+b < [1]
+b += [1]
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_empty_array_type_inference_ref_deep() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        "
+fun level2(ref arr: [Int]) {
+    arr += [10]
+}
+fun level1(ref arr: [Int]) {
+    level2(arr)
+}
+let a = []
+level1(a)
+",
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    // `a` should be inferred as [Int] through deep ref passing
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
+}
+
+#[test]
+async fn test_empty_array_type_inference_generic_ref_param() {
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(
+        &uri.to_file_path().unwrap(),
+        r#"
+fun bar(ref arg, val) {
+    arg += [val]
+}
+
+let b = []
+bar(b, "Hello")
+"#,
+    )
+    .await
+    .unwrap();
+
+    let file_id = backend.open_document(&uri).await.unwrap();
+
+    let symbol_table = backend.files.symbol_table.get(&file_id).unwrap();
+    let generic_types = backend.files.generic_types.clone();
+
+    // `b` should be inferred as [Text] from bar(b, "Hello")
+    assert_debug_snapshot!(symbol_table
+        .symbols
+        .iter()
+        .map(|(_, symbol_info)| symbol_info.to_string(&generic_types))
+        .collect::<Vec<String>>());
+    assert_debug_snapshot!(backend.files.errors);
 }

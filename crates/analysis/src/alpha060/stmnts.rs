@@ -1014,8 +1014,38 @@ pub fn analyze_stmnt(
                 );
             }
 
-            if let DataType::Generic(id) = var_ty {
-                scoped_generic_types.constrain_generic_type(id, exp_analysis.exp_ty);
+            if let DataType::Generic(id) = &var_ty {
+                scoped_generic_types.constrain_generic_type(*id, exp_analysis.exp_ty.clone());
+            }
+
+            // If the variable was initialized as an empty array [Any], refine its
+            // type from the RHS so that `let x = []; x += [1]` infers x as [Int].
+            if let DataType::Array(inner) = &var_ty {
+                if matches!(inner.as_ref(), DataType::Any) {
+                    if let DataType::Array(_) = &exp_analysis.exp_ty {
+                        // Look up the original definition location
+                        // (read guard is dropped at the end of this block)
+                        let def_location = {
+                            files.symbol_table.get(&file).and_then(|st| {
+                                st.definitions
+                                    .get(var)
+                                    .and_then(|defs| defs.get(&var_span.start).cloned())
+                            })
+                        };
+
+                        if let Some(def_location) = def_location {
+                            if let Some(mut st) = files.symbol_table.get_mut(&def_location.file) {
+                                if let Some(sym_info) = st.symbols.get(&def_location.start).cloned()
+                                {
+                                    let mut updated = sym_info;
+                                    updated.data_type = exp_analysis.exp_ty.clone();
+                                    st.symbols
+                                        .insert(def_location.start..=def_location.end, updated);
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             insert_symbol_reference(
@@ -1313,11 +1343,38 @@ pub fn analyze_stmnt(
                 file_id,
                 file_version,
                 exp,
-                var_ty,
+                var_ty.clone(),
                 files,
                 scoped_generic_types,
                 contexts,
             );
+
+            // If the variable was an empty array [Any], refine its type from the RHS.
+            if let DataType::Array(inner) = &var_ty {
+                if matches!(inner.as_ref(), DataType::Any) {
+                    if let DataType::Array(_) = &exp_analysis.exp_ty {
+                        let def_location = {
+                            files.symbol_table.get(&file).and_then(|st| {
+                                st.definitions
+                                    .get(var)
+                                    .and_then(|defs| defs.get(&var_span.start).cloned())
+                            })
+                        };
+
+                        if let Some(def_location) = def_location {
+                            if let Some(mut st) = files.symbol_table.get_mut(&def_location.file) {
+                                if let Some(sym_info) = st.symbols.get(&def_location.start).cloned()
+                                {
+                                    let mut updated = sym_info;
+                                    updated.data_type = exp_analysis.exp_ty.clone();
+                                    st.symbols
+                                        .insert(def_location.start..=def_location.end, updated);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             insert_symbol_reference(
                 var,

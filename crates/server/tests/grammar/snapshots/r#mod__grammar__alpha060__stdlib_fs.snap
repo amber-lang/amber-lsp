@@ -4320,9 +4320,11 @@ expression: parse_unwrap(&tokenize(&stdlib))
                             4633..4638,
                         ),
                         (
-                            DataType(
+                            Expression(
                                 (
-                                    [Any],
+                                    Array(
+                                        [],
+                                    ),
                                     4641..4643,
                                 ),
                             ),

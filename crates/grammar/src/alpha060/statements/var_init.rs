@@ -1,7 +1,7 @@
 use chumsky::prelude::*;
 
 use crate::alpha060::expressions::parse_expr;
-use crate::alpha060::global::type_parser;
+use crate::alpha060::global::type_parser_no_empty_array;
 use crate::alpha060::parser::{
     default_recovery,
     ident,
@@ -31,7 +31,7 @@ pub fn var_init_parser<'a>(
         )
         .then(
             choice((
-                type_parser().map(VariableInitType::DataType),
+                type_parser_no_empty_array().map(VariableInitType::DataType),
                 parse_expr(stmnts).map(VariableInitType::Expression),
             ))
             .recover_with(via_parser(

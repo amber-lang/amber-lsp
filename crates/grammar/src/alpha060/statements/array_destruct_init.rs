@@ -1,7 +1,6 @@
 use chumsky::prelude::*;
 
 use crate::alpha060::expressions::parse_expr;
-use crate::alpha060::global::type_parser;
 use crate::alpha060::parser::{
     default_recovery,
     ident,
@@ -41,14 +40,12 @@ pub fn array_destruct_init_parser<'a>(
             just(T!["="]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["="]))),
         )
         .then(
-            choice((
-                type_parser().map(VariableInitType::DataType),
-                parse_expr(stmnts).map(VariableInitType::Expression),
-            ))
-            .recover_with(via_parser(
-                default_recovery().or_not().map(|_| VariableInitType::Error),
-            ))
-            .map_with(|val, e| (val, e.span())),
+            parse_expr(stmnts)
+                .map(VariableInitType::Expression)
+                .recover_with(via_parser(
+                    default_recovery().or_not().map(|_| VariableInitType::Error),
+                ))
+                .map_with(|val, e| (val, e.span())),
         )
         .map_with(|((let_keyword, names), value), e| {
             (

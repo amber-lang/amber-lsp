@@ -1,6 +1,5 @@
 ---
 source: crates/server/tests/grammar/alpha060.rs
-assertion_line: 531
 expression: parse_unwrap(&tokenize(input))
 ---
 [
@@ -9,7 +8,7 @@ expression: parse_unwrap(&tokenize(input))
             [],
             (
                 false,
-                5..58,
+                5..52,
             ),
             (
                 "fun",
@@ -31,16 +30,16 @@ expression: parse_unwrap(&tokenize(input))
                             13..14,
                         ),
                         (
-                            Int | [Num? | Int] | Text | Null?,
-                            16..49,
+                            Int | [Num]? | Text | Null?,
+                            16..43,
                         ),
                     ),
-                    13..49,
+                    13..43,
                 ),
             ],
             None,
             [],
         ),
-        5..58,
+        5..52,
     ),
 ]

@@ -104,53 +104,99 @@ pub fn import_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
 }
 
 pub fn type_parser<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
-    recursive(|union_type| {
-        let literal_type = choice((
-            just(T!["Text"]).to(DataType::Text),
-            just(T!["Num"]).to(DataType::Number),
-            just(T!["Int"]).to(DataType::Int),
-            just(T!["Bool"]).to(DataType::Boolean),
-            just(T!["Null"]).to(DataType::Null),
-        ))
+    let literal_type = choice((
+        just(T!["Text"]).to(DataType::Text),
+        just(T!["Num"]).to(DataType::Number),
+        just(T!["Int"]).to(DataType::Int),
+        just(T!["Bool"]).to(DataType::Boolean),
+        just(T!["Null"]).to(DataType::Null),
+    ))
+    .boxed();
+
+    let array_type = just(T!["["])
+        .ignore_then(literal_type.clone().or_not())
+        .then_ignore(just(T!["]"]))
+        .map(|ty| DataType::Array(Box::new(ty.unwrap_or(DataType::Any))))
         .boxed();
 
-        let array_type = just(T!["["])
-            .ignore_then(union_type.or_not())
-            .then_ignore(just(T!["]"]))
-            .map(|ty| DataType::Array(Box::new(ty.unwrap_or(DataType::Any))))
-            .boxed();
+    // single_type := (literal_type | array_type) "?"?
+    let single_type = literal_type
+        .or(array_type)
+        .then(
+            just(T!["?"])
+                .or_not()
+                .map(|is_optional| is_optional.is_some()),
+        )
+        .map(|(ty, is_optional)| match is_optional {
+            true => DataType::Failable(Box::new(ty)),
+            _ => ty,
+        })
+        .boxed();
 
-        // single_type := (literal_type | array_type) "?"?
-        let single_type = literal_type
-            .or(array_type)
-            .then(
-                just(T!["?"])
-                    .or_not()
-                    .map(|is_optional| is_optional.is_some()),
-            )
-            .map(|(ty, is_optional)| match is_optional {
-                true => DataType::Failable(Box::new(ty)),
-                _ => ty,
-            })
-            .boxed();
+    // union_type := single_type ("|" single_type)*
+    single_type
+        .clone()
+        .separated_by(just(T!["|"]))
+        .at_least(1)
+        .collect::<Vec<DataType>>()
+        .map(|types| {
+            if types.len() == 1 {
+                types.into_iter().next().unwrap()
+            } else {
+                DataType::Union(types)
+            }
+        })
+        .map_with(|ty, e| (ty, e.span()))
+        .labelled("type")
+        .boxed()
+}
 
-        // union_type := single_type ("|" single_type)*
-        single_type
-            .clone()
-            .separated_by(just(T!["|"]))
-            .at_least(1)
-            .collect::<Vec<DataType>>()
-            .map(|types| {
-                if types.len() == 1 {
-                    types.into_iter().next().unwrap()
-                } else {
-                    DataType::Union(types)
-                }
-            })
-    })
-    .map_with(|ty, e| (ty, e.span()))
-    .labelled("type")
-    .boxed()
+pub fn type_parser_no_empty_array<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
+    let literal_type = choice((
+        just(T!["Text"]).to(DataType::Text),
+        just(T!["Num"]).to(DataType::Number),
+        just(T!["Int"]).to(DataType::Int),
+        just(T!["Bool"]).to(DataType::Boolean),
+        just(T!["Null"]).to(DataType::Null),
+    ))
+    .boxed();
+
+    let array_type = just(T!["["])
+        .ignore_then(literal_type.clone())
+        .then_ignore(just(T!["]"]))
+        .map(|ty| DataType::Array(Box::new(ty)))
+        .boxed();
+
+    // single_type := (literal_type | array_type) "?"?
+    let single_type = literal_type
+        .or(array_type)
+        .then(
+            just(T!["?"])
+                .or_not()
+                .map(|is_optional| is_optional.is_some()),
+        )
+        .map(|(ty, is_optional)| match is_optional {
+            true => DataType::Failable(Box::new(ty)),
+            _ => ty,
+        })
+        .boxed();
+
+    // union_type := single_type ("|" single_type)*
+    single_type
+        .clone()
+        .separated_by(just(T!["|"]))
+        .at_least(1)
+        .collect::<Vec<DataType>>()
+        .map(|types| {
+            if types.len() == 1 {
+                types.into_iter().next().unwrap()
+            } else {
+                DataType::Union(types)
+            }
+        })
+        .map_with(|ty, e| (ty, e.span()))
+        .labelled("type")
+        .boxed()
 }
 
 fn compiler_flag_parser<'a>() -> impl AmberParser<'a, Spanned<CompilerFlag>> {
@@ -388,7 +434,7 @@ pub fn pub_var_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         )
         .then(
             choice((
-                type_parser().map(VariableInitType::DataType),
+                type_parser_no_empty_array().map(VariableInitType::DataType),
                 parse_expr(statement_parser()).map(VariableInitType::Expression),
             ))
             .recover_with(via_parser(

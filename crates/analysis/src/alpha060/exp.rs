@@ -208,6 +208,9 @@ pub fn analyze_exp(
             };
 
             let mut generics_to_restore: Vec<(usize, DataType)> = vec![];
+            // Collect ref params with [Any] variables for deferred refinement
+            // after all arguments have been processed and generics resolved.
+            let mut pending_ref_refinements: Vec<(String, chumsky::span::SimpleSpan)> = vec![];
 
             args.iter().enumerate().for_each(|(idx, arg)| {
                 if let Some((ty, _, is_ref, _)) = expected_types.get(idx) {
@@ -244,6 +247,18 @@ pub fn analyze_exp(
                             generics_to_restore.push((*id, scoped_generic_types.get(*id)));
                         }
                         scoped_generic_types.constrain_generic_type(*id, arg_result.exp_ty.clone());
+                    }
+
+                    // If a variable with type [Any] is passed to a ref param,
+                    // defer refinement until all args are processed (generics resolved).
+                    if *is_ref {
+                        if let Expression::Var((var_name, var_span)) = &arg.0 {
+                            if let DataType::Array(inner) = &arg_result.exp_ty {
+                                if matches!(inner.as_ref(), DataType::Any) {
+                                    pending_ref_refinements.push((var_name.clone(), *var_span));
+                                }
+                            }
+                        }
                     }
                 } else {
                     files.report_error(
@@ -286,6 +301,42 @@ pub fn analyze_exp(
                 .clone()
                 .map(|fun_symbol| fun_symbol.data_type)
                 .unwrap_or(DataType::Null);
+
+            // Now that all arguments are processed and generics are fully
+            // constrained, apply deferred ref-param refinements for [Any] variables.
+            for (var_name, var_span) in &pending_ref_refinements {
+                // Find the matching ref param's type from expected_types
+                let param_idx = args
+                    .iter()
+                    .position(|(arg_exp, _)| {
+                        matches!(arg_exp, Expression::Var((n, s)) if n == var_name && s == var_span)
+                    });
+                if let Some(idx) = param_idx {
+                    if let Some((ty, _, _, _)) = expected_types.get(idx) {
+                        let resolved_ty = scoped_generic_types.deref_type(ty);
+                        if let DataType::Array(_) = &resolved_ty {
+                            let def_location = {
+                                files.symbol_table.get(&file).and_then(|st| {
+                                    st.definitions
+                                        .get(var_name.as_str())
+                                        .and_then(|defs| defs.get(&var_span.start).cloned())
+                                })
+                            };
+
+                            if let Some(def_loc) = def_location {
+                                if let Some(mut st) = files.symbol_table.get_mut(&def_loc.file) {
+                                    if let Some(sym_info) = st.symbols.get(&def_loc.start).cloned()
+                                    {
+                                        let mut updated = sym_info;
+                                        updated.data_type = resolved_ty;
+                                        st.symbols.insert(def_loc.start..=def_loc.end, updated);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             let StmntAnalysisResult {
                 return_ty: failure_return_ty,
@@ -431,20 +482,45 @@ pub fn analyze_exp(
             }
         }
         Expression::Add(exp1, exp2) => {
-            analyze_binop_codep!(
-                exp1,
-                DataType::Union(vec![
+            let add_expected = DataType::Union(vec![
+                DataType::Number,
+                DataType::Int,
+                DataType::Text,
+                DataType::Array(Box::new(DataType::Union(vec![
                     DataType::Number,
                     DataType::Int,
                     DataType::Text,
-                    DataType::Array(Box::new(DataType::Union(vec![
-                        DataType::Number,
-                        DataType::Int,
-                        DataType::Text,
-                    ]))),
-                ]),
-                exp2
-            )
+                ]))),
+            ]);
+            let lhs_result = analyze_expr!(exp1, add_expected);
+            let rhs_result = analyze_expr!(exp2, lhs_result.exp_ty.clone());
+
+            if let DataType::Generic(id) = lhs_result.exp_ty.clone() {
+                scoped_generic_types.constrain_generic_type(id, rhs_result.exp_ty.clone());
+            }
+
+            if !matches_type(&rhs_result.exp_ty, &lhs_result.exp_ty, scoped_generic_types) {
+                files.report_error(
+                    &file,
+                    &format!(
+                        "Expected type {}, found type {}",
+                        rhs_result.exp_ty.to_string(scoped_generic_types),
+                        lhs_result.exp_ty.to_string(scoped_generic_types),
+                    ),
+                    exp1.1,
+                );
+            }
+
+            // When LHS is an empty array [Any], use the concrete RHS array type.
+            match &lhs_result.exp_ty {
+                DataType::Array(inner) if matches!(inner.as_ref(), DataType::Any) => {
+                    match &rhs_result.exp_ty {
+                        DataType::Array(_) => rhs_result.exp_ty,
+                        _ => lhs_result.exp_ty,
+                    }
+                }
+                _ => lhs_result.exp_ty,
+            }
         }
         Expression::And(exp1, _, exp2) | Expression::Or(exp1, _, exp2) => {
             analyze_binop_codep!(exp1, DataType::Boolean, exp2);
@@ -553,6 +629,7 @@ pub fn analyze_exp(
 
             let right_constrain_ty = get_constrain_ty_for_compare(rhs.exp_ty, scoped_generic_types);
 
+            let lhs_exp_ty = lhs.exp_ty.clone();
             if let DataType::Generic(id) = lhs.exp_ty.clone() {
                 scoped_generic_types.constrain_generic_type(id, right_constrain_ty.clone());
                 left_constrain_ty = get_constrain_ty_for_compare(lhs.exp_ty, scoped_generic_types);
@@ -572,6 +649,32 @@ pub fn analyze_exp(
                     ),
                     exp1.1,
                 );
+            }
+
+            // If LHS is a variable with [Any] and RHS is a concrete array,
+            // refine the variable's definition type.
+            if let Expression::Var((var_name, var_span)) = &exp1.0 {
+                if matches!(&lhs_exp_ty, DataType::Array(inner) if matches!(inner.as_ref(), DataType::Any))
+                {
+                    if let DataType::Array(_) = &right_constrain_ty {
+                        let def_location = {
+                            files.symbol_table.get(&file).and_then(|st| {
+                                st.definitions
+                                    .get(var_name.as_str())
+                                    .and_then(|defs| defs.get(&var_span.start).cloned())
+                            })
+                        };
+                        if let Some(def_loc) = def_location {
+                            if let Some(mut st) = files.symbol_table.get_mut(&def_loc.file) {
+                                if let Some(sym_info) = st.symbols.get(&def_loc.start).cloned() {
+                                    let mut updated = sym_info;
+                                    updated.data_type = right_constrain_ty;
+                                    st.symbols.insert(def_loc.start..=def_loc.end, updated);
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             DataType::Boolean

@@ -514,18 +514,9 @@ fn test_union_type_with_array() {
 }
 
 #[test]
-fn test_union_type_array_with_union_inside() {
-    let input = r#"
-    fun foo(x: [Int | Text]) {
-    }
-"#;
-    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
-}
-
-#[test]
 fn test_union_type_complex() {
     let input = r#"
-    fun foo(x: Int | [Num? | Int] | Text | Null?) {
+    fun foo(x: Int | [Num]? | Text | Null?) {
     }
 "#;
     assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
@@ -588,15 +579,6 @@ fn test_union_type_array_failable() {
 fn test_union_type_all_primitives() {
     let input = r#"
     fun foo(x: Int | Num | Text | Bool | Null) {
-    }
-"#;
-    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
-}
-
-#[test]
-fn test_union_type_nested_array_with_failable() {
-    let input = r#"
-    fun foo(x: [Num? | Int]) {
     }
 "#;
     assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
@@ -710,4 +692,12 @@ fn test_multiple_test_blocks() {
     }
 "#;
     assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_empty_array_plus_expr() {
+    let input = "let b = [] + [4, 5, 6]\n";
+    let tokens = tokenize(input);
+    let (ast, errors) = parse(&tokens);
+    assert_debug_snapshot!((ast, errors));
 }
