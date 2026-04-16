@@ -142,13 +142,18 @@ fn extract_narrowings(expr: &Expression) -> HashMap<String, Narrowing> {
         }
         Expression::Not(_, inner) => {
             // `not expr` flips narrowings to exclusions and vice versa
+            // When `not expr` is TRUE, `expr` is FALSE → use exclusions from inner
             let inner_exclusions = extract_exclusions(&inner.0);
             let mut result = HashMap::new();
-            for (name, types) in inner_exclusions {
-                if types.len() == 1 {
-                    result.insert(name, Narrowing::Include(types.into_iter().next().unwrap()));
-                } else {
-                    result.insert(name, Narrowing::Include(make_union_type(types)));
+            for (name, narrowing) in inner_exclusions {
+                // Flip: exclusions become inclusions, inclusions become exclusions
+                match narrowing {
+                    Narrowing::Exclude(types) => {
+                        result.insert(name, Narrowing::Include(make_union_type(types)));
+                    }
+                    Narrowing::Include(ty) => {
+                        result.insert(name, Narrowing::Exclude(vec![ty]));
+                    }
                 }
             }
             // Also convert inner narrowings into exclusions
@@ -214,58 +219,73 @@ fn extract_narrowings(expr: &Expression) -> HashMap<String, Narrowing> {
     }
 }
 
-/// Extract type exclusions from a condition expression.
-/// Returns the types to EXCLUDE from each variable when the condition is FALSE.
+/// Combine two narrowings under AND semantics (both must hold simultaneously).
+fn combine_narrowings_and(a: &Narrowing, b: &Narrowing) -> Narrowing {
+    match (a, b) {
+        (Narrowing::Exclude(a_types), Narrowing::Exclude(b_types)) => {
+            let mut combined = a_types.clone();
+            combined.extend(b_types.iter().cloned());
+            Narrowing::Exclude(combined)
+        }
+        (Narrowing::Include(ty), Narrowing::Exclude(excluded))
+        | (Narrowing::Exclude(excluded), Narrowing::Include(ty)) => {
+            Narrowing::Include(subtract_types(ty, excluded))
+        }
+        (Narrowing::Include(_), Narrowing::Include(b_ty)) => Narrowing::Include(b_ty.clone()),
+    }
+}
+
+/// Extract type narrowings from a condition expression for when the condition is FALSE.
+/// Returns a map of variable name → narrowing to apply in the else branch or
+/// after an early-return if-block.
 ///
 /// For `a is Int`: excludes `Int` from `a`.
-/// For `not (a is Int)`: excludes nothing (the negation was true, so we can't exclude `Int`).
+/// For `not (a is Int)`: includes `Int` for `a` (since `not (a is Int)` being false means `a is Int`).
 /// For `a is Int or a is Bool`: excludes both `Int` and `Bool` from `a`.
 /// For `a is Int and b is Text`: can't exclude anything (De Morgan's law).
-fn extract_exclusions(expr: &Expression) -> HashMap<String, Vec<DataType>> {
+fn extract_exclusions(expr: &Expression) -> HashMap<String, Narrowing> {
     match expr {
         Expression::Is(inner_expr, _, (data_type, _)) => {
             if let Expression::Var((name, _)) = &inner_expr.0 {
                 if !matches!(data_type, DataType::Error) {
                     let mut map = HashMap::new();
-                    map.insert(name.clone(), vec![data_type.clone()]);
+                    map.insert(name.clone(), Narrowing::Exclude(vec![data_type.clone()]));
                     return map;
                 }
             }
             HashMap::new()
         }
         Expression::Not(_, inner) => {
-            // NOT (NOT (a is Int)) → a is Int → no exclusion (we'd need inclusion)
-            // For else-branch exclusion purposes, `not (a is X)` being false means `a is X` was true
-            // So the exclusion from the negated condition is the narrowing of the inner
-            let inner_narrowings = extract_narrowings(&inner.0);
-            let mut result = HashMap::new();
-            for (name, narrowing) in inner_narrowings {
-                if let Narrowing::Include(ty) = narrowing {
-                    result.insert(name, vec![ty]);
-                }
-            }
-            result
+            // not(expr) is FALSE → expr is TRUE → use the narrowings of the inner
+            extract_narrowings(&inner.0)
         }
         Expression::Or(lhs, _, rhs) => {
             // NOT (A or B) = NOT A AND NOT B
-            let mut exclusions = extract_exclusions(&lhs.0);
+            let mut result = extract_exclusions(&lhs.0);
             let rhs_exclusions = extract_exclusions(&rhs.0);
-            for (name, types) in rhs_exclusions {
-                exclusions.entry(name).or_default().extend(types);
+            for (name, narrowing) in rhs_exclusions {
+                result
+                    .entry(name)
+                    .and_modify(|existing| {
+                        *existing = combine_narrowings_and(existing, &narrowing);
+                    })
+                    .or_insert(narrowing);
             }
-            exclusions
+            result
         }
         Expression::And(lhs, _, rhs) => {
             // NOT (A and B) = NOT A OR NOT B — can't exclude individually in general
-            // But if both sides exclude the same variable, we can take the intersection
+            // But if both sides affect the same variable, we can combine
             let lhs_exclusions = extract_exclusions(&lhs.0);
             let rhs_exclusions = extract_exclusions(&rhs.0);
             let mut result = HashMap::new();
-            for (name, lhs_types) in &lhs_exclusions {
-                if let Some(rhs_types) = rhs_exclusions.get(name) {
-                    let mut combined = lhs_types.clone();
-                    combined.extend(rhs_types.iter().cloned());
-                    result.insert(name.clone(), combined);
+            for (name, lhs_n) in &lhs_exclusions {
+                if let Some(rhs_n) = rhs_exclusions.get(name) {
+                    if let (Narrowing::Exclude(a), Narrowing::Exclude(b)) = (lhs_n, rhs_n) {
+                        let mut combined = a.clone();
+                        combined.extend(b.iter().cloned());
+                        result.insert(name.clone(), Narrowing::Exclude(combined));
+                    }
                 }
             }
             result
@@ -321,7 +341,12 @@ fn apply_type_narrowings(
 
         if let Some(original_info) = original_info {
             let narrowed_type = match narrowing {
-                Narrowing::Include(ty) => ty.clone(),
+                Narrowing::Include(ty) => {
+                    if *ty == original_info.data_type {
+                        continue;
+                    }
+                    ty.clone()
+                }
                 Narrowing::Exclude(excluded) => {
                     let result = subtract_types(&original_info.data_type, excluded);
                     if result == original_info.data_type {
@@ -394,7 +419,7 @@ pub fn analyze_stmnt(
         Statement::IfChain(_, if_chain) => {
             let mut stmnts = vec![];
             let mut exps = vec![];
-            let mut all_exclusions: HashMap<String, Vec<DataType>> = HashMap::new();
+            let mut all_exclusions: HashMap<String, Narrowing> = HashMap::new();
 
             for (if_chain_content, _) in if_chain.iter() {
                 match if_chain_content {
@@ -430,8 +455,13 @@ pub fn analyze_stmnt(
                             );
 
                             let exclusions = extract_exclusions(&exp.0);
-                            for (name, types) in exclusions {
-                                all_exclusions.entry(name).or_default().extend(types);
+                            for (name, narrowing) in exclusions {
+                                all_exclusions
+                                    .entry(name)
+                                    .and_modify(|existing| {
+                                        *existing = combine_narrowings_and(existing, &narrowing);
+                                    })
+                                    .or_insert(narrowing);
                             }
 
                             exps.push(exp_result);
@@ -445,19 +475,12 @@ pub fn analyze_stmnt(
                     },
                     IfChainContent::Else((else_cond, _)) => match else_cond {
                         ElseCondition::Else(_, block) => {
-                            // Compute narrowings for else branch by subtracting
-                            // all excluded types from original variable types
+                            // Compute narrowings for else branch from accumulated exclusions
                             if !all_exclusions.is_empty() {
-                                let else_narrowings: HashMap<String, Narrowing> = all_exclusions
-                                    .iter()
-                                    .map(|(name, excluded)| {
-                                        (name.clone(), Narrowing::Exclude(excluded.clone()))
-                                    })
-                                    .collect();
                                 apply_type_narrowings(
                                     file_id,
                                     file_version,
-                                    &else_narrowings,
+                                    &all_exclusions,
                                     block.1,
                                     files,
                                     contexts,
@@ -488,7 +511,7 @@ pub fn analyze_stmnt(
         Statement::IfCondition(_, if_cond, comments, else_cond) => {
             let mut stmnts = vec![];
             let mut exps = vec![];
-            let mut condition_exclusions: HashMap<String, Vec<DataType>> = HashMap::new();
+            let mut condition_exclusions: HashMap<String, Narrowing> = HashMap::new();
 
             match &if_cond.0 {
                 IfCondition::IfCondition(exp, block) => {
@@ -542,16 +565,10 @@ pub fn analyze_stmnt(
                 match &else_cond.0 {
                     ElseCondition::Else(_, block) => {
                         if !condition_exclusions.is_empty() {
-                            let else_narrowings: HashMap<String, Narrowing> = condition_exclusions
-                                .iter()
-                                .map(|(name, excluded)| {
-                                    (name.clone(), Narrowing::Exclude(excluded.clone()))
-                                })
-                                .collect();
                             apply_type_narrowings(
                                 file_id,
                                 file_version,
-                                &else_narrowings,
+                                &condition_exclusions,
                                 block.1,
                                 files,
                                 contexts,
@@ -568,6 +585,30 @@ pub fn analyze_stmnt(
                         );
 
                         stmnts.push(block);
+                    }
+                }
+            } else if !condition_exclusions.is_empty() {
+                // Early-return fall-through: if the if-block terminates and
+                // there's no else, apply condition exclusions to subsequent
+                // code in the parent scope.
+                let if_terminates = match &if_cond.0 {
+                    IfCondition::IfCondition(_, block) => block_terminates(&block.0),
+                    _ => false,
+                };
+                if if_terminates {
+                    // Start one position after the if-statement to avoid
+                    // picking up the synthetic narrowing from the if-block.
+                    let fallthrough_start = span.end + 1;
+                    if fallthrough_start < scope_end {
+                        let fallthrough_span = Span::from(fallthrough_start..scope_end);
+                        apply_type_narrowings(
+                            file_id,
+                            file_version,
+                            &condition_exclusions,
+                            fallthrough_span,
+                            files,
+                            contexts,
+                        );
                     }
                 }
             }

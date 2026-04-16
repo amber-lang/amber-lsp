@@ -4782,3 +4782,39 @@ let v = array_shift(x)
 
     assert_eq!(v_symbol.data_type.to_string(&generic_types), "Int");
 }
+
+#[test]
+async fn test_type_narrowing_early_return_fallthrough() {
+    let symbols = symbols_from_source(
+        r#"
+fun array_filled(size, value = 0) {
+    let array = [value]
+    array = array[0..0]
+
+    if size <= 0 or not (size is Int):
+        return array
+
+    for _ in 0..size:
+        array += [value]
+
+    return array
+}
+"#,
+    )
+    .await;
+
+    // After the early-return if-block, `size` should be narrowed to Int
+    let size_refs: Vec<_> = symbols
+        .iter()
+        .filter(|(name, _, is_def)| name == "size" && !is_def)
+        .collect();
+
+    // The `size` reference in `0..size` (after the if-return) should be Int
+    let has_int_ref = size_refs.iter().any(|(_, ty, _)| ty == "Int");
+
+    assert!(
+        has_int_ref,
+        "Expected size narrowed to Int after early-return guard, refs: {:?}",
+        size_refs
+    );
+}
