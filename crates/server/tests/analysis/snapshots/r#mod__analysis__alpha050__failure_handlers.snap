@@ -1,5 +1,5 @@
 ---
-source: tests/analysis/alpha050.rs
+source: crates/server/tests/analysis/alpha050.rs
 expression: symbol_table.symbols
 ---
 {
@@ -8,6 +8,7 @@ expression: symbol_table.symbols
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
+                is_public: false,
             },
         ),
         data_type: Int,
@@ -21,6 +22,7 @@ expression: symbol_table.symbols
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
+                is_public: false,
             },
         ),
         data_type: Int,
@@ -40,6 +42,7 @@ expression: symbol_table.symbols
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
+                is_public: false,
             },
         ),
         data_type: Int,
@@ -53,6 +56,7 @@ expression: symbol_table.symbols
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
+                is_public: false,
             },
         ),
         data_type: Int,

@@ -1,0 +1,23 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: backend.files.errors
+---
+{
+    (
+        FileId(
+            0,
+        ),
+        FileVersion(
+            1,
+        ),
+    ): [
+        (
+            "File doesn't exist",
+            26..31,
+        ),
+        (
+            "\"MAX_SIZE\" is not defined",
+            41..49,
+        ),
+    ],
+}

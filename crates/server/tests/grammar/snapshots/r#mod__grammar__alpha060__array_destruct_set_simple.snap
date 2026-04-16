@@ -1,0 +1,51 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+expression: "parse_unwrap(&tokenize(\"[a, b] = [1, 2]\"))"
+---
+[
+    (
+        Statement(
+            (
+                ArrayDestructSet(
+                    [
+                        (
+                            "a",
+                            1..2,
+                        ),
+                        (
+                            "b",
+                            4..5,
+                        ),
+                    ],
+                    (
+                        Array(
+                            [
+                                (
+                                    Int(
+                                        (
+                                            1,
+                                            10..11,
+                                        ),
+                                    ),
+                                    10..11,
+                                ),
+                                (
+                                    Int(
+                                        (
+                                            2,
+                                            13..14,
+                                        ),
+                                    ),
+                                    13..14,
+                                ),
+                            ],
+                        ),
+                        9..15,
+                    ),
+                ),
+                0..15,
+            ),
+        ),
+        0..15,
+    ),
+]

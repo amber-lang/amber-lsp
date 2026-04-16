@@ -309,7 +309,10 @@ pub fn analyze_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: var1.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: DataType::Int,
                             is_definition: true,
                             undefined: false,
@@ -325,7 +328,10 @@ pub fn analyze_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: var2.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: iter_type,
                             is_definition: true,
                             undefined: false,
@@ -343,7 +349,10 @@ pub fn analyze_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: var.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: iter_type,
                             is_definition: true,
                             undefined: false,
@@ -406,7 +415,10 @@ pub fn analyze_stmnt(
                 &mut symbol_table,
                 &SymbolInfo {
                     name: var_name.to_string(),
-                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                    symbol_type: SymbolType::Variable(VariableSymbol {
+                        is_const: false,
+                        is_public: false,
+                    }),
                     data_type: var_type,
                     is_definition: true,
                     undefined: false,
@@ -445,7 +457,10 @@ pub fn analyze_stmnt(
                 &mut symbol_table,
                 &SymbolInfo {
                     name: var_name.to_string(),
-                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: true }),
+                    symbol_type: SymbolType::Variable(VariableSymbol {
+                        is_const: true,
+                        is_public: false,
+                    }),
                     data_type: var_type,
                     is_definition: true,
                     undefined: false,
@@ -1153,13 +1168,68 @@ fn handle_doc_strings(docs: &String, contexts: &mut Vec<Context>) -> StmntAnalys
     }
 }
 
+/// Returns `true` if the given block unconditionally terminates
+/// (i.e. its last statement is a terminating statement).
+fn block_terminates(block: &Block) -> bool {
+    match block {
+        Block::Block(_, stmnts) => stmnts
+            .last()
+            .is_some_and(|s| is_terminating_statement(&s.0)),
+        Block::Singleline(stmnt) => is_terminating_statement(&stmnt.0),
+        Block::Error => false,
+    }
+}
+
 /// Returns `true` if the given statement unconditionally terminates
-/// the current block's control flow (return, fail, break, continue).
+/// the current block's control flow (return, fail, break, continue,
+/// or an if/else where all branches terminate).
 pub fn is_terminating_statement(stmnt: &Statement) -> bool {
-    matches!(
-        stmnt,
-        Statement::Return(..) | Statement::Fail(..) | Statement::Break | Statement::Continue
-    )
+    match stmnt {
+        Statement::Return(..) | Statement::Fail(..) | Statement::Break | Statement::Continue => {
+            true
+        }
+        Statement::IfCondition(_, if_cond, _, Some(else_cond)) => {
+            let if_terminates = match &if_cond.0 {
+                IfCondition::IfCondition(_, block) => block_terminates(&block.0),
+                _ => false,
+            };
+            let else_terminates = match &else_cond.0 {
+                ElseCondition::Else(_, block) => block_terminates(&block.0),
+            };
+            if_terminates && else_terminates
+        }
+        Statement::IfChain(_, chain) => {
+            let mut has_else = false;
+            let mut all_terminate = true;
+            for (content, _) in chain.iter() {
+                match content {
+                    IfChainContent::IfCondition((cond, _)) => match cond {
+                        IfCondition::IfCondition(_, block) => {
+                            if !block_terminates(&block.0) {
+                                all_terminate = false;
+                            }
+                        }
+                        _ => {
+                            all_terminate = false;
+                        }
+                    },
+                    IfChainContent::Else((else_cond, _)) => {
+                        has_else = true;
+                        match else_cond {
+                            ElseCondition::Else(_, block) => {
+                                if !block_terminates(&block.0) {
+                                    all_terminate = false;
+                                }
+                            }
+                        }
+                    }
+                    IfChainContent::Comment(_) => {}
+                }
+            }
+            has_else && all_terminate
+        }
+        _ => false,
+    }
 }
 
 pub fn analyze_block(
@@ -1311,6 +1381,7 @@ pub fn analyze_failable_handlers(
                                     name: code_var.to_string(),
                                     symbol_type: SymbolType::Variable(VariableSymbol {
                                         is_const: false,
+                                        is_public: false,
                                     }),
                                     data_type: DataType::Int,
                                     is_definition: true,
@@ -1441,7 +1512,7 @@ pub fn analyze_failable_handlers(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: code_var.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false, is_public: false }),
                             data_type: DataType::Int,
                             is_definition: true,
                             undefined: false,

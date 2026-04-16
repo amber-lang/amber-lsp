@@ -306,7 +306,10 @@ pub fn analyze_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: var1.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: DataType::Number,
                             is_definition: true,
                             undefined: false,
@@ -322,7 +325,10 @@ pub fn analyze_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: var2.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: iter_type,
                             is_definition: true,
                             undefined: false,
@@ -340,7 +346,10 @@ pub fn analyze_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: var.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: iter_type,
                             is_definition: true,
                             undefined: false,
@@ -403,7 +412,10 @@ pub fn analyze_stmnt(
                 &mut symbol_table,
                 &SymbolInfo {
                     name: var_name.to_string(),
-                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                    symbol_type: SymbolType::Variable(VariableSymbol {
+                        is_const: false,
+                        is_public: false,
+                    }),
                     data_type: var_type,
                     is_definition: true,
                     undefined: false,
@@ -442,7 +454,10 @@ pub fn analyze_stmnt(
                 &mut symbol_table,
                 &SymbolInfo {
                     name: var_name.to_string(),
-                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: true }),
+                    symbol_type: SymbolType::Variable(VariableSymbol {
+                        is_const: true,
+                        is_public: false,
+                    }),
                     data_type: var_type,
                     is_definition: true,
                     undefined: false,

@@ -1,0 +1,15 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+assertion_line: 2915
+expression: backend.files.errors
+---
+{
+    (
+        FileId(
+            0,
+        ),
+        FileVersion(
+            1,
+        ),
+    ): [],
+}

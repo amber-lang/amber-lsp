@@ -87,7 +87,10 @@ pub async fn analyze_global_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: name.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: ty.clone(),
                             is_definition: true,
                             undefined: false,
@@ -309,6 +312,7 @@ pub async fn analyze_global_stmnt(
                                         name: ident.to_string(),
                                         symbol_type: SymbolType::Variable(VariableSymbol {
                                             is_const: false,
+                                            is_public: false,
                                         }),
                                         data_type: DataType::Null,
                                         is_definition: false,
@@ -381,6 +385,7 @@ pub async fn analyze_global_stmnt(
                                             name: ident.to_string(),
                                             symbol_type: SymbolType::Variable(VariableSymbol {
                                                 is_const: false,
+                                                is_public: false,
                                             }),
                                             data_type: DataType::Null,
                                             is_definition: false,
@@ -447,7 +452,10 @@ pub async fn analyze_global_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: args.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: DataType::Array(Box::new(DataType::Text)),
                             is_definition: true,
                             undefined: false,

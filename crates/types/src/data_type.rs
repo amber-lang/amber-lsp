@@ -118,7 +118,19 @@ impl GenericsMap {
             }
             ty if self.is_more_or_equally_specific(&ty, &constraint) => {
                 self.unify_inner_generics(&ty, &constraint);
-                self.map.insert(id, constraint);
+                // Only replace the stored value when doing so won't lose
+                // Generic references that are needed for call-site
+                // unification. When the current type contains Generic nodes
+                // (e.g. Array(Generic(inner_id))) but the constraint doesn't
+                // (e.g. Array(Any)), and both resolve to the same specificity,
+                // keep the current value so the parametric link (inner_id) is
+                // preserved for later resolution.
+                if !contains_generic_node(&ty)
+                    || contains_generic_node(&constraint)
+                    || !self.is_more_or_equally_specific(&constraint, &ty)
+                {
+                    self.map.insert(id, constraint);
+                }
             }
             _ => {}
         }
@@ -287,6 +299,17 @@ impl Display for GenericsMap {
     }
 }
 
+/// Returns `true` if the type expression structurally contains any
+/// `Generic` node (without resolving through the map).
+fn contains_generic_node(ty: &DataType) -> bool {
+    match ty {
+        DataType::Generic(_) => true,
+        DataType::Array(inner) | DataType::Failable(inner) => contains_generic_node(inner),
+        DataType::Union(types) => types.iter().any(contains_generic_node),
+        _ => false,
+    }
+}
+
 pub fn make_union_type(types: Vec<DataType>) -> DataType {
     if types.is_empty() {
         return DataType::Any;
@@ -299,6 +322,20 @@ pub fn make_union_type(types: Vec<DataType>) -> DataType {
         .into_iter()
         .filter(|ty| seen.insert(ty.clone()))
         .collect();
+
+    // When there is a concrete Array(T) alongside Array(Any) (empty array),
+    // drop Array(Any) so the concrete element type wins.
+    let has_concrete_array = dedup_types
+        .iter()
+        .any(|ty| matches!(ty, DataType::Array(inner) if !matches!(inner.as_ref(), DataType::Any)));
+    let dedup_types: Vec<DataType> = if has_concrete_array {
+        dedup_types
+            .into_iter()
+            .filter(|ty| !matches!(ty, DataType::Array(inner) if matches!(inner.as_ref(), DataType::Any)))
+            .collect()
+    } else {
+        dedup_types
+    };
 
     if dedup_types.len() == 1 {
         dedup_types[0].clone()
