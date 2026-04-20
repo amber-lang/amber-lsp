@@ -1,19 +1,51 @@
-/// TODO DOCS
+/// Changes the current working directory to `path`.
+/// If the directory cannot be changed, the script exits immediately.
+///
+/// ```amber
+/// cd("/tmp")
+/// ```
 pub fun cd(path: Text): Null {}
 
-/// TODO DOCS
+/// Clears the terminal screen.
+///
+/// ```amber
+/// clear()
+/// ```
 pub fun clear(): Null {}
 
-/// TODO DOCS
+/// Copies a file or directory from `source` to `destination`.
+/// This is a recursive copy (`cp -r`), so directories are copied in full.
+/// When `force` is `true`, the `-f` flag is added to overwrite existing files.
+/// This builtin can fail and requires explicit failure handling:
+///
+/// ```amber
+/// cp("src/", "dst/") failed {
+///     echo "Copy failed"
+/// }
+/// ```
 pub fun cp(source: Text, destination: Text, force: Bool = false): Null? {}
 
-/// TODO DOCS
+/// Disowns the most recently backgrounded job, detaching it from the shell session.
+///
+/// ```amber
+/// disown()
+/// ```
 pub fun disown(): Null {}
 
-/// TODO DOCS
+/// Prints a value to standard output followed by a newline.
+///
+/// ```amber
+/// echo("Hello, World!")
+/// echo(42)
+/// ```
 pub fun echo(log): Null {}
 
-/// TODO DOCS
+/// Exits the script with the given integer exit code.
+///
+/// ```amber
+/// exit(0)
+/// exit(1)
+/// ```
 pub fun exit(code: Int): Null {}
 
 /// For a `Text` value, this builtin calculates and returns the length (in ASCII characters) as a Num type.
@@ -55,41 +87,124 @@ pub fun len(value): Int {}
 /// ```
 pub fun lines(path: Text): [Text] {}
 
-/// TODO DOCS
+/// Creates an exclusive file lock using `path` as the lock file.
+/// Can only be used in the main block or test blocks.
+/// If no path is given, defaults to `/tmp/<script-name>.lock`.
+/// On success, the lock file is registered for automatic cleanup on exit.
+/// This builtin can fail if the lock file already exists (another instance holds the lock):
+///
+/// ```amber
+/// lock() failed {
+///     echo "Another instance is running"
+///     exit(1)
+/// }
+/// ```
 pub fun lock(path: Text = ""): Null? {}
 
-/// TODO DOCS
+/// Lists the contents of a directory and returns them as an array of file names.
+/// Defaults to the current directory when no path is given.
+/// When `all` is `true`, hidden files (starting with `.`) are included (`-A` flag).
+/// When `recursive` is `true`, subdirectories are listed recursively (`-R` flag).
+/// This builtin can fail (e.g. directory does not exist) and requires failure handling:
+///
+/// ```amber
+/// let files = ls("/tmp") failed {
+///     echo "Could not list directory"
+/// }
+/// ```
 pub fun ls(path: Text = "", all: Bool = false, recursive: Bool = false): [Text]? {}
 
-/// TODO DOCS
+/// Moves or renames a file or directory from `source` to `destination`.
+/// This builtin can fail and requires explicit failure handling:
+///
+/// ```amber
+/// mv("old.txt", "new.txt") failed {
+///     echo "Move failed"
+/// }
+/// ```
 pub fun mv(source: Text, destination: Text): Null? {}
 
-/// TODO DOCS
+/// Returns the name of a variable as a `Text` value, without evaluating it.
+///
+/// ```amber
+/// let my_var = 42
+/// echo nameof(ref my_var) // Outputs: my_var
+/// ```
 pub fun nameof(ref var): Text {}
 
-/// TODO DOCS
+/// Returns the PID of the most recently backgrounded process as an `Int`.
+/// It is transpiled to `$!`:
+///
+/// ```amber
+/// // Start a background process, then capture its PID
+/// let p = pid()
+/// ```
 pub fun pid(): Int {}
 
-/// TODO DOCS
+/// Returns the absolute path of the current working directory as a `Text` value.
+/// It is transpiled to `$PWD`:
+///
+/// ```amber
+/// echo pwd()
+/// ```
 pub fun pwd(): Text {}
 
-/// TODO DOCS
+/// Removes a file or directory at `path`.
+/// When `recursive` is `true`, removes directories and their contents (`-r` flag).
+/// When `force` is `true`, suppresses errors for missing files (`-f` flag).
+/// This builtin can fail and requires explicit failure handling:
+///
+/// ```amber
+/// rm("old_dir", true) failed {
+///     echo "Removal failed"
+/// }
+/// ```
 pub fun rm(path: Text, recursive: Bool = false, force: Bool = false): Null? {}
 
-/// TODO DOCS
+/// Returns the name of the currently executing shell as a `Text` value.
+/// It is transpiled to `$EXEC_SHELL`:
+///
+/// ```amber
+/// echo shellname() // e.g. "bash" or "zsh"
+/// ```
 pub fun shellname(): Text {}
 
-/// TODO DOCS
+/// Returns the version of the currently executing shell as an array of integers `[major, minor, patch]`.
+/// It is transpiled to `$EXEC_SHELL_VERSION`:
+///
+/// ```amber
+/// let ver = shellversion()
+/// echo "{ver[0]}.{ver[1]}.{ver[2]}"
+/// ```
 pub fun shellversion(): [Int] {}
 
-/// TODO DOCS Int | Num
-pub fun sleep(time_s: Int): Text {}
+/// Pauses execution for the given number of seconds.
+/// Accepts an `Int` or `Num` value.
+/// It is transpiled to `sleep time_s`:
+///
+/// ```amber
+/// sleep(2)
+/// sleep(0.5)
+/// ```
+pub fun sleep(time_s: Int | Num): Text {}
 
-/// TODO DOCS
+/// Creates a file at `file` if it does not exist, or updates its modification timestamp if it does.
+/// It is transpiled to `touch file`:
+///
+/// ```amber
+/// touch("output.log")
+/// ```
 pub fun touch(file: Text): Null {}
 
-/// TODO DOCS
+/// Waits for one or more background processes to finish.
+/// Accepts either a single PID (`Int`) or an array of PIDs (`[Int]`).
+/// It is transpiled to `wait pids`:
+///
+/// ```amber
+/// let p = pid()
+/// await(p)
+/// ```
 pub fun await(pids: [Int] | Int): Null {}
 
-/// TODO DOCS
+/// Returns the status code of the last command
 pub fun status(): Int {}
