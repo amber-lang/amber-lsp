@@ -58,6 +58,7 @@ pub enum CommandModifier {
     Unsafe,
     Trust,
     Silent,
+    Suppress,
     Sudo,
 }
 

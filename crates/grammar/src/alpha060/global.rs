@@ -151,6 +151,39 @@ pub fn type_parser<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
         .boxed()
 }
 
+pub fn type_parser_no_union<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
+    let literal_type = choice((
+        just(T!["Text"]).to(DataType::Text),
+        just(T!["Num"]).to(DataType::Number),
+        just(T!["Int"]).to(DataType::Int),
+        just(T!["Bool"]).to(DataType::Boolean),
+        just(T!["Null"]).to(DataType::Null),
+    ))
+    .boxed();
+
+    let array_type = just(T!["["])
+        .ignore_then(literal_type.clone().or_not())
+        .then_ignore(just(T!["]"]))
+        .map(|ty| DataType::Array(Box::new(ty.unwrap_or(DataType::Any))))
+        .boxed();
+
+    // single_type := (literal_type | array_type) "?"?
+    literal_type
+        .or(array_type)
+        .then(
+            just(T!["?"])
+                .or_not()
+                .map(|is_optional| is_optional.is_some()),
+        )
+        .map(|(ty, is_optional)| match is_optional {
+            true => DataType::Failable(Box::new(ty)),
+            _ => ty,
+        })
+        .map_with(|ty, e| (ty, e.span()))
+        .labelled("type")
+        .boxed()
+}
+
 pub fn type_parser_no_empty_array<'a>() -> impl AmberParser<'a, Spanned<DataType>> {
     let literal_type = choice((
         just(T!["Text"]).to(DataType::Text),
@@ -269,7 +302,7 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
 
     let ret_parser = just(T![":"])
         .ignore_then(
-            type_parser().recover_with(via_parser(
+            type_parser_no_union().recover_with(via_parser(
                 default_recovery()
                     .or_not()
                     .map_with(|_, e| (DataType::Error, e.span())),

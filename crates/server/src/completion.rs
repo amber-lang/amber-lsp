@@ -760,6 +760,7 @@ fn keyword_completions_alpha060(contexts: &[Context]) -> Vec<CompletionItem> {
         ),
         ("unsafe", "Suppress failure handling", None),
         ("silent", "Suppress command output", None),
+        ("suppress", "Suppress command stderr output", None),
         ("trust", "Trust command result", None),
         ("sudo", "Run with elevated privileges", None),
         (
