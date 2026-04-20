@@ -57,6 +57,14 @@ pub async fn handle_completion(
 
     let position = params.text_document_position.position;
 
+    if backend.amber_version == AmberVersion::Alpha060 {
+        if let Some(flag_items) =
+            compiler_flag_completions_alpha060(backend, file_id, version, position)
+        {
+            return Ok(Some(CompletionResponse::Array(flag_items)));
+        }
+    }
+
     let symbol_info = match backend.get_symbol_at_position(file_id, position).await {
         Some((symbol_info, _)) => symbol_info,
         None => return Ok(None),
@@ -86,6 +94,64 @@ pub async fn handle_completion(
     };
 
     Ok(Some(CompletionResponse::Array(completions)))
+}
+
+/// Completions for alpha060 compiler flags inside `#[...]`.
+fn compiler_flag_completions_alpha060(
+    backend: &Backend,
+    file_id: FileId,
+    version: FileVersion,
+    position: Position,
+) -> Option<Vec<CompletionItem>> {
+    let rope = backend.files.document_map.get(&(file_id, version))?.clone();
+
+    let line = rope.get_line(position.line as usize)?;
+    let prefix: String = line.chars().take(position.character as usize).collect();
+    let suffix: String = line.chars().skip(position.character as usize).collect();
+
+    let flag_start = prefix.rfind("#[")?;
+    let after_flag_start = &prefix[flag_start + 2..];
+
+    let typed_prefix = after_flag_start;
+    let replace_start = position
+        .character
+        .saturating_sub(typed_prefix.chars().count() as u32);
+
+    let all_flags = [
+        "allow_nested_if_else",
+        "allow_generic_return",
+        "allow_absurd_cast",
+        "allow_public_mutable",
+    ];
+
+    let has_closing_bracket_after_cursor = suffix.trim_start().starts_with(']');
+
+    let items = all_flags
+        .into_iter()
+        .filter(|flag| typed_prefix.is_empty() || flag.starts_with(typed_prefix))
+        .map(|flag| CompletionItem {
+            label: format!("#[{}]", flag),
+            kind: Some(CompletionItemKind::KEYWORD),
+            detail: Some("Compiler flag".to_string()),
+            text_edit: Some(CompletionTextEdit::Edit(TextEdit {
+                range: Range {
+                    start: Position {
+                        line: position.line,
+                        character: replace_start,
+                    },
+                    end: position,
+                },
+                new_text: if has_closing_bracket_after_cursor {
+                    flag.to_string()
+                } else {
+                    format!("{}]", flag)
+                },
+            })),
+            ..CompletionItem::default()
+        })
+        .collect();
+
+    Some(items)
 }
 
 /// Completions for import paths (stdlib + filesystem).

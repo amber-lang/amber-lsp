@@ -1759,6 +1759,65 @@ async fn keyword_labels_at(source: &str, line: u32, character: u32) -> Vec<Strin
     }
 }
 
+/// Helper: request completions and return all completion items.
+async fn completion_items_at(
+    source: &str,
+    line: u32,
+    character: u32,
+) -> Vec<tower_lsp_server::lsp_types::CompletionItem> {
+    use tower_lsp_server::lsp_types::*;
+    use tower_lsp_server::LanguageServer;
+
+    let (service, _) = tower_lsp_server::LspService::new(|client| {
+        Backend::new(
+            client,
+            AmberVersion::Alpha060,
+            Some(Arc::new(MemoryFS::new())),
+        )
+    });
+
+    let backend = service.inner();
+    let vfs = &backend.files.fs;
+
+    let file = {
+        #[cfg(windows)]
+        {
+            Path::new("C:\\main.ab")
+        }
+        #[cfg(unix)]
+        {
+            Path::new("/main.ab")
+        }
+    };
+    let uri = Uri::from_file_path(file).unwrap();
+
+    vfs.write(&uri.to_file_path().unwrap(), source)
+        .await
+        .unwrap();
+
+    backend.open_document(&uri).await.unwrap();
+
+    let completion_params = CompletionParams {
+        text_document_position: TextDocumentPositionParams {
+            text_document: TextDocumentIdentifier { uri },
+            position: Position { line, character },
+        },
+        work_done_progress_params: WorkDoneProgressParams {
+            work_done_token: None,
+        },
+        partial_result_params: PartialResultParams {
+            partial_result_token: None,
+        },
+        context: None,
+    };
+
+    let result = backend.completion(completion_params).await.unwrap();
+    match result {
+        Some(CompletionResponse::Array(items)) => items,
+        _ => vec![],
+    }
+}
+
 /// Helper: request completions and return full keyword CompletionItems.
 async fn keyword_completions_at(
     source: &str,
@@ -1820,6 +1879,74 @@ async fn keyword_completions_at(
             .collect(),
         _ => vec![],
     }
+}
+
+#[test]
+async fn test_compiler_flag_completions_inside_attribute() {
+    let keywords = keyword_labels_at("#[allow_", 0, 8).await;
+
+    assert!(
+        keywords.contains(&"#[allow_absurd_cast]".to_string()),
+        "allow_absurd_cast compiler flag should be offered in attribute context, got: {:?}",
+        keywords
+    );
+    assert!(
+        keywords.contains(&"#[allow_public_mutable]".to_string()),
+        "allow_public_mutable compiler flag should be offered in attribute context, got: {:?}",
+        keywords
+    );
+}
+
+#[test]
+async fn test_compiler_flag_completions_insert_closing_bracket() {
+    let completions = completion_items_at("#[allow_", 0, 8).await;
+
+    let allow_nested_if_else = completions
+        .iter()
+        .find(|item| item.label == "#[allow_nested_if_else]")
+        .expect("expected #[allow_nested_if_else] completion");
+
+    let new_text = allow_nested_if_else
+        .text_edit
+        .as_ref()
+        .map(|edit| match edit {
+            tower_lsp_server::lsp_types::CompletionTextEdit::Edit(edit) => edit.new_text.clone(),
+            tower_lsp_server::lsp_types::CompletionTextEdit::InsertAndReplace(edit) => {
+                edit.new_text.clone()
+            }
+        })
+        .expect("expected text edit for compiler flag completion");
+
+    assert!(
+        new_text.ends_with(']'),
+        "compiler flag insertion should include closing bracket"
+    );
+}
+
+#[test]
+async fn test_compiler_flag_completions_inside_empty_brackets() {
+    let completions = completion_items_at("#[]", 0, 2).await;
+
+    let allow_absurd_cast = completions
+        .iter()
+        .find(|item| item.label == "#[allow_absurd_cast]")
+        .expect("expected #[allow_absurd_cast] completion");
+
+    let new_text = allow_absurd_cast
+        .text_edit
+        .as_ref()
+        .map(|edit| match edit {
+            tower_lsp_server::lsp_types::CompletionTextEdit::Edit(edit) => edit.new_text.clone(),
+            tower_lsp_server::lsp_types::CompletionTextEdit::InsertAndReplace(edit) => {
+                edit.new_text.clone()
+            }
+        })
+        .expect("expected text edit for compiler flag completion");
+
+    assert_eq!(
+        new_text, "allow_absurd_cast",
+        "should not append a duplicate closing bracket when one already exists"
+    );
 }
 
 #[test]
