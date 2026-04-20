@@ -1753,6 +1753,7 @@ pub fn is_terminating_statement(stmnt: &Statement) -> bool {
             }
             has_else && all_terminate
         }
+        Statement::Block((block, _)) => block_terminates(block),
         _ => false,
     }
 }
