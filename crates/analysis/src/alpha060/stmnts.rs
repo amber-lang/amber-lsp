@@ -63,6 +63,36 @@ pub struct StmntAnalysisResult {
     pub return_ty: Option<DataType>,
 }
 
+/// Check if a statement declares a name that is already declared in the same scope.
+/// If so, report an error. Otherwise, record the declaration.
+pub fn check_scope_redeclaration(
+    stmnt: &Statement,
+    scope_declarations: &mut HashMap<String, Span>,
+    file: &(FileId, FileVersion),
+    files: &Files,
+) {
+    let names: Vec<(&str, Span)> = match stmnt {
+        Statement::VariableInit(_, (name, span), _) => vec![(name.as_str(), *span)],
+        Statement::ConstInit(_, (name, span), _) => vec![(name.as_str(), *span)],
+        Statement::ArrayDestructInit(_, _, names, _) => {
+            names.iter().map(|(n, s)| (n.as_str(), *s)).collect()
+        }
+        _ => vec![],
+    };
+
+    for (name, name_span) in names {
+        if scope_declarations.contains_key(name) {
+            files.report_error(
+                file,
+                &format!("'{name}' is already declared in this scope"),
+                name_span,
+            );
+        } else {
+            scope_declarations.insert(name.to_string(), name_span);
+        }
+    }
+}
+
 /// Report errors for duplicate command modifiers in a modifier list.
 pub fn check_duplicate_modifiers(
     modifiers: &[Spanned<CommandModifier>],
@@ -1748,6 +1778,7 @@ pub fn analyze_block(
             }));
 
             let mut terminator_seen = false;
+            let mut block_declarations: HashMap<String, Span> = HashMap::new();
 
             for stmnt in stmnt.iter() {
                 if terminator_seen
@@ -1758,6 +1789,13 @@ pub fn analyze_block(
                 {
                     files.report_unused(&(file_id, file_version), "Unreachable code", stmnt.1);
                 }
+
+                check_scope_redeclaration(
+                    &stmnt.0,
+                    &mut block_declarations,
+                    &(file_id, file_version),
+                    files,
+                );
 
                 let StmntAnalysisResult {
                     return_ty,

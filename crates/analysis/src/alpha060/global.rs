@@ -44,6 +44,7 @@ use amber_types::paths::FileId;
 use super::exp::analyze_exp;
 use super::stmnts::{
     analyze_stmnt,
+    check_scope_redeclaration,
     StmntAnalysisResult,
 };
 
@@ -230,6 +231,7 @@ pub async fn analyze_global_stmnt(
     let mut seen_test_names: HashMap<String, Span> = HashMap::new();
     'analysis: loop {
         let mut contexts = vec![];
+        let mut global_declarations: HashMap<String, Span> = HashMap::new();
         for (global, span) in default_imports.iter().chain(ast.iter()) {
             match global {
                 GlobalStatement::Import(..) if is_reanalysis => continue,
@@ -242,6 +244,16 @@ pub async fn analyze_global_stmnt(
                     declared_return_ty,
                     body,
                 ) => {
+                    if global_declarations.contains_key(name) {
+                        backend.get_files().report_error(
+                            &(file_id, file_version),
+                            &format!("'{name}' is already declared in this scope"),
+                            *name_span,
+                        );
+                    } else {
+                        global_declarations.insert(name.to_string(), *name_span);
+                    }
+
                     // We create scoped generics map, to not overwrite other generics, not defined here
                     let scoped_generics_map = backend.get_files().generic_types.clone();
 
@@ -375,6 +387,22 @@ pub async fn analyze_global_stmnt(
 
                     let mut terminator_seen = false;
 
+                    let mut body_declarations: HashMap<String, Span> = args
+                        .iter()
+                        .filter_map(|(arg, _)| match arg {
+                            FunctionArgument::Generic(_, (name, span)) => {
+                                Some((name.clone(), *span))
+                            }
+                            FunctionArgument::Typed(_, (name, span), _) => {
+                                Some((name.clone(), *span))
+                            }
+                            FunctionArgument::Optional(_, (name, span), _, _) => {
+                                Some((name.clone(), *span))
+                            }
+                            FunctionArgument::Error => None,
+                        })
+                        .collect();
+
                     body.iter().for_each(|stmnt| {
                         if terminator_seen
                             && !matches!(stmnt.0, Statement::Comment(_) | Statement::Error)
@@ -385,6 +413,13 @@ pub async fn analyze_global_stmnt(
                                 stmnt.1,
                             );
                         }
+
+                        check_scope_redeclaration(
+                            &stmnt.0,
+                            &mut body_declarations,
+                            &(file_id, file_version),
+                            backend.get_files(),
+                        );
 
                         let StmntAnalysisResult {
                             return_ty,
@@ -907,6 +942,12 @@ pub async fn analyze_global_stmnt(
                     }
                 }
                 GlobalStatement::Statement(stmnt) => {
+                    check_scope_redeclaration(
+                        &stmnt.0,
+                        &mut global_declarations,
+                        &(file_id, file_version),
+                        backend.get_files(),
+                    );
                     analyze_stmnt(
                         file_id,
                         file_version,
@@ -937,7 +978,14 @@ pub async fn analyze_global_stmnt(
                     let mut test_contexts = vec![Context::Block(BlockContext {
                         modifiers: vec![CommandModifier::Trust],
                     })];
+                    let mut test_body_declarations: HashMap<String, Span> = HashMap::new();
                     body.iter().for_each(|stmnt| {
+                        check_scope_redeclaration(
+                            &stmnt.0,
+                            &mut test_body_declarations,
+                            &(file_id, file_version),
+                            backend.get_files(),
+                        );
                         analyze_stmnt(
                             file_id,
                             file_version,
@@ -950,6 +998,16 @@ pub async fn analyze_global_stmnt(
                     });
                 }
                 GlobalStatement::PublicConstInit((_is_pub, _), _, (name, name_span), value) => {
+                    if global_declarations.contains_key(name) {
+                        backend.get_files().report_error(
+                            &(file_id, file_version),
+                            &format!("'{name}' is already declared in this scope"),
+                            *name_span,
+                        );
+                    } else {
+                        global_declarations.insert(name.to_string(), *name_span);
+                    }
+
                     let exp = analyze_exp(
                         file_id,
                         file_version,
@@ -997,6 +1055,16 @@ pub async fn analyze_global_stmnt(
                     (name, name_span),
                     (value, _),
                 ) => {
+                    if global_declarations.contains_key(name) {
+                        backend.get_files().report_error(
+                            &(file_id, file_version),
+                            &format!("'{name}' is already declared in this scope"),
+                            *name_span,
+                        );
+                    } else {
+                        global_declarations.insert(name.to_string(), *name_span);
+                    }
+
                     let has_allow_public_mutable = compiler_flags
                         .iter()
                         .any(|(flag, _)| *flag == CompilerFlag::AllowPublicMutable);
@@ -1062,6 +1130,18 @@ pub async fn analyze_global_stmnt(
                     );
                 }
                 GlobalStatement::PublicConstArrayDestructInit((_is_pub, _), _, names, value) => {
+                    for (var_name, var_span) in names {
+                        if global_declarations.contains_key(var_name) {
+                            backend.get_files().report_error(
+                                &(file_id, file_version),
+                                &format!("'{var_name}' is already declared in this scope"),
+                                *var_span,
+                            );
+                        } else {
+                            global_declarations.insert(var_name.to_string(), *var_span);
+                        }
+                    }
+
                     let exp = analyze_exp(
                         file_id,
                         file_version,
@@ -1125,6 +1205,18 @@ pub async fn analyze_global_stmnt(
                     names,
                     (value, _),
                 ) => {
+                    for (var_name, var_span) in names {
+                        if global_declarations.contains_key(var_name) {
+                            backend.get_files().report_error(
+                                &(file_id, file_version),
+                                &format!("'{var_name}' is already declared in this scope"),
+                                *var_span,
+                            );
+                        } else {
+                            global_declarations.insert(var_name.to_string(), *var_span);
+                        }
+                    }
+
                     let has_allow_public_mutable = compiler_flags
                         .iter()
                         .any(|(flag, _)| *flag == CompilerFlag::AllowPublicMutable);

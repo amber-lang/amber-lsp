@@ -4996,3 +4996,229 @@ fun array_filled(size, value = 0) {
         size_refs
     );
 }
+
+// ── Same-scope redeclaration tests ──────────────────────────────────────────
+
+#[test]
+async fn test_error_redeclare_var_same_block() {
+    let errors = errors_from_source(
+        r#"main {
+    let x = 1
+    let x = 2
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'x' is already declared in this scope")),
+        "Expected redeclaration error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_redeclare_const_same_block() {
+    let errors = errors_from_source(
+        r#"main {
+    const a = 1
+    const a = 2
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'a' is already declared in this scope")),
+        "Expected redeclaration error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_redeclare_var_and_const_same_block() {
+    let errors = errors_from_source(
+        r#"main {
+    let x = 1
+    const x = 2
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'x' is already declared in this scope")),
+        "Expected redeclaration error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_var_in_different_blocks() {
+    let errors = errors_from_source(
+        r#"main {
+    if true {
+        let x = 1
+    }
+    let x = 2
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("'x' is already declared in this scope")),
+        "Expected no redeclaration error for different blocks, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_redeclare_function_same_scope() {
+    let errors = errors_from_source(
+        r#"fun foo() {
+}
+fun foo() {
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'foo' is already declared in this scope")),
+        "Expected redeclaration error for functions, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_redeclare_function_and_pub_const() {
+    let errors = errors_from_source(
+        r#"fun foo() {
+}
+pub const foo = 1
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'foo' is already declared in this scope")),
+        "Expected redeclaration error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_redeclare_pub_vars() {
+    let errors = errors_from_source(
+        r#"#[allow_public_mutable]
+pub let x = 1
+#[allow_public_mutable]
+pub let x = 2
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'x' is already declared in this scope")),
+        "Expected redeclaration error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_redeclare_var_shadows_param_in_function_body() {
+    let errors = errors_from_source(
+        r#"fun foo(x: Int) {
+    let x = 2
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'x' is already declared in this scope")),
+        "Expected redeclaration error for param shadowing, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_unique_declarations() {
+    let errors = errors_from_source(
+        r#"fun foo() {
+}
+fun bar() {
+}
+pub const x = 1
+"#,
+    )
+    .await;
+    assert!(
+        !errors
+            .iter()
+            .any(|e| e.contains("is already declared in this scope")),
+        "Expected no redeclaration errors, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_redeclare_global_var() {
+    let errors = errors_from_source(
+        r#"let x = 1
+let x = 2
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'x' is already declared in this scope")),
+        "Expected redeclaration error for global var, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_redeclare_global_const() {
+    let errors = errors_from_source(
+        r#"const a = 1
+const a = 2
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'a' is already declared in this scope")),
+        "Expected redeclaration error for global const, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_error_redeclare_global_var_and_function() {
+    let errors = errors_from_source(
+        r#"fun x() {
+}
+let x = 1
+"#,
+    )
+    .await;
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("'x' is already declared in this scope")),
+        "Expected redeclaration error, got: {:?}",
+        errors,
+    );
+}

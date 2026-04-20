@@ -140,6 +140,7 @@ fn detect_amber_version() -> AmberVersion {
         Some("0.3.5-alpha") => AmberVersion::Alpha035,
         Some("0.4.0-alpha") => AmberVersion::Alpha040,
         Some("0.5.0-alpha") => AmberVersion::Alpha050,
+        Some("0.5.1-alpha") => AmberVersion::Alpha050,
         Some("0.6.0-alpha") => AmberVersion::Alpha060,
         _ => AmberVersion::Alpha060,
     }
