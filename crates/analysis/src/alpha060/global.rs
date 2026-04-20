@@ -228,6 +228,7 @@ pub async fn analyze_global_stmnt(
     // `Any` (the hoisted placeholder).  After the first pass all functions have
     // concrete return types so a second pass resolves those forward references.
     let mut is_reanalysis = false;
+    let mut has_main = false;
     let mut seen_test_names: HashMap<String, Span> = HashMap::new();
     'analysis: loop {
         let mut contexts = vec![];
@@ -885,7 +886,15 @@ pub async fn analyze_global_stmnt(
                         }
                     }
                 }
-                GlobalStatement::Main(_, args, (body, body_span)) => {
+                GlobalStatement::Main((_, main_span), args, (body, body_span)) => {
+                    if has_main {
+                        backend.get_files().report_error(
+                            &(file_id, file_version),
+                            "Duplicate 'main' block",
+                            *main_span,
+                        );
+                    }
+                    has_main = true;
                     if let Some((args, args_span)) = args {
                         let mut symbol_table = backend
                             .get_files()
@@ -1333,6 +1342,7 @@ pub async fn analyze_global_stmnt(
             });
             if has_unresolved_forward_refs {
                 is_reanalysis = true;
+                has_main = false;
                 seen_test_names.clear();
                 backend.get_files().errors.remove(&(file_id, file_version));
                 backend

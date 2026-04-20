@@ -37,6 +37,7 @@ pub async fn analyze_global_stmnt(
     ast: &[Spanned<GlobalStatement>],
     backend: &impl AnalysisHost,
 ) {
+    let mut has_main = false;
     for (global, span) in ast.iter() {
         match global {
             GlobalStatement::FunctionDefinition(
@@ -440,7 +441,15 @@ pub async fn analyze_global_stmnt(
                         }),
                 }
             }
-            GlobalStatement::Main(_, args, body) => {
+            GlobalStatement::Main((_, main_span), args, body) => {
+                if has_main {
+                    backend.get_files().report_error(
+                        &(file_id, file_version),
+                        "Duplicate 'main' block",
+                        *main_span,
+                    );
+                }
+                has_main = true;
                 if let Some((args, args_span)) = args {
                     let mut symbol_table = backend
                         .get_files()

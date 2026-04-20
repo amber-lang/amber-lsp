@@ -5222,3 +5222,38 @@ let x = 1
         errors,
     );
 }
+
+#[test]
+async fn test_error_duplicate_main_block() {
+    let errors = errors_from_source(
+        r#"main {
+    echo("first")
+}
+main {
+    echo("second")
+}
+"#,
+    )
+    .await;
+    assert!(
+        errors.iter().any(|e| e.contains("Duplicate 'main' block")),
+        "Expected duplicate main block error, got: {:?}",
+        errors,
+    );
+}
+
+#[test]
+async fn test_no_error_single_main_block() {
+    let errors = errors_from_source(
+        r#"main {
+    echo("hello")
+}
+"#,
+    )
+    .await;
+    assert!(
+        !errors.iter().any(|e| e.contains("Duplicate 'main' block")),
+        "Expected no duplicate main block error, got: {:?}",
+        errors,
+    );
+}
