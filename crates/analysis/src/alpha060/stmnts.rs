@@ -812,7 +812,7 @@ pub fn analyze_stmnt(
                 return_ty: exp.return_ty,
             }
         }
-        Statement::ArrayDestructInit(_, names, (value, _)) => {
+        Statement::ArrayDestructInit((is_const, _), _, names, (value, _)) => {
             let exp = match value {
                 VariableInitType::Expression(exp) => analyze_exp(
                     file_id,
@@ -857,7 +857,7 @@ pub fn analyze_stmnt(
                     &SymbolInfo {
                         name: var_name.to_string(),
                         symbol_type: SymbolType::Variable(VariableSymbol {
-                            is_const: false,
+                            is_const: *is_const,
                             is_public: false,
                         }),
                         data_type: element_ty.clone(),
@@ -1631,6 +1631,18 @@ pub fn analyze_stmnt(
             is_propagating_failure: false,
             return_ty: None,
         },
+        Statement::CompilerFlag((_, span)) => {
+            files.report_error(
+                &(file_id, file_version),
+                "Compiler flag has no effect here",
+                *span,
+            );
+
+            StmntAnalysisResult {
+                is_propagating_failure: false,
+                return_ty: None,
+            }
+        }
     }
 }
 

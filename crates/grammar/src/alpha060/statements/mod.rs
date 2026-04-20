@@ -14,6 +14,7 @@ pub mod array_destruct_set;
 pub mod array_index_set;
 pub mod block;
 pub mod comment;
+pub mod compiler_flag;
 pub mod const_init;
 pub mod failable_handlers;
 pub mod if_cond;
@@ -44,6 +45,7 @@ pub fn statement_parser<'a>() -> impl AmberParser<'a, Spanned<Statement>> {
             loops::while_loop_parser(stmnt.clone()),
             keywords::keywords_parser(stmnt.clone()),
             const_init::const_init_parser(stmnt.clone()),
+            compiler_flag::compiler_flag_parser(),
             parse_expr(stmnt).map_with(|expr, e| (Statement::Expression(Box::new(expr)), e.span())),
         ))
         .labelled("statement")

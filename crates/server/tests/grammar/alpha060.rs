@@ -457,6 +457,33 @@ fn test_array_destruct_init_with_comments_and_trailing() {
     assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
 }
 
+#[test]
+fn test_const_array_destruct_init() {
+    let input = r#"
+    const [a, b] = [1, 2]
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_pub_const_array_destruct_init() {
+    let input = r#"
+pub const [a, b] = [1, 2]
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_pub_var_array_destruct_init() {
+    let input = r#"
+#[allow_public_mutable] pub let [a, b] = [1, 2]
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
 // ==================== Union Type Tests ====================
 
 #[test]

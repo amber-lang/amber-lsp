@@ -65,6 +65,10 @@ expression: parse_unwrap(&tokenize(input))
             (
                 ArrayDestructInit(
                     (
+                        false,
+                        44..47,
+                    ),
+                    (
                         "let",
                         44..47,
                     ),

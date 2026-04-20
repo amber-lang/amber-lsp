@@ -1,6 +1,7 @@
 use chumsky::prelude::*;
 
 use crate::alpha060::statements::block::block_parser;
+use crate::alpha060::statements::compiler_flag::compiler_flag_parser;
 use crate::alpha060::Block;
 use crate::T;
 use amber_types::Token;
@@ -13,7 +14,6 @@ use super::parser::{
 use super::statements::statement_parser;
 use super::{
     AmberParser,
-    CompilerFlag,
     DataType,
     Expression,
     FunctionArgument,
@@ -199,27 +199,6 @@ pub fn type_parser_no_empty_array<'a>() -> impl AmberParser<'a, Spanned<DataType
         .boxed()
 }
 
-fn compiler_flag_parser<'a>() -> impl AmberParser<'a, Spanned<CompilerFlag>> {
-    just(T!["#["])
-        .ignore_then(
-            choice((
-                just(T!["allow_nested_if_else"]).to(CompilerFlag::AllowNestedIfElse),
-                just(T!["allow_generic_return"]).to(CompilerFlag::AllowGenericReturn),
-                just(T!["allow_absurd_cast"]).to(CompilerFlag::AllowAbsurdCast),
-                just(T!["allow_public_mutable"]).to(CompilerFlag::AllowPublicMutable),
-            ))
-            .recover_with(via_parser(
-                default_recovery().or_not().map(|_| CompilerFlag::Error),
-            )),
-        )
-        .then_ignore(
-            just(T!["]"]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["]"]))),
-        )
-        .map_with(|flag, e| (flag, e.span()))
-        .labelled("compiler flag")
-        .boxed()
-}
-
 pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
     let generic_arg_parser = just(T!["ref"])
         .or_not()
@@ -300,7 +279,7 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
 
     compiler_flag_parser()
         .repeated()
-        .collect()
+        .collect::<Vec<Spanned<Statement>>>()
         .then(
             just(T!["pub"])
                 .or_not()
@@ -343,7 +322,13 @@ pub fn function_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
             |((((((compiler_flags, is_pub), fun), name), args), ty), body), e| {
                 (
                     GlobalStatement::FunctionDefinition(
-                        compiler_flags,
+                        compiler_flags
+                            .iter()
+                            .filter_map(|(flag, _)| match flag {
+                                Statement::CompilerFlag(flag) => Some(flag.clone()),
+                                _ => None,
+                            })
+                            .collect(),
                         is_pub,
                         fun,
                         name,
@@ -419,7 +404,7 @@ pub fn pub_const_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> 
 pub fn pub_var_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
     compiler_flag_parser()
         .repeated()
-        .collect()
+        .collect::<Vec<Spanned<Statement>>>()
         .then(just(T!["pub"]).map_with(|_, e| (true, e.span())))
         .then(just(T!["let"]).map_with(|_, e| ("let".to_string(), e.span())))
         .then(
@@ -446,7 +431,13 @@ pub fn pub_var_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
             |((((compiler_flags, is_pub), let_keyword), name), value), e| {
                 (
                     GlobalStatement::PublicVarInit(
-                        compiler_flags,
+                        compiler_flags
+                            .iter()
+                            .filter_map(|(flag, _)| match flag {
+                                Statement::CompilerFlag(flag) => Some(flag.clone()),
+                                _ => None,
+                            })
+                            .collect(),
                         is_pub,
                         let_keyword,
                         name,
@@ -458,6 +449,96 @@ pub fn pub_var_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
         )
         .boxed()
         .labelled("public variable declaration")
+}
+
+pub fn pub_const_array_destruct_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
+    just(T!["pub"])
+        .map_with(|_, e| (true, e.span()))
+        .then(just(T!["const"]).map_with(|_, e| ("const".to_string(), e.span())))
+        .then(
+            ident("variable".to_string())
+                .map_with(|name, e| (name, e.span()))
+                .separated_by(just(T![","]))
+                .at_least(1)
+                .allow_trailing()
+                .collect::<Vec<_>>()
+                .delimited_by(just(T!["["]), just(T!["]"])),
+        )
+        .then_ignore(
+            just(T!["="]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["="]))),
+        )
+        .then(
+            parse_expr(statement_parser()).recover_with(via_parser(
+                default_recovery()
+                    .or_not()
+                    .map_with(|_, e| (Expression::Error, e.span())),
+            )),
+        )
+        .map_with(|(((is_pub, const_keyword), names), value), e| {
+            (
+                GlobalStatement::PublicConstArrayDestructInit(
+                    is_pub,
+                    const_keyword,
+                    names,
+                    Box::new(value),
+                ),
+                e.span(),
+            )
+        })
+        .boxed()
+        .labelled("public const array destructuring")
+}
+
+pub fn pub_var_array_destruct_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
+    compiler_flag_parser()
+        .repeated()
+        .collect::<Vec<Spanned<Statement>>>()
+        .then(just(T!["pub"]).map_with(|_, e| (true, e.span())))
+        .then(just(T!["let"]).map_with(|_, e| ("let".to_string(), e.span())))
+        .then(
+            ident("variable".to_string())
+                .map_with(|name, e| (name, e.span()))
+                .separated_by(just(T![","]))
+                .at_least(1)
+                .allow_trailing()
+                .collect::<Vec<_>>()
+                .delimited_by(just(T!["["]), just(T!["]"])),
+        )
+        .then_ignore(
+            just(T!["="]).recover_with(via_parser(default_recovery().or_not().map(|_| T!["="]))),
+        )
+        .then(
+            choice((
+                type_parser_no_empty_array().map(VariableInitType::DataType),
+                parse_expr(statement_parser()).map(VariableInitType::Expression),
+            ))
+            .recover_with(via_parser(
+                default_recovery().or_not().map(|_| VariableInitType::Error),
+            ))
+            .map_with(|val, e| (val, e.span())),
+        )
+        .map_with(
+            |((((compiler_flags, is_pub), let_keyword), names), value), e| {
+                (
+                    GlobalStatement::PublicVarArrayDestructInit(
+                        compiler_flags
+                            .iter()
+                            .filter_map(|(flag, _)| match flag {
+                                Statement::CompilerFlag(flag) => Some(flag.clone()),
+                                _ => None,
+                            })
+                            .collect(),
+                        is_pub,
+                        let_keyword,
+                        names,
+                        value,
+                    ),
+                    e.span(),
+                )
+            },
+        )
+        .boxed()
+        .labelled("public variable array destructuring")
 }
 
 pub fn test_parser<'a>() -> impl AmberParser<'a, Spanned<GlobalStatement>> {
@@ -526,6 +607,8 @@ pub fn global_statement_parser<'a>() -> impl AmberParser<'a, Vec<Spanned<GlobalS
         function_parser(),
         main_parser(),
         test_parser(),
+        pub_const_array_destruct_parser(),
+        pub_var_array_destruct_parser(),
         pub_const_parser(),
         pub_var_parser(),
         statement,

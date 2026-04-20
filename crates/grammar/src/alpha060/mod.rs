@@ -203,8 +203,9 @@ pub enum Statement {
         Box<Spanned<Expression>>,
         Box<Spanned<Expression>>,
     ),
-    /// Array destructuring in declaration: `let [a, b] = expr`
+    /// Array destructuring in declaration: `let [a, b] = expr` or `const [a, b] = expr`
     ArrayDestructInit(
+        Spanned<bool>,
         Spanned<String>,
         Vec<Spanned<String>>,
         Spanned<VariableInitType>,
@@ -236,15 +237,8 @@ pub enum Statement {
     Continue,
     Return(Spanned<String>, Option<Box<Spanned<Expression>>>),
     Fail(Spanned<String>, Option<Box<Spanned<Expression>>>),
-    // Echo(Spanned<String>, Box<Spanned<Expression>>),
-    // Cd(Spanned<String>, Box<Spanned<Expression>>),
-    // MoveFiles(
-    //     Vec<Spanned<CommandModifier>>,
-    //     Spanned<String>,
-    //     Box<Spanned<Expression>>,
-    //     Box<Spanned<Expression>>,
-    //     Vec<Spanned<FailableHandler>>,
-    // ),
+    /// Standalone compiler flags (error in analysis)
+    CompilerFlag(Spanned<CompilerFlag>),
     Block(Spanned<Block>),
     Comment(Spanned<Comment>),
     Shebang(String),
@@ -293,6 +287,25 @@ pub enum GlobalStatement {
         Spanned<bool>,
         Spanned<String>,
         Spanned<String>,
+        Spanned<VariableInitType>,
+    ),
+    /// Public constant array destructuring: `pub const [a, b] = expr`
+    ///
+    /// is_pub, "const", names, value
+    PublicConstArrayDestructInit(
+        Spanned<bool>,
+        Spanned<String>,
+        Vec<Spanned<String>>,
+        Box<Spanned<Expression>>,
+    ),
+    /// Public variable array destructuring: `pub let [a, b] = expr`
+    ///
+    /// compiler_flags, is_pub, "let", names, value
+    PublicVarArrayDestructInit(
+        Vec<Spanned<CompilerFlag>>,
+        Spanned<bool>,
+        Spanned<String>,
+        Vec<Spanned<String>>,
         Spanned<VariableInitType>,
     ),
     Statement(Box<Spanned<Statement>>),

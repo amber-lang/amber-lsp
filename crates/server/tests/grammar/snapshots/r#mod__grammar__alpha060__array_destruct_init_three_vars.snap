@@ -8,6 +8,10 @@ expression: parse_unwrap(&tokenize(input))
             (
                 ArrayDestructInit(
                     (
+                        false,
+                        5..8,
+                    ),
+                    (
                         "let",
                         5..8,
                     ),

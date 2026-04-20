@@ -1061,6 +1061,150 @@ pub async fn analyze_global_stmnt(
                         true,
                     );
                 }
+                GlobalStatement::PublicConstArrayDestructInit((_is_pub, _), _, names, value) => {
+                    let exp = analyze_exp(
+                        file_id,
+                        file_version,
+                        value,
+                        DataType::Any,
+                        backend.get_files(),
+                        &backend.get_files().generic_types.clone(),
+                        &vec![],
+                    );
+
+                    let rhs_ty = match exp.exp_ty {
+                        DataType::Failable(ty) => backend.get_files().generic_types.deref_type(&ty),
+                        ty => backend.get_files().generic_types.deref_type(&ty),
+                    };
+
+                    let element_ty = match &rhs_ty {
+                        DataType::Array(inner) => {
+                            backend.get_files().generic_types.deref_type(inner)
+                        }
+                        _ => {
+                            backend.get_files().report_error(
+                                &(file_id, file_version),
+                                "Array destructuring requires an array value",
+                                *span,
+                            );
+                            DataType::Error
+                        }
+                    };
+
+                    let mut symbol_table = backend
+                        .get_files()
+                        .symbol_table
+                        .entry((file_id, file_version))
+                        .or_default();
+
+                    for (var_name, var_span) in names {
+                        insert_symbol_definition(
+                            &mut symbol_table,
+                            &SymbolInfo {
+                                name: var_name.to_string(),
+                                symbol_type: SymbolType::Variable(VariableSymbol {
+                                    is_const: true,
+                                    is_public: true,
+                                }),
+                                data_type: element_ty.clone(),
+                                is_definition: true,
+                                undefined: false,
+                                span: *var_span,
+                                contexts: vec![],
+                            },
+                            (file_id, file_version),
+                            span.end..=usize::MAX,
+                            true,
+                        );
+                    }
+                }
+                GlobalStatement::PublicVarArrayDestructInit(
+                    compiler_flags,
+                    (_is_pub, pub_span),
+                    _,
+                    names,
+                    (value, _),
+                ) => {
+                    let has_allow_public_mutable = compiler_flags
+                        .iter()
+                        .any(|(flag, _)| *flag == CompilerFlag::AllowPublicMutable);
+
+                    if !has_allow_public_mutable {
+                        backend.get_files().report_error(
+                            &(file_id, file_version),
+                            "Public mutable variables require `#[allow_public_mutable]`",
+                            *pub_span,
+                        );
+                    }
+
+                    let exp = match value {
+                        VariableInitType::Expression(exp) => analyze_exp(
+                            file_id,
+                            file_version,
+                            exp,
+                            DataType::Any,
+                            backend.get_files(),
+                            &backend.get_files().generic_types.clone(),
+                            &vec![],
+                        ),
+                        VariableInitType::DataType((ty, _)) => ExpAnalysisResult {
+                            exp_ty: ty.clone(),
+                            is_propagating_failure: false,
+                            return_ty: None,
+                        },
+                        _ => ExpAnalysisResult {
+                            exp_ty: DataType::Error,
+                            is_propagating_failure: false,
+                            return_ty: None,
+                        },
+                    };
+
+                    let rhs_ty = match exp.exp_ty {
+                        DataType::Failable(ty) => backend.get_files().generic_types.deref_type(&ty),
+                        ty => backend.get_files().generic_types.deref_type(&ty),
+                    };
+
+                    let element_ty = match &rhs_ty {
+                        DataType::Array(inner) => {
+                            backend.get_files().generic_types.deref_type(inner)
+                        }
+                        _ => {
+                            backend.get_files().report_error(
+                                &(file_id, file_version),
+                                "Array destructuring requires an array value",
+                                *span,
+                            );
+                            DataType::Error
+                        }
+                    };
+
+                    let mut symbol_table = backend
+                        .get_files()
+                        .symbol_table
+                        .entry((file_id, file_version))
+                        .or_default();
+
+                    for (var_name, var_span) in names {
+                        insert_symbol_definition(
+                            &mut symbol_table,
+                            &SymbolInfo {
+                                name: var_name.to_string(),
+                                symbol_type: SymbolType::Variable(VariableSymbol {
+                                    is_const: false,
+                                    is_public: true,
+                                }),
+                                data_type: element_ty.clone(),
+                                is_definition: true,
+                                undefined: false,
+                                span: *var_span,
+                                contexts: vec![],
+                            },
+                            (file_id, file_version),
+                            span.end..=usize::MAX,
+                            true,
+                        );
+                    }
+                }
             }
         }
 

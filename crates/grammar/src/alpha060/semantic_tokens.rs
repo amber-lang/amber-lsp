@@ -275,6 +275,65 @@ pub fn semantic_tokens_from_ast(
                         VariableInitType::Error => {}
                     }
                 }
+                GlobalStatement::PublicConstArrayDestructInit(
+                    (_, is_pub_span),
+                    (_, const_keyword_span),
+                    names,
+                    value,
+                ) => {
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::MODIFIER),
+                        *is_pub_span,
+                    ));
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                        *const_keyword_span,
+                    ));
+                    for (_, var_span) in names {
+                        tokens.push((hash_semantic_token_type(CONSTANT), *var_span));
+                    }
+                    tokens.extend(semantic_tokens_from_expr(value));
+                }
+                GlobalStatement::PublicVarArrayDestructInit(
+                    compiler_flags,
+                    (_, is_pub_span),
+                    (_, let_keyword_span),
+                    names,
+                    (value, _),
+                ) => {
+                    compiler_flags.iter().for_each(|(_, span)| {
+                        tokens.push((
+                            hash_semantic_token_type(SemanticTokenType::DECORATOR),
+                            *span,
+                        ));
+                    });
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::MODIFIER),
+                        *is_pub_span,
+                    ));
+                    tokens.push((
+                        hash_semantic_token_type(SemanticTokenType::KEYWORD),
+                        *let_keyword_span,
+                    ));
+                    for (_, var_span) in names {
+                        tokens.push((
+                            hash_semantic_token_type(SemanticTokenType::VARIABLE),
+                            *var_span,
+                        ));
+                    }
+                    match value {
+                        VariableInitType::Expression(expr) => {
+                            tokens.extend(semantic_tokens_from_expr(expr));
+                        }
+                        VariableInitType::DataType((_, ty_span)) => {
+                            tokens.push((
+                                hash_semantic_token_type(SemanticTokenType::TYPE),
+                                *ty_span,
+                            ));
+                        }
+                        VariableInitType::Error => {}
+                    }
+                }
             }
         }
 
@@ -305,6 +364,12 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                 }
                 Block::Error => vec![],
             },
+            Statement::CompilerFlag((_, span)) => {
+                vec![(
+                    hash_semantic_token_type(SemanticTokenType::DECORATOR),
+                    *span,
+                )]
+            }
             Statement::Break => vec![(hash_semantic_token_type(SemanticTokenType::KEYWORD), *span)],
             Statement::Comment(_) => {
                 vec![(hash_semantic_token_type(SemanticTokenType::COMMENT), *span)]
@@ -609,10 +674,10 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
 
                 tokens
             }
-            Statement::ArrayDestructInit((_, let_span), names, (val, _)) => {
+            Statement::ArrayDestructInit(_, (_, keyword_span), names, (val, _)) => {
                 let mut tokens = vec![(
                     hash_semantic_token_type(SemanticTokenType::KEYWORD),
-                    *let_span,
+                    *keyword_span,
                 )];
 
                 for (_, var_span) in names {
