@@ -4,7 +4,7 @@
 /// ```amber
 /// cd("/tmp")
 /// ```
-pub fun cd(path: Text): Null {}
+pub fun cd(path: Text): Null? {}
 
 /// Clears the terminal screen.
 ///
@@ -25,12 +25,16 @@ pub fun clear(): Null {}
 /// ```
 pub fun cp(source: Text, destination: Text, force: Bool = false): Null? {}
 
-/// Disowns the most recently backgrounded job, detaching it from the shell session.
+/// Bash `disown` command. Removes jobs from session.
+///
+/// If no argument is passed, disowns the most recently backgrounded job, detaching it from the shell session.
 ///
 /// ```amber
 /// disown()
+/// disown(123)
+/// disown([123, 124])
 /// ```
-pub fun disown(): Null {}
+pub fun disown(pids: Int | [Int] = []): Null {}
 
 /// Prints a value to standard output followed by a newline.
 ///
@@ -61,18 +65,18 @@ pub fun exit(code: Int): Null {}
 /// // Returns 5
 /// echo len(["one", "two", "three", "four", "five"])
 /// ```
-pub fun len(value): Int {}
+pub fun len(value: Text | []): Int {}
 
 /// This builtin reads one line at a time from a text file.
 /// It can be used in place of an array in an iterative for loop (with or without an index).
 /// This is efficient because each line is read into memory, and processed before the next line is read:
 ///
 /// ```amber
-/// for line in lines("foo.txt") {
+/// for line in trust lines("foo.txt") {
 ///     echo line
 /// }
 ///
-/// for index, line in lines("bar.txt") {
+/// for index, line in trust lines("bar.txt") {
 ///     echo "\#{index} {line}"
 /// }
 /// ```
@@ -85,7 +89,7 @@ pub fun len(value): Int {}
 /// lines += lines("bar.txt")
 /// echo len(lines)
 /// ```
-pub fun lines(path: Text): [Text] {}
+pub fun lines(path: Text): [Text]? {}
 
 /// Creates an exclusive file lock using `path` as the lock file.
 /// Can only be used in the main block or test blocks.
@@ -186,7 +190,7 @@ pub fun shellversion(): [Int] {}
 /// sleep(2)
 /// sleep(0.5)
 /// ```
-pub fun sleep(time_s: Int | Num): Text {}
+pub fun sleep(time_s: Int | Num): Text? {}
 
 /// Creates a file at `file` if it does not exist, or updates its modification timestamp if it does.
 /// It is transpiled to `touch file`:
@@ -194,7 +198,7 @@ pub fun sleep(time_s: Int | Num): Text {}
 /// ```amber
 /// touch("output.log")
 /// ```
-pub fun touch(file: Text): Null {}
+pub fun touch(file: Text): Null? {}
 
 /// Waits for one or more background processes to finish.
 /// Accepts either a single PID (`Int`) or an array of PIDs (`[Int]`).
@@ -204,7 +208,7 @@ pub fun touch(file: Text): Null {}
 /// let p = pid()
 /// await(p)
 /// ```
-pub fun await(pids: [Int] | Int): Null {}
+pub fun await(pids: [Int] | Int): Null? {}
 
 /// Returns the status code of the last command
 pub fun status(): Int {}

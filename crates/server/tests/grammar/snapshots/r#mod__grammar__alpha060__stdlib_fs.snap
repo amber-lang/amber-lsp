@@ -4372,22 +4372,13 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                 4676..4681,
                                             ),
                                             (
-                                                Var(
-                                                    (
-                                                        "suppress",
-                                                        4685..4693,
-                                                    ),
-                                                ),
-                                                4685..4693,
-                                            ),
-                                        ),
-                                        4676..4693,
-                                    ),
-                                    (
-                                        Expression(
-                                            (
                                                 FunctionInvocation(
-                                                    [],
+                                                    [
+                                                        (
+                                                            Suppress,
+                                                            4685..4693,
+                                                        ),
+                                                    ],
                                                     (
                                                         "ls",
                                                         4694..4696,
@@ -4453,10 +4444,10 @@ expression: parse_unwrap(&tokenize(&stdlib))
                                                         ),
                                                     ],
                                                 ),
-                                                4694..4803,
+                                                4685..4803,
                                             ),
                                         ),
-                                        4694..4803,
+                                        4676..4803,
                                     ),
                                 ],
                             ),

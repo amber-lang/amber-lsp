@@ -200,23 +200,25 @@ pub fn check_unused_symbols(file_id: FileId, file_version: FileVersion, files: &
         };
 
         match &symbol_info.symbol_type {
-            SymbolType::Variable(VariableSymbol { is_public, .. }) => {
-                if !is_public && !used_defs.contains(&def_key(&symbol_info.name, &def_location)) {
-                    files.report_unused(
-                        &file,
-                        &format!("Unused variable \"{}\"", symbol_info.name),
-                        symbol_info.span,
-                    );
-                }
+            SymbolType::Variable(VariableSymbol { is_public, .. })
+                if !is_public
+                    && !used_defs.contains(&def_key(&symbol_info.name, &def_location)) =>
+            {
+                files.report_unused(
+                    &file,
+                    &format!("Unused variable \"{}\"", symbol_info.name),
+                    symbol_info.span,
+                );
             }
-            SymbolType::Function(FunctionSymbol { is_public, .. }) => {
-                if !is_public && !used_defs.contains(&def_key(&symbol_info.name, &def_location)) {
-                    files.report_unused(
-                        &file,
-                        &format!("Unused function \"{}\"", symbol_info.name),
-                        symbol_info.span,
-                    );
-                }
+            SymbolType::Function(FunctionSymbol { is_public, .. })
+                if !is_public
+                    && !used_defs.contains(&def_key(&symbol_info.name, &def_location)) =>
+            {
+                files.report_unused(
+                    &file,
+                    &format!("Unused function \"{}\"", symbol_info.name),
+                    symbol_info.span,
+                );
             }
             _ => {}
         }

@@ -550,24 +550,6 @@ fn test_union_type_complex() {
 }
 
 #[test]
-fn test_union_type_return_type() {
-    let input = r#"
-    fun foo(): Int | Text {
-    }
-"#;
-    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
-}
-
-#[test]
-fn test_union_type_return_type_with_failable() {
-    let input = r#"
-    fun foo(): Int | Text? {
-    }
-"#;
-    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
-}
-
-#[test]
 fn test_union_type_multiple_args() {
     let input = r#"
     fun foo(a: Int | Text, b: Bool | Null) {

@@ -283,8 +283,8 @@ async fn symbol_completions(
             .collect::<Vec<SymbolInfo>>(),
         _ => symbol_table
             .definitions
-            .iter()
-            .filter_map(|(name, _)| {
+            .keys()
+            .filter_map(|name| {
                 get_symbol_definition_info(
                     &backend.files,
                     name,
