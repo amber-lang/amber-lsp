@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { workspace, ExtensionContext, window, commands, CompletionList, Terminal } from 'vscode';
+import { workspace, ExtensionContext, window, commands, CompletionList, Terminal, Task, ProcessExecution, TaskScope, tasks, TaskExecution } from 'vscode';
 import {
 	CloseAction,
 	ErrorAction,
@@ -75,7 +75,7 @@ export function activate(context: ExtensionContext) {
 							.filter((file) => file.isFile() && file.name.startsWith('amber-lsp.log'))
 							.sort()
 							.at(-1)
-							.name
+							?.name
 					);
 
 				if (!lastLogFileName) {
@@ -139,15 +139,27 @@ export function activate(context: ExtensionContext) {
 
 	context.subscriptions.push(pathEdits);
 
-	let testTerminal: Terminal | undefined;
+	let testTaskExecution: TaskExecution | undefined;
 
-	const runTestCommand = commands.registerCommand('amber.runTest', (filePath: string, testName: string) => {
-		if (testTerminal && testTerminal.exitStatus === undefined) {
-			testTerminal.dispose();
+	const runTestCommand = commands.registerCommand('amber.runTest', async (filePath: string, testName: string) => {
+		if (testTaskExecution) {
+			testTaskExecution.terminate();
 		}
-		testTerminal = window.createTerminal('Amber Test');
-		testTerminal.show();
-		testTerminal.sendText(`amber test "${filePath}" --test-case "${testName}"`);
+		const task = new Task(
+			{ type: 'amber', task: 'runTest' },
+			TaskScope.Workspace,
+			'Amber Test',
+			'amber',
+			new ProcessExecution('amber', ['test', filePath, '--test-case', testName])
+		);
+		task.presentationOptions = {
+			echo: true,
+			focus: true,
+			panel: 1 /* TaskPanelKind.Shared */,
+			showReuseMessage: false,
+			clear: true
+		};
+		testTaskExecution = await tasks.executeTask(task);
 	});
 
 	context.subscriptions.push(runTestCommand);
@@ -161,7 +173,7 @@ const isInsideImportString = (lineText: string, charPosition: number): boolean =
 
 	const match = textBeforeCursor.match(/\bfrom\b([^"]*)"([^"]*)$/)
 
-	return !!match.length;
+	return !!match?.length;
 }
 
 export function deactivate(): Thenable<void> | undefined {

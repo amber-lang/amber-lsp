@@ -230,6 +230,7 @@ pub async fn analyze_global_stmnt(
     let mut is_reanalysis = false;
     let mut has_main = false;
     let mut seen_test_names: HashMap<String, Span> = HashMap::new();
+    let mut seen_unnamed_test = false;
     'analysis: loop {
         let mut contexts = vec![];
         let mut global_declarations: HashMap<String, Span> = HashMap::new();
@@ -967,7 +968,7 @@ pub async fn analyze_global_stmnt(
                         &mut contexts,
                     );
                 }
-                GlobalStatement::TestBlock(_, name, body) => {
+                GlobalStatement::TestBlock((_, test_kw_span), name, body) => {
                     // Validate unique test names
                     if let Some((test_name, test_name_span)) = name {
                         if !test_name.is_empty() {
@@ -982,6 +983,16 @@ pub async fn analyze_global_stmnt(
                                 seen_test_names.insert(test_name.clone(), *test_name_span);
                             }
                         }
+                    } else {
+                        if seen_unnamed_test {
+                            backend.get_files().report_error(
+                                &(file_id, file_version),
+                                "File can contain only one unnamed test",
+                                *test_kw_span,
+                            );
+                        }
+
+                        seen_unnamed_test = true;
                     }
 
                     let mut test_contexts = vec![Context::Block(BlockContext {
