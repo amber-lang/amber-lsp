@@ -131,7 +131,7 @@ fn detect_amber_version() -> AmberVersion {
         Ok(output) => String::from_utf8_lossy(&output.stdout).to_string(),
         Err(e) => {
             tracing::error!("Failed to execute amber command: {}", e);
-            return AmberVersion::Alpha050; // Default to the latest version if detection fails
+            return AmberVersion::Alpha060; // Default to the latest version if detection fails
         }
     };
 
@@ -140,7 +140,7 @@ fn detect_amber_version() -> AmberVersion {
         Some("0.3.5-alpha") => AmberVersion::Alpha035,
         Some("0.4.0-alpha") => AmberVersion::Alpha040,
         Some("0.5.0-alpha") => AmberVersion::Alpha050,
-        // Some("0.5.1-alpha") => AmberVersion::Alpha050,
+        Some("0.5.1-alpha") => AmberVersion::Alpha050,
         Some("0.6.0-alpha") => AmberVersion::Alpha060,
         _ => AmberVersion::Alpha060,
     }

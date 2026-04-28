@@ -1173,8 +1173,8 @@ fn handle_doc_strings(docs: &String, contexts: &mut Vec<Context>) -> StmntAnalys
 fn block_terminates(block: &Block) -> bool {
     match block {
         Block::Block(_, stmnts) => stmnts
-            .last()
-            .is_some_and(|s| is_terminating_statement(&s.0)),
+            .iter()
+            .any(|(stmnt, _)| is_terminating_statement(stmnt)),
         Block::Singleline(stmnt) => is_terminating_statement(&stmnt.0),
         Block::Error => false,
     }
