@@ -12,24 +12,8 @@ expression: backend.files.errors
         ),
     ): [
         (
-            "found '|' expected '?', or '{'",
-            22..23,
-        ),
-        (
-            "found '|' expected something else, '}', import statement, function definition, main body, test block, public const array destructuring, public variable array destructuring, public const declaration, public variable declaration, or statement",
-            22..23,
-        ),
-        (
-            "found 'Text' expected import statement, function definition, main body, test block, public const array destructuring, public variable array destructuring, public const declaration, public variable declaration, or statement",
-            24..28,
-        ),
-        (
-            "Function returns type Null, but expected Int",
-            18..21,
-        ),
-        (
-            "Return statement outside of function",
-            35..44,
+            "Union types are not supported for function return type",
+            18..28,
         ),
     ],
 }

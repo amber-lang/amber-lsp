@@ -470,15 +470,25 @@ pub async fn analyze_global_stmnt(
                     // collected return types (e.g. `Int | Any` instead of `Int`).
                     // Filter those out so the inferred type is based only on
                     // concrete return expressions.
-                    if declared_return_ty.is_none() {
-                        let concrete: Vec<DataType> = return_types
-                            .iter()
-                            .filter(|t| !matches!(t, DataType::Any))
-                            .cloned()
-                            .collect();
-                        if !concrete.is_empty() {
-                            return_types = concrete;
+                    match declared_return_ty {
+                        Some((DataType::Union(_), span)) => {
+                            backend.get_files().report_error(
+                                &(file_id, file_version),
+                                "Union types are not supported for function return type",
+                                *span,
+                            );
                         }
+                        None => {
+                            let concrete: Vec<DataType> = return_types
+                                .iter()
+                                .filter(|t| !matches!(t, DataType::Any))
+                                .cloned()
+                                .collect();
+                            if !concrete.is_empty() {
+                                return_types = concrete;
+                            }
+                        }
+                        _ => {}
                     }
 
                     let mut inferred_return_type = match return_types.len() {

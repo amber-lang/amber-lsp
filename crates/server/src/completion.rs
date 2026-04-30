@@ -760,6 +760,12 @@ fn keyword_completions_alpha050(contexts: &[Context]) -> Vec<CompletionItem> {
         ("true", "Boolean true", None),
         ("false", "Boolean false", None),
         ("null", "Null value", None),
+        // Types
+        ("Int", "Int type", None),
+        ("Num", "Num type", None),
+        ("Bool", "Bool type", None),
+        ("Text", "Text type", None),
+        ("Null", "Null type", None),
     ];
 
     // Loop-only keywords
@@ -858,6 +864,12 @@ fn keyword_completions_alpha060(contexts: &[Context]) -> Vec<CompletionItem> {
         ("false", "Boolean false", None),
         ("null", "Null value", None),
         ("test", "test case", Some("test \"$1\" {\n\t$0\n}")),
+        // Types
+        ("Int", "Int type", None),
+        ("Num", "Num type", None),
+        ("Bool", "Bool type", None),
+        ("Text", "Text type", None),
+        ("Null", "Null type", None),
     ];
 
     // Loop-only keywords
