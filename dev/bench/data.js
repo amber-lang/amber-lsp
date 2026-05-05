@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1778013134152,
+  "lastUpdate": 1778014133295,
   "repoUrl": "https://github.com/amber-lang/amber-lsp",
   "entries": {
     "Amber LSP Benchmarks": [
@@ -1037,6 +1037,180 @@ window.BENCHMARK_DATA = {
             "name": "autocomplete/alpha060/completion",
             "value": 1635193,
             "range": "± 3576399",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hubik080@gmail.com",
+            "name": "Hubert Jabłoński",
+            "username": "KrosFire"
+          },
+          "committer": {
+            "email": "hubik080@gmail.com",
+            "name": "Hubert Jabłoński",
+            "username": "KrosFire"
+          },
+          "distinct": true,
+          "id": "3530d58bd97c82adb448e6c95a745ebf98bff94d",
+          "message": "Bumped version to 0.3.0",
+          "timestamp": "2026-05-05T22:40:44+02:00",
+          "tree_id": "e3b7e3d52c1889480a6b18b56e213f0368426759",
+          "url": "https://github.com/amber-lang/amber-lsp/commit/3530d58bd97c82adb448e6c95a745ebf98bff94d"
+        },
+        "date": 1778014132616,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "tokenize/alpha034/269 lines",
+            "value": 91530,
+            "range": "± 2147",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "tokenize/alpha035/599 lines",
+            "value": 197928,
+            "range": "± 1799",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "tokenize/alpha040/854 lines",
+            "value": 285754,
+            "range": "± 6205",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "tokenize/alpha050/969 lines",
+            "value": 365845,
+            "range": "± 3707",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "tokenize/alpha060/2324 lines",
+            "value": 720558,
+            "range": "± 32942",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parse/alpha034/269 lines",
+            "value": 2035317,
+            "range": "± 7285",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parse/alpha035/599 lines",
+            "value": 4119417,
+            "range": "± 89540",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parse/alpha040/854 lines",
+            "value": 6860510,
+            "range": "± 45093",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parse/alpha050/969 lines",
+            "value": 9846381,
+            "range": "± 93067",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parse/alpha060/2324 lines",
+            "value": 21025676,
+            "range": "± 343707",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "analysis/alpha034/269 lines",
+            "value": 445988,
+            "range": "± 6415",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "analysis/alpha035/599 lines",
+            "value": 4627753,
+            "range": "± 32603",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "analysis/alpha040/854 lines",
+            "value": 8858478,
+            "range": "± 266939",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "analysis/alpha050/969 lines",
+            "value": 5343535,
+            "range": "± 86010",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "analysis/alpha060/2324 lines",
+            "value": 36659562,
+            "range": "± 737919",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "end_to_end/alpha034/269 lines",
+            "value": 2636675,
+            "range": "± 48023",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "end_to_end/alpha035/599 lines",
+            "value": 13742608,
+            "range": "± 140520",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "end_to_end/alpha040/854 lines",
+            "value": 23938973,
+            "range": "± 525085",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "end_to_end/alpha050/969 lines",
+            "value": 24184697,
+            "range": "± 260000",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "end_to_end/alpha060/2324 lines",
+            "value": 62165673,
+            "range": "± 1167499",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "autocomplete/alpha034/completion",
+            "value": 7559,
+            "range": "± 144",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "autocomplete/alpha035/completion",
+            "value": 7389,
+            "range": "± 147",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "autocomplete/alpha040/completion",
+            "value": 7775,
+            "range": "± 141",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "autocomplete/alpha050/completion",
+            "value": 852208,
+            "range": "± 840720",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "autocomplete/alpha060/completion",
+            "value": 1622698,
+            "range": "± 3712297",
             "unit": "ns/iter"
           }
         ]
