@@ -200,7 +200,7 @@ pub fn semantic_tokens_from_ast(
                     tokens.extend(semantic_tokens_from_stmnts(stmnts));
                 }
                 GlobalStatement::Statement(stmnt) => {
-                    tokens.extend(semantic_tokens_from_stmnts(&vec![*stmnt.clone()]));
+                    tokens.extend(semantic_tokens_from_stmnts(&[*stmnt.clone()]));
                 }
             }
         }
@@ -318,14 +318,14 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                         IfChainContent::IfCondition((if_cond, _)) => match if_cond {
                             IfCondition::IfCondition(expr, block) => {
                                 tokens.extend(semantic_tokens_from_expr(expr));
-                                tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                                tokens.extend(semantic_tokens_from_stmnts(&[(
                                     Statement::Block(block.clone()),
                                     block.1,
                                 )]));
                             }
                             IfCondition::InlineIfCondition(expr, stmnt) => {
                                 tokens.extend(semantic_tokens_from_expr(expr));
-                                tokens.extend(semantic_tokens_from_stmnts(&vec![*stmnt.clone()]));
+                                tokens.extend(semantic_tokens_from_stmnts(&[*stmnt.clone()]));
                             }
                             IfCondition::Comment((_, span)) => {
                                 tokens.push((
@@ -342,7 +342,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                                     *else_span,
                                 ));
 
-                                tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                                tokens.extend(semantic_tokens_from_stmnts(&[(
                                     Statement::Block(block.clone()),
                                     block.1,
                                 )]));
@@ -353,7 +353,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                                     *else_span,
                                 ));
 
-                                tokens.extend(semantic_tokens_from_stmnts(&vec![*stmnt.clone()]));
+                                tokens.extend(semantic_tokens_from_stmnts(&[*stmnt.clone()]));
                             }
                         },
                         IfChainContent::Comment((_, span)) => {
@@ -375,14 +375,14 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                 match if_cond {
                     IfCondition::IfCondition(expr, block) => {
                         tokens.extend(semantic_tokens_from_expr(expr));
-                        tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                        tokens.extend(semantic_tokens_from_stmnts(&[(
                             Statement::Block(block.clone()),
                             block.1,
                         )]));
                     }
                     IfCondition::InlineIfCondition(expr, stmnt) => {
                         tokens.extend(semantic_tokens_from_expr(expr));
-                        tokens.extend(semantic_tokens_from_stmnts(&vec![*stmnt.clone()]));
+                        tokens.extend(semantic_tokens_from_stmnts(&[*stmnt.clone()]));
                     }
                     IfCondition::Comment((_, span)) => {
                         tokens.push((hash_semantic_token_type(SemanticTokenType::COMMENT), *span));
@@ -402,7 +402,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                                 *else_span,
                             ));
 
-                            tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                            tokens.extend(semantic_tokens_from_stmnts(&[(
                                 Statement::Block(block.clone()),
                                 block.1,
                             )]));
@@ -413,7 +413,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                                 *else_span,
                             ));
 
-                            tokens.extend(semantic_tokens_from_stmnts(&vec![*stmnt.clone()]));
+                            tokens.extend(semantic_tokens_from_stmnts(&[*stmnt.clone()]));
                         }
                     }
                 }
@@ -426,7 +426,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                     *loop_span,
                 )];
 
-                tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                tokens.extend(semantic_tokens_from_stmnts(&[(
                     Statement::Block(block.clone()),
                     block.1,
                 )]));
@@ -462,7 +462,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                 ));
 
                 tokens.extend(semantic_tokens_from_expr(expr));
-                tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                tokens.extend(semantic_tokens_from_stmnts(&[(
                     Statement::Block(block.clone()),
                     block.1,
                 )]));

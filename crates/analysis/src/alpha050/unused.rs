@@ -42,6 +42,14 @@ fn build_used_defs(symbol_table: &SymbolTable) -> HashSet<DefKey> {
         if let Some(defs) = symbol_table.definitions.get(name) {
             for reference in references {
                 if let Some(resolved) = defs.get(&reference.start) {
+                    // Skip self-references: if a function's only references
+                    // are recursive calls inside its own body, it is unused.
+                    if let Some(&body_end) = symbol_table.function_body_ranges.get(&resolved.start)
+                    {
+                        if reference.start > resolved.start && reference.start < body_end {
+                            continue;
+                        }
+                    }
                     used.insert(def_key(name, resolved));
                 }
             }
@@ -173,23 +181,24 @@ pub fn check_unused_symbols(file_id: FileId, file_version: FileVersion, files: &
         };
 
         match &symbol_info.symbol_type {
-            SymbolType::Variable(_) => {
-                if !used_defs.contains(&def_key(&symbol_info.name, &def_location)) {
-                    files.report_unused(
-                        &file,
-                        &format!("Unused variable \"{}\"", symbol_info.name),
-                        symbol_info.span,
-                    );
-                }
+            SymbolType::Variable(_)
+                if !used_defs.contains(&def_key(&symbol_info.name, &def_location)) =>
+            {
+                files.report_unused(
+                    &file,
+                    &format!("Unused variable \"{}\"", symbol_info.name),
+                    symbol_info.span,
+                );
             }
-            SymbolType::Function(FunctionSymbol { is_public, .. }) => {
-                if !is_public && !used_defs.contains(&def_key(&symbol_info.name, &def_location)) {
-                    files.report_unused(
-                        &file,
-                        &format!("Unused function \"{}\"", symbol_info.name),
-                        symbol_info.span,
-                    );
-                }
+            SymbolType::Function(FunctionSymbol { is_public, .. })
+                if !is_public
+                    && !used_defs.contains(&def_key(&symbol_info.name, &def_location)) =>
+            {
+                files.report_unused(
+                    &file,
+                    &format!("Unused function \"{}\"", symbol_info.name),
+                    symbol_info.span,
+                );
             }
             _ => {}
         }

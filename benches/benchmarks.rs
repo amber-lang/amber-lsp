@@ -107,6 +107,12 @@ fn versions() -> Vec<VersionConfig> {
             amber_version: AmberVersion::Alpha050,
             compiler: Box::new(amber_grammar::alpha050::AmberCompiler::new()),
         },
+        VersionConfig {
+            name: "alpha060",
+            resource_dir: "alpha060",
+            amber_version: AmberVersion::Alpha060,
+            compiler: Box::new(amber_grammar::alpha060::AmberCompiler::new()),
+        },
     ]
 }
 
@@ -247,6 +253,20 @@ fn bench_analysis(c: &mut Criterion) {
                                     &backend.files,
                                 );
                             }
+                            Grammar::Alpha060(Some(ast)) => {
+                                amber_analysis::alpha060::global::analyze_global_stmnt(
+                                    file_id,
+                                    DEFAULT_VERSION,
+                                    ast,
+                                    backend,
+                                )
+                                .await;
+                                amber_analysis::alpha060::unused::check_unused_symbols(
+                                    file_id,
+                                    DEFAULT_VERSION,
+                                    &backend.files,
+                                );
+                            }
                             other => {
                                 panic!(
                                     "unexpected or empty Grammar variant for analysis benchmark: \
@@ -340,6 +360,7 @@ fn bench_autocomplete(c: &mut Criterion) {
         ("alpha035", AmberVersion::Alpha035),
         ("alpha040", AmberVersion::Alpha040),
         ("alpha050", AmberVersion::Alpha050),
+        ("alpha060", AmberVersion::Alpha060),
     ];
 
     for (name, amber_version) in &autocomplete_versions {

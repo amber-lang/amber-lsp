@@ -1,0 +1,18 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+expression: "compiler.tokenize(\"$$\")"
+---
+[
+    (
+        Token(
+            "$",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "$",
+        ),
+        1..2,
+    ),
+]

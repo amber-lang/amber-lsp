@@ -1,0 +1,5 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+expression: "compiler.tokenize(\"\")"
+---
+[]

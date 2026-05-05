@@ -35,6 +35,7 @@ expression: symbol_table.symbols
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
+                is_public: false,
             },
         ),
         data_type: Any,
@@ -48,6 +49,7 @@ expression: symbol_table.symbols
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
+                is_public: false,
             },
         ),
         data_type: Any,
@@ -67,6 +69,7 @@ expression: symbol_table.symbols
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
+                is_public: false,
             },
         ),
         data_type: Int,
@@ -107,6 +110,7 @@ expression: symbol_table.symbols
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
+                is_public: false,
             },
         ),
         data_type: Int,
@@ -120,6 +124,7 @@ expression: symbol_table.symbols
         symbol_type: Variable(
             VariableSymbol {
                 is_const: false,
+                is_public: false,
             },
         ),
         data_type: Int,

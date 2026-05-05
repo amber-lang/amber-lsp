@@ -36,6 +36,7 @@ fn get_stdlib_dir(amber_version: AmberVersion) -> Result<PathBuf, std::io::Error
         AmberVersion::Alpha035 => "alpha035",
         AmberVersion::Alpha040 => "alpha040",
         AmberVersion::Alpha050 => "alpha050",
+        AmberVersion::Alpha060 => "alpha060",
     };
 
     let base_dir = match std::env::var(RESOURCES_DIR_ENV) {
@@ -92,6 +93,7 @@ pub async fn save_resources(backend: &impl AnalysisHost) -> Option<PathBuf> {
         AmberVersion::Alpha035 => "alpha035/".to_string(),
         AmberVersion::Alpha040 => "alpha040/".to_string(),
         AmberVersion::Alpha050 => "alpha050/".to_string(),
+        AmberVersion::Alpha060 => "alpha060/".to_string(),
     };
 
     if backend
@@ -182,6 +184,7 @@ pub async fn resolve(backend: &impl AnalysisHost, path: String) -> Option<Uri> {
         AmberVersion::Alpha035 => PathBuf::from("alpha035"),
         AmberVersion::Alpha040 => PathBuf::from("alpha040"),
         AmberVersion::Alpha050 => PathBuf::from("alpha050"),
+        AmberVersion::Alpha060 => PathBuf::from("alpha060"),
     }
     .join(file_path.clone());
 
@@ -263,6 +266,7 @@ pub fn list_stdlib_modules(amber_version: &AmberVersion) -> Vec<String> {
         AmberVersion::Alpha035 => "alpha035",
         AmberVersion::Alpha040 => "alpha040",
         AmberVersion::Alpha050 => "alpha050",
+        AmberVersion::Alpha060 => "alpha060",
     };
 
     let std_dir_path = PathBuf::from(version_dir).join("std");

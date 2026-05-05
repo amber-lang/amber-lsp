@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { workspace, ExtensionContext, window, commands, CompletionList } from 'vscode';
+import { workspace, ExtensionContext, window, commands, CompletionList, Terminal, Task, ProcessExecution, TaskScope, tasks, TaskExecution } from 'vscode';
 import {
 	CloseAction,
 	ErrorAction,
@@ -27,30 +27,30 @@ export function activate(context: ExtensionContext) {
 	const command = process.env.SERVER_PATH || `${context.extensionPath}/server/amber-lsp${ext}`
 
 	const run: Executable = {
-	  command,
-	  options: {
+		command,
+		options: {
 			env: {
 				...process.env,
 				RUST_LOG: "debug",
 				RUST_BACKTRACE: 1
 			},
-	  },
-	  args: ["--amber-version", version],
+		},
+		args: ["--amber-version", version],
 	};
 	const serverOptions: ServerOptions = {
-	  run,
-	  debug: run,
+		run,
+		debug: run,
 	};
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
 	// Options to control the language client
 	let clientOptions: LanguageClientOptions = {
-	  // Register the server for plain text documents
-	  documentSelector: [{ scheme: "file", language: "amber" }],
-	  synchronize: {
+		// Register the server for plain text documents
+		documentSelector: [{ scheme: "file", language: "amber" }],
+		synchronize: {
 			// Notify the server about file changes to '.clientrc files contained in the workspace
 			fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
-	  },
+		},
 		errorHandler: {
 			error: (error) => {
 				return {
@@ -71,12 +71,12 @@ export function activate(context: ExtensionContext) {
 				const logsDir = join(tmpdir(), 'amber-lsp')
 				const lastLogFileName = await readdir(logsDir, { withFileTypes: true })
 					.then((files) =>
-							files
-								.filter((file) => file.isFile() && file.name.startsWith('amber-lsp.log'))
-								.sort()
-								.at(-1)
-								.name
-							);
+						files
+							.filter((file) => file.isFile() && file.name.startsWith('amber-lsp.log'))
+							.sort()
+							.at(-1)
+							?.name
+					);
 
 				if (!lastLogFileName) {
 					window.showErrorMessage("No log file found. Please report the issue to github.com/amber-lang/amber-lsp/issues");
@@ -89,10 +89,10 @@ export function activate(context: ExtensionContext) {
 				});
 
 				await axios.post('https://docs.amber-lang.com/api/amber-lsp/crash-report', {
-				  logs,
-          editor: 'vscode',
-          os: platform(),
-          lspVersion: '0.2.0',
+					logs,
+					editor: 'vscode',
+					os: platform(),
+					lspVersion: '0.2.0',
 				})
 
 				window.showInformationMessage("Crash report sent successfully. Thank you for helping us improve Amber!");
@@ -139,6 +139,31 @@ export function activate(context: ExtensionContext) {
 
 	context.subscriptions.push(pathEdits);
 
+	let testTaskExecution: TaskExecution | undefined;
+
+	const runTestCommand = commands.registerCommand('amber.runTest', async (filePath: string, testName: string) => {
+		if (testTaskExecution) {
+			testTaskExecution.terminate();
+		}
+		const task = new Task(
+			{ type: 'amber', task: 'runTest' },
+			TaskScope.Workspace,
+			'Amber Test',
+			'amber',
+			new ProcessExecution('amber', ['test', filePath, '--test-case', testName])
+		);
+		task.presentationOptions = {
+			echo: true,
+			focus: true,
+			panel: 1 /* TaskPanelKind.Shared */,
+			showReuseMessage: false,
+			clear: true
+		};
+		testTaskExecution = await tasks.executeTask(task);
+	});
+
+	context.subscriptions.push(runTestCommand);
+
 	client.setTrace(Trace.Verbose)
 	client.start();
 }
@@ -148,7 +173,7 @@ const isInsideImportString = (lineText: string, charPosition: number): boolean =
 
 	const match = textBeforeCursor.match(/\bfrom\b([^"]*)"([^"]*)$/)
 
-	return !!match.length;
+	return !!match?.length;
 }
 
 export function deactivate(): Thenable<void> | undefined {

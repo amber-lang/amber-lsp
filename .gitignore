@@ -21,7 +21,7 @@ dist/
 .vscode/settings.json*.vsix
 
 # Testing
-test.*
+/test.*
 
 # VsCode extension
 *.vsix

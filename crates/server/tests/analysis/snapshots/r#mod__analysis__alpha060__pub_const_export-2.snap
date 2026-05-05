@@ -1,0 +1,36 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: sorted_pub_defs
+---
+[
+    (
+        "GREETING",
+        SymbolLocation {
+            file: (
+                FileId(
+                    0,
+                ),
+                FileVersion(
+                    1,
+                ),
+            ),
+            start: 36,
+            end: 44,
+        },
+    ),
+    (
+        "MAX_SIZE",
+        SymbolLocation {
+            file: (
+                FileId(
+                    0,
+                ),
+                FileVersion(
+                    1,
+                ),
+            ),
+            start: 11,
+            end: 19,
+        },
+    ),
+]

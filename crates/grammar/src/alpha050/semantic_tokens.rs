@@ -197,7 +197,7 @@ pub fn semantic_tokens_from_ast(
                         ));
                     }
 
-                    tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                    tokens.extend(semantic_tokens_from_stmnts(&[(
                         Statement::Block(body.clone()),
                         body.1,
                     )]));
@@ -309,7 +309,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                         IfChainContent::IfCondition((if_cond, _)) => match if_cond {
                             IfCondition::IfCondition(expr, block) => {
                                 tokens.extend(semantic_tokens_from_expr(expr));
-                                tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                                tokens.extend(semantic_tokens_from_stmnts(&[(
                                     Statement::Block(block.clone()),
                                     block.1,
                                 )]));
@@ -329,7 +329,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                                     *else_span,
                                 ));
 
-                                tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                                tokens.extend(semantic_tokens_from_stmnts(&[(
                                     Statement::Block(block.clone()),
                                     block.1,
                                 )]));
@@ -354,7 +354,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                 match if_cond {
                     IfCondition::IfCondition(expr, block) => {
                         tokens.extend(semantic_tokens_from_expr(expr));
-                        tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                        tokens.extend(semantic_tokens_from_stmnts(&[(
                             Statement::Block(block.clone()),
                             block.1,
                         )]));
@@ -383,7 +383,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                                 *else_span,
                             ));
 
-                            tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                            tokens.extend(semantic_tokens_from_stmnts(&[(
                                 Statement::Block(block.clone()),
                                 block.1,
                             )]));
@@ -399,7 +399,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                     *loop_span,
                 )];
 
-                tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                tokens.extend(semantic_tokens_from_stmnts(&[(
                     Statement::Block(block.clone()),
                     block.1,
                 )]));
@@ -414,7 +414,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
 
                 tokens.extend(semantic_tokens_from_expr(expr));
 
-                tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                tokens.extend(semantic_tokens_from_stmnts(&[(
                     Statement::Block(block.clone()),
                     block.1,
                 )]));
@@ -450,7 +450,7 @@ fn semantic_tokens_from_stmnts(stmnts: &[Spanned<Statement>]) -> Vec<SpannedSema
                 ));
 
                 tokens.extend(semantic_tokens_from_expr(expr));
-                tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                tokens.extend(semantic_tokens_from_stmnts(&[(
                     Statement::Block(block.clone()),
                     block.1,
                 )]));
@@ -911,7 +911,7 @@ fn semantic_tokens_from_failable_handlers(
                                 ));
                             }
 
-                            tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                            tokens.extend(semantic_tokens_from_stmnts(&[(
                                 Statement::Block(*block.clone()),
                                 block.1,
                             )]));
@@ -930,7 +930,7 @@ fn semantic_tokens_from_failable_handlers(
                         *failed_span,
                     ));
 
-                    tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                    tokens.extend(semantic_tokens_from_stmnts(&[(
                         Statement::Block(*block.clone()),
                         block.1,
                     )]));
@@ -946,7 +946,7 @@ fn semantic_tokens_from_failable_handlers(
                         *exit_code_span,
                     ));
 
-                    tokens.extend(semantic_tokens_from_stmnts(&vec![(
+                    tokens.extend(semantic_tokens_from_stmnts(&[(
                         Statement::Block(*block.clone()),
                         block.1,
                     )]));

@@ -4,4 +4,5 @@ pub enum AmberVersion {
     Alpha035,
     Alpha040,
     Alpha050,
+    Alpha060,
 }

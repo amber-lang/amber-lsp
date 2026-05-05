@@ -1,0 +1,90 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: symbol_table.symbols
+---
+{
+    5..=6: SymbolInfo {
+        name: "a",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+                is_public: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: true,
+        undefined: false,
+        span: 5..6,
+        contexts: [],
+    },
+    16..=17: SymbolInfo {
+        name: "b",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+                is_public: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: true,
+        undefined: false,
+        span: 16..17,
+        contexts: [],
+    },
+    27..=33: SymbolInfo {
+        name: "values",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+                is_public: false,
+            },
+        ),
+        data_type: [Int],
+        is_definition: true,
+        undefined: false,
+        span: 27..33,
+        contexts: [],
+    },
+    48..=49: SymbolInfo {
+        name: "a",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+                is_public: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: false,
+        undefined: false,
+        span: 48..49,
+        contexts: [],
+    },
+    51..=52: SymbolInfo {
+        name: "b",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+                is_public: false,
+            },
+        ),
+        data_type: Int,
+        is_definition: false,
+        undefined: false,
+        span: 51..52,
+        contexts: [],
+    },
+    56..=62: SymbolInfo {
+        name: "values",
+        symbol_type: Variable(
+            VariableSymbol {
+                is_const: false,
+                is_public: false,
+            },
+        ),
+        data_type: [Int],
+        is_definition: false,
+        undefined: false,
+        span: 56..62,
+        contexts: [],
+    },
+}

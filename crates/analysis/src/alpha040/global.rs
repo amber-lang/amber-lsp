@@ -43,6 +43,7 @@ pub async fn analyze_global_stmnt(
     backend: &impl AnalysisHost,
 ) {
     let mut contexts = vec![];
+    let mut has_main = false;
 
     let uri = backend.get_files().lookup(&file_id);
 
@@ -170,7 +171,10 @@ pub async fn analyze_global_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: name.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: ty,
                             is_definition: true,
                             undefined: false,
@@ -438,6 +442,7 @@ pub async fn analyze_global_stmnt(
                                         name: ident.to_string(),
                                         symbol_type: SymbolType::Variable(VariableSymbol {
                                             is_const: false,
+                                            is_public: false,
                                         }),
                                         data_type: DataType::Null,
                                         is_definition: false,
@@ -510,6 +515,7 @@ pub async fn analyze_global_stmnt(
                                             name: ident.to_string(),
                                             symbol_type: SymbolType::Variable(VariableSymbol {
                                                 is_const: false,
+                                                is_public: false,
                                             }),
                                             data_type: DataType::Null,
                                             is_definition: false,
@@ -564,7 +570,15 @@ pub async fn analyze_global_stmnt(
                         }),
                 }
             }
-            GlobalStatement::Main(_, args, body) => {
+            GlobalStatement::Main((_, main_span), args, body) => {
+                if has_main {
+                    backend.get_files().report_error(
+                        &(file_id, file_version),
+                        "Duplicate 'main' block",
+                        *main_span,
+                    );
+                }
+                has_main = true;
                 if let Some((args, args_span)) = args {
                     let mut symbol_table = backend
                         .get_files()
@@ -576,7 +590,10 @@ pub async fn analyze_global_stmnt(
                         &mut symbol_table,
                         &SymbolInfo {
                             name: args.to_string(),
-                            symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                            symbol_type: SymbolType::Variable(VariableSymbol {
+                                is_const: false,
+                                is_public: false,
+                            }),
                             data_type: DataType::Array(Box::new(DataType::Text)),
                             is_definition: true,
                             undefined: false,

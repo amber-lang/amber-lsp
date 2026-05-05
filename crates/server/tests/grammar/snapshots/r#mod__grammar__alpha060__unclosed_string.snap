@@ -1,0 +1,18 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+expression: "compiler.tokenize(r#\"\"unclosed\"#)"
+---
+[
+    (
+        Token(
+            "\"",
+        ),
+        0..1,
+    ),
+    (
+        Token(
+            "unclosed",
+        ),
+        1..9,
+    ),
+]

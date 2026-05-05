@@ -1,0 +1,19 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: backend.files.unused_diagnostics
+---
+{
+    (
+        FileId(
+            0,
+        ),
+        FileVersion(
+            1,
+        ),
+    ): [
+        (
+            "Unused function \"test_narrowing\"",
+            5..19,
+        ),
+    ],
+}

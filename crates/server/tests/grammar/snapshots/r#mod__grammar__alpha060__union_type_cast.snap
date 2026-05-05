@@ -1,0 +1,52 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+assertion_line: 566
+expression: parse_unwrap(&tokenize(input))
+---
+[
+    (
+        Statement(
+            (
+                VariableInit(
+                    (
+                        "let",
+                        5..8,
+                    ),
+                    (
+                        "x",
+                        9..10,
+                    ),
+                    (
+                        Expression(
+                            (
+                                Cast(
+                                    (
+                                        Int(
+                                            (
+                                                42,
+                                                13..15,
+                                            ),
+                                        ),
+                                        13..15,
+                                    ),
+                                    (
+                                        "as",
+                                        16..18,
+                                    ),
+                                    (
+                                        Int | Text,
+                                        19..29,
+                                    ),
+                                ),
+                                13..29,
+                            ),
+                        ),
+                        13..29,
+                    ),
+                ),
+                5..29,
+            ),
+        ),
+        5..29,
+    ),
+]

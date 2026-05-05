@@ -1,0 +1,57 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+assertion_line: 620
+expression: parse_unwrap(&tokenize(input))
+---
+[
+    (
+        FunctionDefinition(
+            [],
+            (
+                false,
+                5..40,
+            ),
+            (
+                "fun",
+                5..8,
+            ),
+            (
+                "foo",
+                9..12,
+            ),
+            [
+                (
+                    Optional(
+                        (
+                            false,
+                            13..13,
+                        ),
+                        (
+                            "x",
+                            13..14,
+                        ),
+                        Some(
+                            (
+                                Int | Text,
+                                16..26,
+                            ),
+                        ),
+                        (
+                            Int(
+                                (
+                                    42,
+                                    29..31,
+                                ),
+                            ),
+                            29..31,
+                        ),
+                    ),
+                    13..31,
+                ),
+            ],
+            None,
+            [],
+        ),
+        5..40,
+    ),
+]

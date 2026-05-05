@@ -1,0 +1,5 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: backend.files.errors
+---
+{}

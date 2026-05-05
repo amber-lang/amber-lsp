@@ -1,0 +1,21 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: sorted_pub_defs
+---
+[
+    (
+        "counter",
+        SymbolLocation {
+            file: (
+                FileId(
+                    0,
+                ),
+                FileVersion(
+                    1,
+                ),
+            ),
+            start: 33,
+            end: 40,
+        },
+    ),
+]

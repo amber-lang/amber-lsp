@@ -1186,7 +1186,10 @@ pub fn analyze_exp(
                 exp_span_inclusive,
                 SymbolInfo {
                     name: "status".to_string(),
-                    symbol_type: SymbolType::Variable(VariableSymbol { is_const: false }),
+                    symbol_type: SymbolType::Variable(VariableSymbol {
+                        is_const: false,
+                        is_public: false,
+                    }),
                     data_type: DataType::Number,
                     is_definition: false,
                     undefined: false,

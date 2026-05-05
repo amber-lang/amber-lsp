@@ -1,0 +1,17 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_string(&generic_types)).collect::<Vec<String>>()"
+---
+[
+    "fun foo(a: Any): Any",
+    "a: Any",
+    "fun bar(a: Any): Any",
+    "a: Any",
+    "fun bar(a: Any): Any",
+    "a: Any",
+    "a: Any",
+    "x: Int",
+    "fun foo(a: Int): Int",
+    "y: Text",
+    "fun foo(a: Text): Text",
+]

@@ -1,0 +1,32 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+expression: parse_unwrap(&tokenize(input))
+---
+[
+    (
+        PublicConstInit(
+            (
+                true,
+                5..8,
+            ),
+            (
+                "const",
+                9..14,
+            ),
+            (
+                "MAX_SIZE",
+                15..23,
+            ),
+            (
+                Int(
+                    (
+                        100,
+                        26..29,
+                    ),
+                ),
+                26..29,
+            ),
+        ),
+        5..29,
+    ),
+]

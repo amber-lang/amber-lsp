@@ -1,0 +1,13 @@
+---
+source: crates/server/tests/analysis/alpha060.rs
+expression: "symbol_table.symbols.iter().map(|(_, symbol_info)|\nsymbol_info.to_string(&generic_types)).collect::<Vec<String>>()"
+---
+[
+    "fun caller(): Int",
+    "fun callee(n: Int): Int",
+    "fun callee(n: Int): Int",
+    "n: Int",
+    "n: Int",
+    "result: Int",
+    "fun caller(): Int",
+]

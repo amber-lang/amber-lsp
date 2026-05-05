@@ -88,21 +88,27 @@
 					"description": "Select the version of the LSP server to use."
 				}
 			}
-		}
+		},
+		"commands": [
+			{
+				"command": "amber.runTest",
+				"title": "Amber: Run Test"
+			}
+		]
 	},
 	"scripts": {
 		"compile": "npm run check-types && node esbuild.js",
-    "check-types": "tsc --noEmit",
-    "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "vscode:prepublish": "npm run package",
-    "package": "npm run check-types && node esbuild.js --production"
+		"check-types": "tsc --noEmit",
+		"watch": "npm-run-all -p watch:*",
+		"watch:esbuild": "node esbuild.js --watch",
+		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+		"vscode:prepublish": "npm run package",
+		"package": "npm run check-types && node esbuild.js --production"
 	},
 	"devDependencies": {
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^20.0.0",
-		"@types/vscode": "^1.75.1",
+		"@types/vscode": "^1.116.0",
 		"@typescript-eslint/eslint-plugin": "^7.1.0",
 		"@typescript-eslint/parser": "^7.1.0",
 		"esbuild": "^0.25.6",
