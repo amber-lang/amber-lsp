@@ -20,7 +20,7 @@
 		"language server"
 	],
 	"engines": {
-		"vscode": "^1.75.0"
+		"vscode": "^1.116.0"
 	},
 	"activationEvents": [
 		"onLanguage:amber"
