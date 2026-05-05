@@ -92,7 +92,7 @@ export function activate(context: ExtensionContext) {
 					logs,
 					editor: 'vscode',
 					os: platform(),
-					lspVersion: '0.2.0',
+					lspVersion: '0.3.0',
 				})
 
 				window.showInformationMessage("Crash report sent successfully. Thank you for helping us improve Amber!");

@@ -1,6 +1,6 @@
 // A launch configuration that compiles the extension and then opens it inside a new window
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "configurations": [
     {
       // Used for testing the extension with a local build of the LSP server (in `target/release`).
