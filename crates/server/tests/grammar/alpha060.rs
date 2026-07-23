@@ -427,6 +427,57 @@ fn test_array_destruct_init_and_set() {
 }
 
 #[test]
+fn test_array_literal_with_comments() {
+    let input = r#"
+    let arr = [
+        1, // this number is 1
+        // the next number is 2
+        2,
+    ]
+    echo(arr)
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_function_call_with_comments() {
+    let input = r#"
+    foo(
+        // first arg
+        1,
+        // second arg
+        2,
+    )
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_parentheses_with_comments() {
+    let input = r#"
+    let x = (
+        // comment
+        1 + 2
+    )
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
+fn test_ternary_comments() {
+    let input = r#"
+    let x = true // condition
+        then 1 // if true
+        else 2 // if false
+"#;
+
+    assert_debug_snapshot!(parse_unwrap(&tokenize(input)));
+}
+
+#[test]
 fn test_array_destruct_init_with_comments_and_trailing() {
     let input = r#"
     let array_to_destruct = [1, 2, 3]

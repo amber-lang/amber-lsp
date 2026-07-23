@@ -2,6 +2,7 @@ use crate::alpha060::parser::{
     default_recovery,
     ident,
 };
+use crate::alpha060::statements::comment::comment_parser;
 use crate::alpha060::statements::failable_handlers::failable_handlers_parser;
 use crate::alpha060::statements::modifiers::modifier_parser;
 use crate::alpha060::{
@@ -21,14 +22,16 @@ pub fn function_call_parser<'a>(
         .repeated()
         .collect()
         .then(ident("function".to_string()).map_with(|name, e| (name, e.span())))
-        .then_ignore(just(T!["("]))
+        .then_ignore(just(T!["("]).then(comment_parser().repeated()))
         .then(
             expr.recover_with(via_parser(
                 default_recovery().map_with(|_, e| (Expression::Error, e.span())),
             ))
             .separated_by(
-                just(T![","])
-                    .recover_with(via_parser(default_recovery().rewind().map(|_| T![","]))),
+                comment_parser()
+                    .repeated()
+                    .then(just(T![","]))
+                    .then(comment_parser().repeated()),
             )
             .allow_trailing()
             .collect(),
