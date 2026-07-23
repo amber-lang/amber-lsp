@@ -1,0 +1,57 @@
+---
+source: crates/server/tests/grammar/alpha060.rs
+expression: parse_unwrap(&tokenize(input))
+---
+[
+    (
+        Statement(
+            (
+                VariableInit(
+                    (
+                        "let",
+                        5..8,
+                    ),
+                    (
+                        "x",
+                        9..10,
+                    ),
+                    (
+                        Expression(
+                            (
+                                Parentheses(
+                                    (
+                                        Add(
+                                            (
+                                                Int(
+                                                    (
+                                                        1,
+                                                        42..43,
+                                                    ),
+                                                ),
+                                                42..43,
+                                            ),
+                                            (
+                                                Int(
+                                                    (
+                                                        2,
+                                                        46..47,
+                                                    ),
+                                                ),
+                                                46..47,
+                                            ),
+                                        ),
+                                        42..47,
+                                    ),
+                                ),
+                                13..53,
+                            ),
+                        ),
+                        13..53,
+                    ),
+                ),
+                5..53,
+            ),
+        ),
+        5..53,
+    ),
+]

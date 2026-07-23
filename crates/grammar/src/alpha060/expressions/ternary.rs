@@ -1,6 +1,7 @@
 use chumsky::prelude::*;
 
 use crate::alpha060::parser::default_recovery;
+use crate::alpha060::statements::comment::comment_parser;
 use crate::alpha060::{
     AmberParser,
     Spanned,
@@ -17,7 +18,9 @@ pub fn ternary_parser<'a>(
 ) -> impl AmberParser<'a, Spanned<Expression>> {
     range_parser(stmnts, expr.clone())
         .foldl(
-            just(T!["then"])
+            comment_parser()
+                .repeated()
+                .ignore_then(just(T!["then"]))
                 .map_with(|t, e| (t.to_string(), e.span()))
                 .then(
                     expr.clone().recover_with(via_parser(
@@ -27,13 +30,15 @@ pub fn ternary_parser<'a>(
                     )),
                 )
                 .then(
-                    just(T!["else"])
-                        .map_with(|t, e| (t.to_string(), e.span()))
-                        .recover_with(via_parser(
-                            default_recovery()
-                                .or_not()
-                                .map_with(|_, e| ("".to_string(), e.span())),
-                        )),
+                    comment_parser().repeated().ignore_then(
+                        just(T!["else"])
+                            .map_with(|t, e| (t.to_string(), e.span()))
+                            .recover_with(via_parser(
+                                default_recovery()
+                                    .or_not()
+                                    .map_with(|_, e| ("".to_string(), e.span())),
+                            )),
+                    ),
                 )
                 .then(
                     expr.recover_with(via_parser(
