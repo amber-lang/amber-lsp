@@ -1,0 +1,53 @@
+{
+  description = "Language server protocol implementation for Amber";
+
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+  outputs =
+    { self, nixpkgs, ... }:
+    let
+      systems = [
+        "aarch64-darwin"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "x86_64-linux"
+      ];
+      forAllSystems = nixpkgs.lib.genAttrs systems;
+    in
+    {
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          amber-lsp = pkgs.callPackage ./default.nix { };
+        in
+        {
+          inherit amber-lsp;
+          default = amber-lsp;
+        }
+      );
+
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShell {
+            inputsFrom = [ self.packages.${system}.amber-lsp ];
+
+            packages = with pkgs; [
+              cargo
+              cargo-insta
+              clippy
+              nodejs
+              pre-commit
+              python3
+              rustc
+              rustfmt
+            ];
+          };
+        }
+      );
+    };
+}
