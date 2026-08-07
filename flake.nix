@@ -46,12 +46,19 @@
             overlays = [ rust-overlay.overlays.default ];
           };
           rustToolchain = pkgs.rust-bin.nightly.latest.default;
+          cargo = pkgs.writeShellScriptBin "cargo" ''
+            if [ "$1" = "+nightly" ]; then
+              shift
+            fi
+            exec ${rustToolchain}/bin/cargo "$@"
+          '';
         in
         {
           default = pkgs.mkShell {
             inputsFrom = [ self.packages.${system}.amber-lsp ];
 
             packages = with pkgs; [
+              cargo
               cargo-insta
               clippy
               nodejs
@@ -59,6 +66,9 @@
               python3
               rustToolchain
             ];
+            shellHook = ''
+              export PATH="${cargo}/bin:$PATH"
+            '';
           };
         }
       );
