@@ -1,10 +1,21 @@
 {
   description = "Language server protocol implementation for Amber";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
 
   outputs =
-    { self, nixpkgs, ... }:
+    {
+      self,
+      nixpkgs,
+      rust-overlay,
+      ...
+    }:
     let
       systems = [
         "aarch64-darwin"
@@ -30,21 +41,23 @@
       devShells = forAllSystems (
         system:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ rust-overlay.overlays.default ];
+          };
+          rustToolchain = pkgs.rust-bin.nightly.latest.default;
         in
         {
           default = pkgs.mkShell {
             inputsFrom = [ self.packages.${system}.amber-lsp ];
 
             packages = with pkgs; [
-              cargo
               cargo-insta
               clippy
               nodejs
               pre-commit
               python3
-              rustc
-              rustfmt
+              rustToolchain
             ];
           };
         }
